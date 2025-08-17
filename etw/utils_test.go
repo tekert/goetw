@@ -9,6 +9,7 @@ import (
 	"hash/maphash"
 	"runtime" // <-- Import runtime
 	"strconv"
+	"sync"
 	"syscall"
 	"testing"
 	"unsafe"
@@ -297,4 +298,49 @@ func BenchmarkHash(b *testing.B) {
 			}
 		})
 	}
+}
+
+// TestUTF16PtrToStringConcurrent tests the UTF16PtrToString function
+// in a concurrent environment to ensure it handles multiple goroutines
+// accessing the cache without issues.
+func TestUTF16PtrToStringConcurrent(t *testing.T) {
+	// Reset the global cache for a clean test run.
+	globalUtf16Cache = newClockCache(128)
+
+	var wg sync.WaitGroup
+	// Tested a bug with this, min 100/10000 for consistent detection
+	numGoroutines := 100 // use min of 100
+	iterations := 10000 // use at least 10000 to get consisnt results
+
+	// Prepare test data
+	testStrings := make([]string, numGoroutines)
+	testPtrs := make([]*uint16, numGoroutines)
+	for i := range numGoroutines {
+		testStrings[i] = fmt.Sprintf("concurrent-string-%d", i)
+		ptr, err := syscall.UTF16PtrFromString(testStrings[i])
+		if err != nil {
+			t.Fatalf("Failed to create test string: %v", err)
+		}
+		testPtrs[i] = ptr
+	}
+
+	for i := range numGoroutines {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := range iterations {
+				// Access different strings to stress the cache's read/write paths
+				index := (id + j) % numGoroutines
+				s := testStrings[index]
+				p := testPtrs[index]
+
+				res := UTF16PtrToString(p)
+				if res != s {
+					t.Errorf("goroutine %d: expected '%s', got '%s'", id, s, res)
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
 }

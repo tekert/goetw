@@ -26,7 +26,7 @@ type clockCacheEntry struct {
 
 // clockCache is a concurrent-safe, fixed-size cache using the second-chance algorithm.
 type clockCache struct {
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	data     map[uint64]*clockCacheEntry
 	buffer   []*clockCacheEntry
 	capacity int
@@ -44,12 +44,14 @@ func newClockCache(capacity int) *clockCache {
 
 // lookupOrConvert contains the core clock cache logic.
 func (c *clockCache) lookupOrConvert(hash uint64, converter func() string) string {
-	// Optimistic read lock for the common cache-hit case.
-	// This is a fast-path that doesn't require a full mutex lock.
+	// Use a read lock for the common cache-hit case.
+	c.mu.RLock()
 	if entry, ok := c.data[hash]; ok {
 		entry.referenced.Store(true)
+		c.mu.RUnlock()
 		return entry.value
 	}
+	c.mu.RUnlock()
 
 	// Item not in cache, convert it before taking the full lock.
 	str := converter()
