@@ -4,6 +4,147 @@ package etw
 
 import "strings"
 
+// KernelFlag defines a bitmask for enabling a specific group of legacy kernel events.
+// These flags are used with NewKernelRealTimeSession to configure the "NT Kernel Logger".
+type KernelFlag uint32
+
+const (
+	// ALPC logs Advanced Local Procedure call events.
+	// https://docs.microsoft.com/en-us/windows/win32/etw/alpc
+	// GUID: {45d8cccd-539f-4b72-a8b7-5c683142609a}
+	ALPC KernelFlag = EVENT_TRACE_FLAG_ALPC
+
+	// DbgPrint logs debug output messages from kernel-mode components using DbgPrint/DbgPrintEx.
+	// GUID: {13976d09-a327-438c-950b-7f03192815c7}
+	DbgPrint KernelFlag = EVENT_TRACE_FLAG_DBGPRINT
+
+	// DiskIo logs the completion of Physical disk activity.
+	// https://docs.microsoft.com/en-us/windows/win32/etw/diskio
+	// GUID: {3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}
+	DiskIo KernelFlag = EVENT_TRACE_FLAG_DISK_IO
+
+	// DiskIoInit logs the initialization of disk IO operations.
+	// Generally not TOO volumous (typically less than 1K per second)
+	// (Stacks associated with this)
+	// GUID: {3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}
+	DiskIoInit KernelFlag = EVENT_TRACE_FLAG_DISK_IO_INIT
+
+	// Driver logs events for kernel-mode driver operations.
+	// More info on https://learn.microsoft.com/en-us/windows/win32/etw/diskio
+	// Driver* events.
+	// GUID: {3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}
+	Driver KernelFlag = EVENT_TRACE_FLAG_DRIVER
+
+	// FileIo logs file operation end events (e.g., read, write, create) when they complete. (even ones that do not actually
+	// cause Disk I/O).  (Vista+ only)
+	// Generally not TOO volumous (typically less than 1K per second) (No stacks associated with these)
+	// https://docs.microsoft.com/en-us/windows/win32/etw/fileio
+	// GUID: {90cbdc39-4a3e-11d1-84f4-0000f80464e3}
+	FileIo KernelFlag = EVENT_TRACE_FLAG_FILE_IO
+
+	// DiskFileIo logs the mapping of file IDs to actual (kernel) file names.
+	// Rundown event with opcode 36 (EventType)
+	// https://learn.microsoft.com/en-us/windows/win32/etw/fileio-name
+	// FileObject is used to correlate with other FileIo events that reference the same file
+	// FileKey persists across system reboots and can be used to track the same file over time
+	// GUID: {90cbdc39-4a3e-11d1-84f4-0000f80464e3}
+	DiskFileIo KernelFlag = EVENT_TRACE_FLAG_DISK_FILE_IO | EVENT_TRACE_FLAG_FILE_IO
+
+	// FileIoInit logs the start of file I/O operations. (Vista+ only)
+	// Generally not TOO volumous (typically less than 1K per second)
+	// GUID: {90cbdc39-4a3e-11d1-84f4-0000f80464e3}
+	FileIoInit KernelFlag = EVENT_TRACE_FLAG_FILE_IO_INIT
+
+	// FileIoVAmap enables events for mapping and unmapping of files into memory. (Win8+)
+	// Generally low volume.
+	// GUID: {90cbdc39-4a3e-11d1-84f4-0000f80464e3}
+	FileIoVAmap KernelFlag = EVENT_TRACE_FLAG_VAMAP
+
+	// ImageLoad logs native modules loads (LoadLibrary), and unloads (FreeLibrary).
+	// https://docs.microsoft.com/en-us/windows/win32/etw/image
+	// GUID: {2cb15d1d-5fc1-11d2-abe1-00a0c911f518}
+	ImageLoad KernelFlag = EVENT_TRACE_FLAG_IMAGE_LOAD
+
+	// LMemoryPageFault logs all page faults (hard or soft). Can be high volume.
+	// https://docs.microsoft.com/en-us/windows/win32/etw/pagefault-v2
+	// GUID: {3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}
+	MemoryPageFault KernelFlag = EVENT_TRACE_FLAG_MEMORY_PAGE_FAULTS
+
+	// Logs all page faults that must fetch the data from the disk (hard faults)
+	// GUID: {3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}
+	MemoryHardFault KernelFlag = EVENT_TRACE_FLAG_MEMORY_HARD_FAULTS
+
+	// Log Virtual Alloc calls and VirtualFree.   (Vista+ Only)
+	// Generally not TOO volumous (typically less than 1K per second)
+	// GUID: {3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}
+	VirtualAlloc KernelFlag = EVENT_TRACE_FLAG_VIRTUAL_ALLOC
+
+	// DPC logs Deferred Procedure Calls (Vista+).
+	// https://docs.microsoft.com/en-us/windows/win32/etw/process
+	// GUID: {ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}
+	DPC KernelFlag = EVENT_TRACE_FLAG_DPC
+
+	// Interrupt logs hardware interrupts (Vista+).
+	// https://learn.microsoft.com/es-es/windows/win32/etw/isr
+	// GUID: {ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}
+	Interrupt KernelFlag = EVENT_TRACE_FLAG_INTERRUPT
+
+	// Profile enables sampled-based profiling events (requires special privileges).
+	// (expect 1K events per proc per second)
+	// GUID: {ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}
+	Profile KernelFlag = EVENT_TRACE_FLAG_PROFILE
+
+	// Syscall logs calls into the operating system (very high volume, Vista+).
+	// GUID: {ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}
+	Syscall KernelFlag = EVENT_TRACE_FLAG_SYSTEMCALL
+
+	// Process logs process starts and stops.
+	// https://docs.microsoft.com/en-us/windows/win32/etw/process
+	// GUID: {3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}
+	Process KernelFlag = EVENT_TRACE_FLAG_PROCESS
+
+	// ProcessCounters logs process performance counters (CPU, IO, etc).
+	// https://docs.microsoft.com/en-us/windows/win32/etw/process
+	// GUID: {3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}
+	ProcessCounters KernelFlag = EVENT_TRACE_FLAG_PROCESS_COUNTERS
+
+	// Registry logs activity to the windows registry. Can be high volume.
+	// https://docs.microsoft.com/en-us/windows/win32/etw/registry
+	// GUID: {ae53722e-c863-11d2-8659-00c04fa321a1}
+	Registry KernelFlag = EVENT_TRACE_FLAG_REGISTRY
+
+	// SplitIo logs Disk I/O that was split (e.g., for mirroring) (Vista+).
+	// https://docs.microsoft.com/en-us/windows/win32/etw/splitio
+	// GUID: {d837ca92-12b9-44a5-ad6a-3a65b3578aa8}
+	SplitIo KernelFlag = EVENT_TRACE_FLAG_SPLIT_IO
+
+	// TcpIp logs TCP/IP network send and receive events.
+	// https://docs.microsoft.com/en-us/windows/win32/etw/tcpip
+	// GUID: {9a280ac0-c8e0-11d1-84e2-00c04fb998a2}
+	TcpIp KernelFlag = EVENT_TRACE_FLAG_NETWORK_TCPIP
+
+	// Thread logs thread starts and stops.
+	// https://docs.microsoft.com/en-us/windows/win32/etw/thread
+	// GUID: {3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}
+	Thread KernelFlag = EVENT_TRACE_FLAG_THREAD
+
+	// CSwitch logs thread context switches. High volume.
+	// (use with ReadyThread to get full context switches)
+	// GUID: {3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}
+	CSwitch KernelFlag = EVENT_TRACE_FLAG_CSWITCH
+
+	// Dispatcher logs thread dispatcher activity (ReadyThread). High volume (Vista+).
+	// GUID: {3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}
+	Dispatcher KernelFlag = EVENT_TRACE_FLAG_DISPATCHER
+
+	// UdpIp logs UDP/IP network send and receive events.
+	// https://docs.microsoft.com/en-us/windows/win32/etw/udpip
+	// GUID: {bf3a50c5-a9c9-4988-a005-2df0b7c80f80}
+	UdpIp KernelFlag = EVENT_TRACE_FLAG_NETWORK_TCPIP // Note: Same flag as TcpIp
+)
+
+// Deprecated: Use the KernelFlag constants (e.g., etw.Process, etw.Thread) with
+// NewKernelRealTimeSession instead. This struct will be removed in a future version.
 type ProviderKernel struct {
 	Name   string
 	Kernel bool
@@ -37,6 +178,9 @@ var (
 	// or the new SystemProvider on Windows 10 SDK build 20348 or later
 	//
 	// But they are still useful for some cases. like obtaining context switches.
+	//
+	// Deprecated: Use the KernelFlag constants (e.g., etw.Process, etw.Thread) with
+	// NewKernelRealTimeSession instead. This slice will be removed in a future version.
 	KernelProviders = []ProviderKernel{
 
 		// Some comments where taken from https://github.com/microsoft/perfview/blob/main/src/TraceEvent/Parsers/KernelTraceEventParser.cs
@@ -282,8 +426,11 @@ var (
 	SystemTimerProviderGuid      = GUID{0x6a399ae0, 0x4e0b, 0x4d6d, [8]byte{0x8c, 0x5d, 0x6a, 0x7b, 0x5b, 0x0d, 0x5c, 0x3d}}
 )
 
-// GetKernelProviderFlags returns the flags for the given kernel provider names or GUIDs
-// It is case insensitive
+// GetKernelProviderFlags returns the flags for the given kernel provider names or GUIDs.
+// It is case insensitive.
+//
+// Deprecated: Use the KernelFlag constants (e.g., etw.Process, etw.Thread) with
+// NewKernelRealTimeSession instead. This function will be removed in a future version.
 func GetKernelProviderFlags(terms ...string) (flags uint32) {
 	for _, t := range terms {
 		for _, pd := range KernelProviders {
@@ -296,7 +443,10 @@ func GetKernelProviderFlags(terms ...string) (flags uint32) {
 	return
 }
 
-// Checks if this is a system event trace provider
+// IsKernelProvider checks if this is a system event trace provider.
+//
+// Deprecated: This function is no longer needed with the new KernelFlag constants.
+// It will be removed in a future version.
 func IsKernelProvider(term string) bool {
 	for _, pd := range KernelProviders {
 		if strings.EqualFold(term, pd.Name) || term == pd.GUID {
