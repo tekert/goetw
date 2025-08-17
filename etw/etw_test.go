@@ -295,7 +295,6 @@ func TestEventMapInfo(t *testing.T) {
 }
 
 func TestLostEvents(t *testing.T) {
-
 	tt := test.FromT(t)
 
 	// Producer part
@@ -318,7 +317,7 @@ func TestLostEvents(t *testing.T) {
 		WMIGUID_QUERY |
 		WMIGUID_NOTIFICATION
 	securityLogGuid := MustParseGUID("54849625-5478-4994-a5ba-3e3b0328c30d")
-	tt.CheckErr(AddProviderAccess(*securityLogGuid, "", SecurityLogReadFlags2))
+	tt.CheckErr(AddProviderAccess(securityLogGuid, "", SecurityLogReadFlags2))
 	// EventAccessControl(
 	// 	securityLogGuid,
 	// 	uint32(EventSecuritySetSACL), // Use SET instead of ADD
@@ -411,15 +410,6 @@ loop:
 		t.Logf(`[BufferCallback] EventTraceLogfile.EventsLost: %d
 		 (Note: documented as 'Not used')`, logFile.EventsLost)
 	}
-}
-
-func jsonStr(i any) string {
-	var b []byte
-	var err error
-	if b, err = json.Marshal(i); err != nil {
-		panic(err)
-	}
-	return string(b)
 }
 
 func TestConsumerCallbacks(t *testing.T) {
