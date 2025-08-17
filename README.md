@@ -28,10 +28,7 @@ import (
 
 func main() {
     // A session is required to start a trace.
-    s, err := etw.NewRealTimeSession("MyRealtimeSession")
-    if err != nil {
-        panic(err)
-    }
+    s := etw.NewRealTimeSession("MyRealtimeSession")
     defer s.Stop()
 
     // Enable a provider by its name. The string format allows for quick configuration.
@@ -87,7 +84,7 @@ import (
 )
 
 func main() {
-    s, _ := etw.NewRealTimeSession("MyAdvancedSession")
+    s := etw.NewRealTimeSession("MyAdvancedSession")
     defer s.Stop()
 
     // Configure the provider programmatically for fine-grained control.
@@ -138,18 +135,19 @@ import (
 )
 
 func main() {
-    // The NT Kernel Logger is a special session with a fixed name.
-    s, err := etw.NewRealTimeSession(etw.NtKernelLogger)
-    if err != nil {
-        // Fails if another kernel session is already running.
-        panic(err)
-    }
-    defer s.Stop()
-
     // Enable kernel providers by name. The library resolves the required flags.
     // Here, we ask for Process and Thread start/stop events.
     flags := etw.GetKernelProviderFlags("Process", "Thread")
-    if err := s.EnableKernelProvider(flags, 0); err != nil {
+
+    // The NT Kernel Logger is a special session. Kernel event groups are enabled
+    // at session creation by passing flags.
+    s := etw.NewKernelRealTimeSession(flags)
+    defer s.Stop()
+
+    // For kernel sessions, we must explicitly start the session.
+    // This can fail if another kernel session is already running (though this
+    // library attempts to stop it first).
+    if err := s.Start(); err != nil {
         panic(err)
     }
 
@@ -166,7 +164,9 @@ func main() {
         }
     })
 
-    c.Start()
+    if err := c.Start(); err != nil {
+        panic(err)
+    }
     time.Sleep(5 * time.Second)
 }
 ```
