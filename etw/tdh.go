@@ -149,7 +149,8 @@ Tested: OK
 */
 
 // [Deprecated] Dont use this. Use TdhFormatProperty instead.
-//  Retrieves a property value from the event data.
+//
+//	Retrieves a property value from the event data.
 func TdhGetProperty(pEvent *EventRecord,
 	tdhContextCount uint32,
 	pTdhContext *TdhContext,
@@ -258,6 +259,7 @@ TDHSTATUS TdhFormatProperty(
 Tested: OK
 */
 
+// Using Syscall.SyscallN instead of Proc.Call to avoid heap allocations
 // Formats a property value for display.
 func TdhFormatProperty(
 	eventInfo *TraceEventInfo,
@@ -271,7 +273,8 @@ func TdhFormatProperty(
 	bufferSize *uint32,
 	buffer *uint16,
 	userDataConsumed *uint16) error {
-	r1, _, _ := tdhFormatProperty.Call(
+	r1, _, _ := syscall.SyscallN(tdhFormatProperty.Addr(),
+		//r1, _, _ := tdhFormatProperty.Call(
 		uintptr(unsafe.Pointer(eventInfo)),
 		uintptr(unsafe.Pointer(mapInfo)),
 		uintptr(pointerSize),
