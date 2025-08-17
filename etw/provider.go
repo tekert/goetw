@@ -103,30 +103,30 @@ type Provider struct {
     //
     //   EVENT_ENABLE_PROPERTY_PROCESS_START_KEY
     //     - Includes the Process Start Key in the event's extended data.
-    //       Retrieve with: EventRecord.ProcessStartKey()
+    //       Retrieve with: EventRecord.ExtProcessStartKey()
     //
     //   EVENT_ENABLE_PROPERTY_EVENT_KEY
     //     - Includes a unique Event Key in the event's extended data.
-    //       Retrieve with: EventRecord.EventKey()
+    //       Retrieve with: EventRecord.ExtEventKey()
     //
     //   EVENT_ENABLE_PROPERTY_EXCLUDE_INPRIVATE
     //     - Filters out events marked as InPrivate or from InPrivate processes.
     //
     //   EVENT_ENABLE_PROPERTY_SID
     //     - Includes the security identifier (SID) of the user in the event's extended data.
-    //       Retrieve with: EventRecord.Sid()
+    //       Retrieve with: EventRecord.ExtSid()
     //
     //   EVENT_ENABLE_PROPERTY_TS_ID
     //     - Includes the terminal session identifier in the event's extended data.
-    //       Retrieve with: EventRecord.TerminalSessionID()
+    //       Retrieve with: EventRecord.ExtTerminalSessionID()
     //
     //   EVENT_ENABLE_PROPERTY_STACK_TRACE
     //     - Adds a call stack trace to the extended data of events written using EventWrite.
-    //       Retrieve with: EventRecord.StackTrace()
+    //       Retrieve with: EventRecord.ExtStackTrace()
     //
     //   EVENT_ENABLE_PROPERTY_CONTAINER_ID
     //     - Includes the container ID (GUID) in the event's extended data.
-    //       Retrieve with: EventRecord.ContainerID()
+    //       Retrieve with: EventRecord.ExtContainerID()
     //
     // Example usage:
     //   prov.EnableProperties = EVENT_ENABLE_PROPERTY_PROCESS_START_KEY | EVENT_ENABLE_PROPERTY_SID
