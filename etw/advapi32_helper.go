@@ -45,7 +45,7 @@ func GetAccessString(guid *GUID) (s string, err error) {
 
 // Adds an ACE to the current DACL.
 // if sid is empty: current user is used.
-func AddProviderAccess(guid GUID, sidString string, rights uint32) (err error) {
+func AddProviderAccess(guid *GUID, sidString string, rights uint32) (err error) {
 	var sid *SID
 
 	if sidString != "" {
@@ -60,10 +60,8 @@ func AddProviderAccess(guid GUID, sidString string, rights uint32) (err error) {
 		}
 	}
 
-	g := &guid
-
 	return EventAccessControl(
-		g,
+		guid,
 		uint32(EventSecurityAddDACL),
 		sid,
 		rights,
