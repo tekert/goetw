@@ -14,7 +14,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/tekert/golang-etw/internal/test"
+	"github.com/tekert/goetw/internal/test"
 )
 
 func TestUtils(t *testing.T) {

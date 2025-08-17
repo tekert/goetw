@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/tekert/golang-etw/logsampler"
+	"github.com/tekert/goetw/logsampler"
 
 	plog "github.com/phuslu/log"
 )

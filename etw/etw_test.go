@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tekert/golang-etw/internal/test"
+	"github.com/tekert/goetw/internal/test"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 	KernelMemoryProviderGuid = "{D1D93EF7-E1F2-4F45-9943-03D245FE6C00}"
 	KernelFileProviderName   = "Microsoft-Windows-Kernel-File"
 	// sessions
-	EventlogSecurity = "Eventlog-Security" // Need special permissions
+	EventlogSecuritySession = "Eventlog-Security" // Need special permissions
 )
 
 func init() {
@@ -321,15 +321,14 @@ func TestLostEvents(t *testing.T) {
 	tt.CheckErr(AddProviderAccess(*securityLogGuid, "", SecurityLogReadFlags2))
 	// EventAccessControl(
 	// 	securityLogGuid,
-	// 	uint32(EVENT_SECURITY_SET_DACL), // Use SET instead of ADD
+	// 	uint32(EventSecuritySetSACL), // Use SET instead of ADD
 	// 	nil,                             // Use current process token
 	// 	SecurityLogReadFlags,
 	// 	true,
 	// )
 
 	// Consumer part
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	c := NewConsumer(ctx).FromSessions(ses) //.FromTraceNames(EventlogSecurity)
 	// we have to declare a func otherwise c.Stop does not seem to be called
 	defer func() { tt.CheckErr(c.Stop()) }()

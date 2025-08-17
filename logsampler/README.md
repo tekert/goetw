@@ -93,7 +93,7 @@ Instantiate the sampler with your reporter and use it in your application's hot 
 import (
     "errors"
     "time"
-    "github.com/tekert/golang-etw/logsampler"
+    "github.com/tekert/goetw/logsampler"
 )
 
 func main() {

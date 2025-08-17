@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tekert/golang-etw/internal/test"
+	"github.com/tekert/goetw/internal/test"
 )
 
 func TestGUID(t *testing.T) {

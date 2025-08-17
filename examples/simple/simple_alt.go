@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tekert/golang-etw/etw"
+	"github.com/tekert/goetw/etw"
 )
 
 func main2() {
 	// ETW needs a trace to be created before being able to consume from
-	// it. Traces can be created using golang-etw or they might be already
+	// it. Traces can be created using goetw or they might be already
 	// existing (created from an autologgers for instance) like Eventlog-Security.
 
 	// Creating the trace (producer part)

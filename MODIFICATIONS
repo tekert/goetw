@@ -6,12 +6,10 @@
 - Initial Fork Commit: [ee0b3d8df53e70f9762341537b83c2128ee52f33]
 
 ## Changes
-### Refactored > 30% of the code by now.
-- Added tons of new code.
-- Updated go.mod to change module path to github.com/tekert/golang-etw
-- Refactored most of the core processing and parsing/decoding of ETW events (Hot path) 
-  maintained the preparsing structure but completely refactored and rewrote the contents many times over.
-- Most of the additions not having to do with event processing where not modified (for now).
+### Refactored > 50% of the code by now.
+- Created a new repo since the original scope of the original repo was smaller than this project.
+- Barely any remains of the forked repo except function names.
+- ETW API work was redone with doc and many aditions.
 
 ### Project Structure
 - Maintained original GPL-3.0 license structure

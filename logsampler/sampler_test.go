@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	sampler "github.com/tekert/golang-etw/logsampler"
+	sampler "github.com/tekert/goetw/logsampler"
 )
 
 func TestDeduplicatingSampler(t *testing.T) {

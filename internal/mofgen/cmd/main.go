@@ -34,7 +34,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/tekert/golang-etw/internal/mofgen"
+	"github.com/tekert/goetw/internal/mofgen"
 )
 
 // findProjectRoot returns the absolute path to the project root directory

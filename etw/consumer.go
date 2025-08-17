@@ -265,6 +265,8 @@ func (c *Consumer) bufferCallback(e *EventTraceLogfile) uintptr {
 	return 1
 }
 
+//var cc int64
+
 // https://learn.microsoft.com/en-us/windows/win32/api/evntrace/nc-evntrace-pevent_record_callback
 //
 // Called when ProcessTrace gets an event record.
@@ -278,8 +280,12 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	setError := func(err error) {
 		er.getUserContext().trace.ErrorEvents.Add(1)
 		conlog.SampledErrorWithErrSig("callback-error", err).Msg("callback error")
-		//conlog.Error().Err(err).Msg("callback error")
 		c.lastError.Store(err)
+
+		// cc = cc + 1
+		// if cc%1000 == 0 {
+		// 	conlog.Error().Int64("event_count", cc).Msg("callback: processed 1000 events")
+		// }
 	}
 
 	// Skips the event if it is the event trace header. Log files contain this event
@@ -312,7 +318,7 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		}
 	}
 
-	// TODO: some MOF events will not have a TRACE_EVENT_INFO
+	// TODO: some MOF events will not have a TRACE_EVENT_INFO and error here
 
 	// we get the TraceContext from EventRecord.UserContext
 	// Parse TRACE_EVENT_INFO from the event record
@@ -368,7 +374,7 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	return
 }
 
-// TODO(tekert): selective close
+// TODO(tekert): selective close a single trace handle
 // close closes the open handles and eventually waits for ProcessTrace goroutines
 // to return if wait = true
 func (c *Consumer) close(wait bool) (lastErr error) {

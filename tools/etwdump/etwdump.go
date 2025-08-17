@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/0xrawsec/golang-utils/log"
-	"github.com/tekert/golang-etw/etw"
+	"github.com/tekert/goetw/etw"
 )
 
 const (

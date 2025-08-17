@@ -1,7 +1,7 @@
-[![GoDoc](https://pkg.go.dev/badge/github.com/tekert/golang-etw)](https://pkg.go.dev/github.com/tekert/golang-etw/etw?GOOS=windows)
-![Version](https://img.shields.io/github/v/tag/tekert/golang-etw?label=version)
+[![GoDoc](https://pkg.go.dev/badge/github.com/tekert/goetw)](https://pkg.go.dev/github.com/tekert/goetw/etw?GOOS=windows)
+![Version](https://img.shields.io/github/v/tag/tekert/goetw?label=version)
 <!-- Coverage badge hidden but still accessible
- [![Coverage](https://raw.githubusercontent.com/tekert/golang-etw/master/.github/coverage/badge.svg)](https://raw.githubusercontent.com/tekert/golang-etw/refs/heads/fork/.github/coverage/coverage.txt)
+ [![Coverage](https://raw.githubusercontent.com/tekert/goetw/master/.github/coverage/badge.svg)](https://raw.githubusercontent.com/tekert/goetw/refs/heads/fork/.github/coverage/coverage.txt)
 -->
 High performant etw library to consume ETW logs.
 
@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tekert/golang-etw/etw"
+	"github.com/tekert/goetw/etw"
 )
 
 func main() {
 	// ETW needs a trace to be created before being able to consume from
-	// it. Traces can be created using golang-etw or they might be already
+	// it. Traces can be created using goetw or they might be already
 	// existing (created from an autologgers for instance) like Eventlog-Security.
 
 	// Creating the trace (producer part)

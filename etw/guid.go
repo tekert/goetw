@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/tekert/golang-etw/internal/hexf"
+	"github.com/tekert/goetw/internal/hexf"
 )
 
 const (

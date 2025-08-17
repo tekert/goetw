@@ -1,4 +1,4 @@
-module github.com/tekert/golang-etw
+module github.com/tekert/goetw
 
 go 1.24
 

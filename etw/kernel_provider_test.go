@@ -5,7 +5,7 @@ package etw
 import (
 	"testing"
 
-	"github.com/tekert/golang-etw/internal/test"
+	"github.com/tekert/goetw/internal/test"
 )
 
 func hasFlag(flags, flag uint32) bool {

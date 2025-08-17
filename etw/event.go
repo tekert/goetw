@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tekert/golang-etw/internal/hexf"
+	"github.com/tekert/goetw/internal/hexf"
 )
 
 var (

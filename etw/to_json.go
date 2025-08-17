@@ -7,7 +7,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/tekert/golang-etw/internal/hexf"
+	"github.com/tekert/goetw/internal/hexf"
 )
 
 // This is called only for static analysis purposes, so it's not used often
@@ -396,4 +396,3 @@ func (t *TraceEventInfo) MarshalJSON() (b []byte, err error) {
 		Properties:            properties,
 	})
 }
-
