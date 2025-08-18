@@ -430,22 +430,6 @@ func (e *EventRecordHelper) getEpiAt(i uint32) *EventPropertyInfo {
 	return epi
 }
 
-// TODO: test performance of this (no bounds checking), 1.5% faster but not sure if worth it
-//
-//go:nosplit
-//go:nocheckptr
-func (e *EventRecordHelper) getEpiAt_2(i uint32) *EventPropertyInfo {
-	// Direct pointer access to epiArray element without bounds checking
-	pEpi := unsafe.Add(unsafe.Pointer(&(*e.epiArray)[0]),
-		uintptr(i)*unsafe.Sizeof((*EventPropertyInfo)(nil)))
-	if *(**EventPropertyInfo)(pEpi) == nil {
-		// Cache miss - get and store EventPropertyInfo
-		*(**EventPropertyInfo)(pEpi) = e.TraceInfo.GetEventPropertyInfoAt(i)
-		e.cacheIntergerValues(i)
-	}
-	return *(**EventPropertyInfo)(pEpi)
-}
-
 // Returns the length of the property (can be 0) at index i and the actual size in bytes.
 func (e *EventRecordHelper) getPropertyLength(i uint32) (propLength uint16, sizeBytes uint32, err error) {
 	var epi = e.getEpiAt(i)
