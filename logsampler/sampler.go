@@ -182,10 +182,23 @@ func (s *DeduplicatingSampler) flushSummaries() {
 
 // garbageCollector is a background task that cleans up inactive keys to prevent memory leaks.
 func (s *DeduplicatingSampler) garbageCollector() {
-	// Run GC less frequently, e.g., every 2x the max interval.
-	tickerInterval := max(s.config.MaxInterval*2, 1*time.Minute)
-	ticker := time.NewTicker(tickerInterval)
+	// The ticker determines how frequently we check for inactive keys.
+	// A moderate interval is a good balance between responsiveness and overhead.
+	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
+
+	// Determine the threshold for considering a key "inactive".
+	// If ResetInterval is configured, it's the best indicator of inactivity.
+	// Otherwise, we use a generous multiple of the max backoff interval.
+	inactivityThreshold := s.config.ResetInterval
+	if inactivityThreshold <= 0 {
+		inactivityThreshold = s.config.MaxInterval * 2
+	}
+	// Ensure a minimum threshold to avoid overly aggressive cleanup.
+	if inactivityThreshold < 1*time.Minute {
+		inactivityThreshold = 1 * time.Minute
+	}
+	inactivityThresholdNanos := int64(inactivityThreshold)
 
 	for {
 		select {
@@ -195,8 +208,9 @@ func (s *DeduplicatingSampler) garbageCollector() {
 				info := value.(*logInfo)
 				lastLog := info.lastLogTime.Load()
 
-				// If a key hasn't logged anything for a long time, it's considered inactive.
-				if now-lastLog > int64(tickerInterval) {
+				// If a key hasn't logged anything for the configured inactivity period,
+				// report its summary and remove it to prevent memory leaks.
+				if now-lastLog > inactivityThresholdNanos {
 					// Before deleting, flush any lingering suppressed count.
 					if suppressed := info.suppressedCount.Swap(0); suppressed > 0 {
 						s.reporter.LogSummary(key.(string), suppressed)
