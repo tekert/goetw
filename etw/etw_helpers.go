@@ -30,7 +30,19 @@ var (
 	// We use a global pool for EventRecordHelper.
 	helperPool    = sync.Pool{New: func() any { return &EventRecordHelper{} }}
 	tdhBufferPool = sync.Pool{New: func() any { s := make([]uint16, 128); return &s }}
+
+	// propertyNameCache stores slices of property names keyed by event schema.
+	// This avoids repeatedly converting UTF-16 names to Go strings for common events.
+	propertyNameCache sync.Map
 )
+
+// eventSchemaID is used as a key to cache event metadata like property names.
+type eventSchemaID struct {
+	ProviderGUID GUID
+	EventID      uint16
+	Version      uint8
+	Opcode       uint8
+}
 
 // traceStorage holds all the necessary reusable memory for a single trace (goroutine).
 // This avoids using sync.Pool for thread-local data, reducing overhead.
@@ -625,24 +637,18 @@ func (e *EventRecordHelper) getPropertyLength(i uint32) (propLength uint16, size
 }
 
 // Setups a property for parsing, will be parsed later (or not)
-func (e *EventRecordHelper) prepareProperty(i uint32) (p *Property, err error) {
+func (e *EventRecordHelper) prepareProperty(i uint32, name string) (p *Property, err error) {
 	p = e.newProperty()
 
 	p.evtPropInfo = e.getEpiAt(i)
 	p.erh = e
-	// the complexity of maintaining a stringCache is larger than the small cost it saves
-	p.name = UTF16AtOffsetToString(e.TraceInfo.pointer(), uintptr(p.evtPropInfo.NameOffset))
+	p.name = name
 	p.pValue = e.userDataIt
 	p.userDataRemaining = e.remainingUserDataLength()
 	p.length, p.sizeBytes, err = e.getPropertyLength(i)
 	if err != nil {
 		return
 	}
-
-	// ! TESTING
-	// rawPtr := e.TraceInfo.pointer() + uintptr(p.evtPropInfo.NameOffset)
-	// fmt.Printf("Reading property name at 0x%X (offset %d)\n", rawPtr, p.evtPropInfo.NameOffset)
-	// fmt.Printf("First 32 bytes: % X\n", unsafe.Slice((*byte)(unsafe.Pointer(rawPtr)), 32))
 
 	// p.length has to be 0 on strings and structures for TdhFormatProperty to work.
 	// We use size instead to advance when p.length is 0.
@@ -671,10 +677,10 @@ func (e *EventRecordHelper) getArrayInfo(epi *EventPropertyInfo) (count uint16, 
 }
 
 // prepareStruct handles properties that are structs or arrays of structs.
-func (e *EventRecordHelper) prepareStruct(epi *EventPropertyInfo, arrayCount uint16, isArray bool) error {
+func (e *EventRecordHelper) prepareStruct(i uint32, epi *EventPropertyInfo, arrayCount uint16, isArray bool, names []string) error {
 	var p *Property
 	var err error
-	arrayName := UTF16AtOffsetToString(e.TraceInfo.pointer(), uintptr(epi.NameOffset))
+	arrayName := names[i]
 
 	// Treat non-array properties as arrays with one element.
 	for range arrayCount {
@@ -684,7 +690,7 @@ func (e *EventRecordHelper) prepareStruct(epi *EventPropertyInfo, arrayCount uin
 		lastMember := startIndex + epi.NumOfStructMembers()
 
 		for j := startIndex; j < lastMember; j++ {
-			if p, err = e.prepareProperty(uint32(j)); err != nil {
+			if p, err = e.prepareProperty(uint32(j), names[j]); err != nil {
 				e.addPropError()
 				// On error, return the map to the pool.
 				// No need to release individual properties due to block pooling.
@@ -708,8 +714,8 @@ func (e *EventRecordHelper) prepareStruct(epi *EventPropertyInfo, arrayCount uin
 }
 
 // prepareSimpleArray handles properties that are arrays of simple types (not structs).
-func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo, arrayCount uint16) error {
-	arrayName := UTF16AtOffsetToString(e.TraceInfo.pointer(), uintptr(epi.NameOffset))
+func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo, arrayCount uint16, names []string) error {
+	arrayName := names[i]
 
 	// Special case for MOF string arrays, which are common in classic kernel events.
 	// if this is a MOF event, we don't need to parse the properties of the array
@@ -735,7 +741,7 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	var p *Property
 	var err error
 	for range arrayCount {
-		if p, err = e.prepareProperty(i); err != nil {
+		if p, err = e.prepareProperty(i, names[i]); err != nil {
 			e.addPropError()
 			// On error, return the slice to the pool.
 			// No need to release individual properties due to block pooling.
@@ -755,6 +761,36 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	}
 
 	return nil
+}
+
+func (e *EventRecordHelper) getEventPropNames() []string {
+	// Get property names from cache or generate them.
+	key := eventSchemaID{
+		ProviderGUID: e.TraceInfo.ProviderGUID,
+		EventID:      e.EventID(),
+		Version:      e.TraceInfo.EventDescriptor.Version,
+		Opcode:       e.TraceInfo.EventDescriptor.Opcode,
+	}
+	var names []string
+	if key.EventID == 0 {
+		conlog.SampledError("evenid-cache-warning").
+			Interface("EventRec", e.EventRec).
+			Uint32("currentCount", e.TraceInfo.PropertyCount).
+			Msg("Computed EventID is 0, skipping property name cache for this event.")
+	}
+	if cachedNames, ok := propertyNameCache.Load(key); ok && (key.EventID != 0) {
+		names = cachedNames.([]string)
+	} else {
+		// Cache miss. Generate all property names for this schema once.
+		// Note: PropertyCount includes all properties, including those inside structs.
+		names = make([]string, e.TraceInfo.PropertyCount)
+		for i := range names {
+			epi := e.TraceInfo.GetEventPropertyInfoAt(uint32(i))
+			names[i] = UTF16AtOffsetToString(e.TraceInfo.pointer(), uintptr(epi.NameOffset))
+		}
+		propertyNameCache.Store(key, names)
+	}
+	return names
 }
 
 // Prepare will partially decode the event, extracting event info for later
@@ -786,6 +822,10 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 	//	// Kernel events
 	// }
 
+	// Get or generate property names for this event schema.
+	// This is a performance optimization to avoid repeated UTF-16 to string conversions.
+	names := e.getEventPropNames()
+
 	// Process all top-level properties defined in the event schema.
 	for i := uint32(0); i < e.TraceInfo.TopLevelPropertyCount; i++ {
 		epi := e.getEpiAt(i)
@@ -803,18 +843,18 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 
 		if (epi.Flags & PropertyStruct) != 0 {
 			// Property is a struct or an array of structs.
-			if err = e.prepareStruct(epi, arrayCount, isArray); err != nil {
+			if err = e.prepareStruct(i, epi, arrayCount, isArray, names); err != nil {
 				return err
 			}
 		} else if isArray {
 			// Property is an array of simple types.
-			if err = e.prepareSimpleArray(i, epi, arrayCount); err != nil {
+			if err = e.prepareSimpleArray(i, epi, arrayCount, names); err != nil {
 				return err
 			}
 		} else {
 			// Property is a single, non-array, non-struct value.
 			var p *Property
-			if p, err = e.prepareProperty(i); err != nil {
+			if p, err = e.prepareProperty(i, names[i]); err != nil {
 				e.addPropError()
 				return err
 			}
@@ -1094,6 +1134,7 @@ func (e *EventRecordHelper) Channel() string {
 }
 
 func (e *EventRecordHelper) EventID() uint16 {
+	// EventRec.EventID() Uses different fields but same result.
 	return e.TraceInfo.EventID()
 }
 
