@@ -1212,6 +1212,7 @@ func (e *EventRecord) ExtRelatedActivityID() GUID {
 // ExtSid returns the security identifier (SID) of the user who logged the event.
 // It returns nil if the SID is not present in the event's extended data.
 // Use [etw.ConvertSidToStringSidGO] to convert the SID to a go string (it's fast).
+// Enabled by using the EVENT_ENABLE_PROPERTY_SID flag on EnableProvider config.
 func (e *EventRecord) ExtSid() *SID {
 	for i := uint16(0); i < e.ExtendedDataCount; i++ {
 		item, err := e.ExtendedDataItem(i)
@@ -1224,6 +1225,7 @@ func (e *EventRecord) ExtSid() *SID {
 
 // ExtTerminalSessionID returns the terminal session identifier of the user who logged the event.
 // The boolean return value indicates whether the session ID was present in the event's extended data.
+// Enabled by using the EVENT_ENABLE_PROPERTY_TS_ID flag on EnableProvider config.
 func (e *EventRecord) ExtTerminalSessionID() (uint32, bool) {
 	for i := uint16(0); i < e.ExtendedDataCount; i++ {
 		item, err := e.ExtendedDataItem(i)
@@ -1237,6 +1239,8 @@ func (e *EventRecord) ExtTerminalSessionID() (uint32, bool) {
 // ExtProcessStartKey returns a unique identifier for the process that persists across boot sessions.
 // This is more reliable for correlation than a PID, which can be reused.
 // The boolean return value indicates whether the start key was present in the event's extended data.
+// Enabled by using the EVENT_ENABLE_PROPERTY_PROCESS_START_KEY flag on EnableProvider config.
+// Enabled by default for XML-based events.
 func (e *EventRecord) ExtProcessStartKey() (uint64, bool) {
 	for i := uint16(0); i < e.ExtendedDataCount; i++ {
 		item, err := e.ExtendedDataItem(i)
@@ -1250,6 +1254,7 @@ func (e *EventRecord) ExtProcessStartKey() (uint64, bool) {
 // ExtEventKey returns a unique identifier for the event that is constant across trace sessions.
 // This is useful for correlating events from the same provider across different traces.
 // The boolean return value indicates whether the event key was present in the event's extended data.
+// Enabled by using the EVENT_ENABLE_PROPERTY_EVENT_KEY flag on EnableProvider config.
 func (e *EventRecord) ExtEventKey() (uint64, bool) {
 	for i := uint16(0); i < e.ExtendedDataCount; i++ {
 		item, err := e.ExtendedDataItem(i)
@@ -1263,6 +1268,7 @@ func (e *EventRecord) ExtEventKey() (uint64, bool) {
 // ExtContainerID returns the GUID of the container in which the event provider is running.
 // This is useful for tracing events in containerized environments.
 // It returns a zero GUID if the container ID is not present in the event's extended data.
+// Enabled by using the EVENT_HEADER_EXT_TYPE_CONTAINER_ID flag on EnableProvider config.
 func (e *EventRecord) ExtContainerID() GUID {
 	for i := uint16(0); i < e.ExtendedDataCount; i++ {
 		item, err := e.ExtendedDataItem(i)
@@ -1284,6 +1290,7 @@ type EventStackTrace struct {
 // A stack trace will only be present if the provider was enabled with the
 // EVENT_ENABLE_PROPERTY_STACK_TRACE flag.
 // The boolean return value indicates whether a stack trace was found.
+// Enabled by using the EVENT_ENABLE_PROPERTY_STACK_TRACE flag on EnableProvider config.
 func (e *EventRecord) ExtStackTrace() (EventStackTrace, bool) {
 	for i := uint16(0); i < e.ExtendedDataCount; i++ {
 		item, err := e.ExtendedDataItem(i)
