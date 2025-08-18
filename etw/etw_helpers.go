@@ -14,7 +14,6 @@ import (
 
 const (
 	StructurePropertyName = "Structures"
-	propertyBlockSize     = 64 // Pool blocks of 64 properties at a time.
 )
 
 var (
@@ -747,6 +746,9 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	return nil
 }
 
+// getEventPropNames retrieves the property names for the event schema.
+// It uses a cache for each provider event type to avoid repeated UTF-16 to string conversions.
+// This increased events/s performance by ~20% in benchmarks.
 func (e *EventRecordHelper) getEventPropNames() []string {
 	// Get property names from cache or generate them.
 	key := eventSchemaID{
@@ -857,7 +859,7 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 		// Try to parse the remaining data as a MOF property.
 		// TODO: remove this?
 		if e.TraceInfo.IsMof() {
-			if err2 := e.prepareMofProperty(remainingData, remainingBytes); err2 == nil {
+			if err2 := e.prepareMofPropertyFix(remainingData, remainingBytes); err2 == nil {
 				return nil // Data was successfully parsed, return.
 			}
 		}
@@ -878,7 +880,7 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 // data is a new field.
 // TODO(tekert): use the new kernel mof generated classes to decode this.
 // TODO: the problem is, for example FileIO V3 is not defined elsewere, and we get those events from ETW
-func (e *EventRecordHelper) prepareMofProperty(remainingData []byte, remaining uint32) (err error) {
+func (e *EventRecordHelper) prepareMofPropertyFix(remainingData []byte, remaining uint32) (err error) {
 	// Check if all bytes are padding (zeros)
 	if bytes.IndexFunc(remainingData, func(r rune) bool {
 		return r != 0
@@ -935,20 +937,16 @@ func (e *EventRecordHelper) mofClassVersion() uint8 {
 
 func (e *EventRecordHelper) buildEvent() (event *Event, err error) {
 	event = NewEvent()
-
 	event.Flags.Skippable = e.Flags.Skippable
-
 	if err = e.parseAndSetAllProperties(event); err != nil {
 		return
 	}
-
 	e.setEventMetadata(event)
 
 	return
 }
 
 func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err error) {
-
 	eventData := out.EventData
 
 	// it is a user data property
@@ -1078,7 +1076,7 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 }
 
 func (e *EventRecordHelper) formatStructs(structs []map[string]*Property, name string) ([]map[string]string, error) {
-	// NOTE: this is only used when parsing to json event, reusable memory maybe it's no ideal.
+	// NOTE: this is only used when parsing to json event, using reusable memory maybe it's not ideal.
 	result := make([]map[string]string, 0, len(structs))
 	var err error
 
