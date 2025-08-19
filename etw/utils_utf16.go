@@ -85,13 +85,13 @@ func UTF16SliceToString(s []uint16) string {
 	return utf16Convert(s, 0, len(s))
 }
 
-// UTF16AtOffsetToString2 converts a UTF-16 string at a given offset from a pointer.
+// UTF16AtOffsetToString converts a UTF-16 string at a given offset from a pointer.
 func UTF16AtOffsetToString(pstruct uintptr, offset uintptr) string {
 	ptr := (*uint16)(unsafe.Pointer(pstruct + offset))
 	return UTF16PtrToString(ptr)
 }
 
-// UTF16BytesToString2 transforms a byte slice of UTF16 encoded characters to a Go string.
+// UTF16BytesToString transforms a byte slice of UTF16 encoded characters to a Go string.
 func UTF16BytesToString(b []byte) string {
 	if len(b) == 0 {
 		return ""
