@@ -218,6 +218,7 @@
   [ WmiDataId(1), pointer, read ] uint32 BaseAddress;
   [ WmiDataId(2), extension("SizeT"), read ] object RegionSize;
   [ WmiDataId(3), read ] uint32 ProcessId;
+  [ WmiDataId(4), format("x"), read ] uint32 Flags;
   [ WmiDataId(5), extension("SizeT"), read ] object CommitSizeInBytes;
 };
 
@@ -226,11 +227,13 @@
   [ WmiDataId(1), pointer, read ] uint32 BaseAddress;
   [ WmiDataId(2), extension("SizeT"), read ] object RegionSize;
   [ WmiDataId(3), read ] uint32 ProcessId;
+  [ WmiDataId(4), format("x"), read ] uint32 Flags;
 };
 
 [dynamic:ToInstance, EventType{134}] class PageFault_MemReset : PageFault_V2 {
   [ WmiDataId(1), pointer, read ] uint32 BaseAddress;
   [ WmiDataId(2), extension("SizeT"), read ] object SizeInBytes;
+  [ WmiDataId(3), format("x"), read ] uint32 Flags;
 };
 
 [dynamic:ToInstance, EventType(100)] class PageFault_HeapRangeRundown_V2
@@ -2011,6 +2014,7 @@
   [ WmiDataId(4), read ] uint32 SessionId;
   [ WmiDataId(5), read ] sint32 ExitStatus;
   [ WmiDataId(6), pointer, read ] uint32 DirectoryTableBase;
+  [ WmiDataId(7), format("x"), read ] uint32 Flags;
   [ WmiDataId(8), extension("Sid"), read ] object UserSID;
   [ WmiDataId(9), StringTermination("NullTerminated"),
     read ] string ImageFileName;
@@ -2895,6 +2899,7 @@
   [ WmiDataId(4), read ] uint32 SessionId;
   [ WmiDataId(5), read ] sint32 ExitStatus;
   [ WmiDataId(6), pointer, read ] uint32 DirectoryTableBase;
+  [ WmiDataId(7), format("x"), read ] uint32 Flags;
   [ WmiDataId(8), extension("Sid"), read ] object UserSID;
   [ WmiDataId(9), StringTermination("NullTerminated"),
     read ] string ImageFileName;
