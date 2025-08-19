@@ -44,7 +44,7 @@ func Parse(content string) (string, error) {
 //
 // Returns error if parsing fails, nil otherwise.
 func (p *Parser) parseClasses(content string) error {
-	classRegex := regexp.MustCompile(`\[\s*dynamic:ToInstance([^\]]*?)\]\s*class\s+(\w+)(?:\s*:\s*(\w+))?\s*{([^}]*?)};`)
+	classRegex := regexp.MustCompile(`(?s)\[\s*dynamic:ToInstance([^\]]*?)\]\s*class\s+(\w+)(?:\s*:\s*(\w+))?\s*{([^}]*?)};`)
 	matches := classRegex.FindAllStringSubmatch(content, -1)
 
 	// Parse in order of appearance in MOF file
@@ -97,8 +97,10 @@ package etw
 // mof{{.Name}} class definition
 var mof{{.Name}} = &MofClassDef{
 	Name: "{{.Name}}",
+	NameW: {{.NameW}},
 	{{- if .Base}}
-	Base: "{{.Base}}",{{end}}
+	Base: "{{.Base}}",
+	BaseW: {{.BaseW}},{{end}}
 	{{- if not .InheritsGUID}}
 	GUID: *MustParseGUID("{{.GUID}}"),
 	{{- else}}
@@ -114,7 +116,7 @@ var mof{{.Name}} = &MofClassDef{
 	{{- if .Properties}}
 	Properties: []MofPropertyDef{
 		{{- range .Properties}}
-		{ID: {{.ID}}, Name: "{{.Name}}", InType: {{.InType}}
+		{ID: {{.ID}}, Name: "{{.Name}}", NameW: {{.NameW}}, InType: {{.InType}}
 			{{- if .OutType}}, OutType: {{.OutType}}{{- end -}}
 			{{- if .IsArray}}, IsArray: {{.IsArray}}{{- end -}}
 			{{- if .ArraySize}}, ArraySize: {{.ArraySize}}{{- end -}}
@@ -182,6 +184,7 @@ func (p *Parser) generateCode() (string, error) {
 }
 
 // NOT USED
+// TODO(tekert): It's better to manually manage this for now, we are missing some classes.
 func (p *Parser) generateClassMapping() []*mofParsedClass {
 	// Use a map to store GUID -> Name mapping
 	bclasses := make([]*mofParsedClass, 0)

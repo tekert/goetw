@@ -6,6 +6,9 @@ The mofgen tool generates Go code for Windows ETW MOF (Managed Object Format) cl
 It reads a Windows Kernel Trace MOF file containing ETW event class definitions and generates
 corresponding Go structures and helper functions for parsing ETW events.
 
+WindowsKernelTrace.mof file taken from:
+https://gist.github.com/jdu2600/a2b03e4e9cf19282a41ad766388c9856
+
 Usage:
     go run main.go || go generate
 
@@ -64,7 +67,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to find project root: %v", err)
 	}
-	mofPath := filepath.Join(projectRoot, "etw", "internal", "mofgen", "cmd", "WindowsKernelTrace.mof")
+	mofPath := filepath.Join(projectRoot, "internal", "mofgen", "cmd", "WindowsKernelTrace.mof")
 	outPath := filepath.Join(projectRoot, "etw", "gen_mof_kerneldef.go")
 
 	// // Get directory containing main.go
