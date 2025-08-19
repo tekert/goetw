@@ -902,6 +902,31 @@ type EventPropertyInfo struct {
 	ResTagUnion uint32
 }
 
+// SetInType sets the InType for the property.
+func (i *EventPropertyInfo) SetInType(inType TdhInType) {
+	i.TypeUnion.u1 = uint16(inType)
+}
+
+// SetOutType sets the OutType for the property.
+func (i *EventPropertyInfo) SetOutType(outType TdhOutType) {
+	i.TypeUnion.u2 = uint16(outType)
+}
+
+// SetCount sets the fixed count for the property.
+func (i *EventPropertyInfo) SetCount(count uint16) {
+	i.CountUnion = count
+}
+
+// SetCountPropertyIndex sets the index of the property that contains the count.
+func (i *EventPropertyInfo) SetCountPropertyIndex(index uint16) {
+	i.CountUnion = index
+}
+
+// SetLength sets the fixed length for the property.
+func (i *EventPropertyInfo) SetLength(length uint16) {
+    i.LengthUnion = length
+}
+
 // Zero-based index to the element of the property array that contains the first member of the structure.
 func (i *EventPropertyInfo) StructStartIndex() uint16 {
 	return i.TypeUnion.u1

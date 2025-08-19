@@ -1,16 +1,39 @@
 package mofgen
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
 )
 
+// stringToUint16SliceLiteral converts a string to a Go literal for a null-terminated []uint16 slice.
+func stringToUint16SliceLiteral(s string) string {
+	if s == "" {
+		return "nil"
+	}
+	var builder strings.Builder
+	builder.WriteString("[]uint16{")
+	for i, r := range s {
+		if i > 0 {
+			builder.WriteString(", ")
+		}
+		 if r < 128 && r >= 32 { // printable ASCII
+            builder.WriteString(fmt.Sprintf("'%c'", r))
+        } else {
+            builder.WriteString(fmt.Sprintf("%d", r))
+        }
+	}
+	builder.WriteString(", 0}") // Null terminator
+	return builder.String()
+}
+
 // parseClass parses a MOF class definition by analyzing regex matches that capture
 // different parts of the class structure. The match array contains:
 //
 // match[0]: Full class definition - Complete MOF class text including qualifiers,
-//          name, base class and property block
+//
+//	name, base class and property block
 //
 // match[1]: Qualifiers block - Contains class metadata like:
 //   - GUID in format "guid(12345678-1234-1234-1234-123456789012)"
@@ -22,7 +45,8 @@ import (
 // match[3]: Base class name - The class this one inherits from (e.g. "MSNT_SystemTrace")
 //
 // match[4]: Property definitions block - Contains all class properties with their
-//          qualifiers, types and names. Can be empty for classes without properties.
+//
+//	qualifiers, types and names. Can be empty for classes without properties.
 //
 // Returns nil if the match array doesn't contain all required parts (len < 5)
 func parseClass(match []string) *mofParsedClass {
@@ -31,9 +55,11 @@ func parseClass(match []string) *mofParsedClass {
 	}
 
 	class := &mofParsedClass{
-		Name:       match[2],
-		Base:       match[3],
-		Properties: make([]mofParsedProperty, 0),
+		Name:          match[2],
+		NameW:         stringToUint16SliceLiteral(match[2]),
+		Base:          match[3],
+		BaseW:         stringToUint16SliceLiteral(match[3]),
+		Properties:    make([]mofParsedProperty, 0),
 		MofDefinition: match[0], // Store complete MOF definition
 	}
 
@@ -137,8 +163,9 @@ func (c *mofParsedClass) parseProperties(body string) {
 		}
 
 		prop := mofParsedProperty{
-			ID:   match[1],
-			Name: match[4],
+			ID:    match[1],
+			Name:  match[4],
+			NameW: stringToUint16SliceLiteral(match[4]),
 		}
 
 		// Parse type and qualifiers
@@ -158,7 +185,8 @@ func (c *mofParsedClass) parseProperties(body string) {
 //   - baseClass: Immediate parent class to inherit from
 //
 // Example:
-//   Child (no GUID defined) inherits from Parent (GUID=123) -> Child.GUID = 123
+//
+//	Child (no GUID defined) inherits from Parent (GUID=123) -> Child.GUID = 123
 func (c *mofParsedClass) processInheritance(baseClass *mofParsedClass) {
 	// Only inherit GUID if not explicitly defined
 	if c.GUID == "" {
@@ -177,8 +205,9 @@ func (c *mofParsedClass) processInheritance(baseClass *mofParsedClass) {
 // Input format: ", Guid(\"{90cbdc39-4a3e-11d1-84f4-0000f80464e3}\"),\r\n         EventVersion(2)"
 // Returns: extracted GUID string or empty if not found/invalid
 // Examples:
-//   returns:  "{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"
-//   - No GUID -> "" (inherits from base class)
+//
+//	returns:  "{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"
+//	- No GUID -> "" (inherits from base class)
 func (c *mofParsedClass) parseGUIDQualifier(qualifiers string) string {
 	re := regexp.MustCompile(`Guid\("({[0-9A-Fa-f-]+})"\)`)
 	if m := re.FindStringSubmatch(qualifiers); len(m) > 1 {

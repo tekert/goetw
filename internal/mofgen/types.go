@@ -3,8 +3,10 @@ package mofgen
 type mofParsedProperty struct {
 	ID         string // WmiDataId
 	Name       string
+	NameW      string // Go literal for []uint16
 	InType     string // string constant
 	OutType    string // string constant
+	Extension  string // e.g., "SizeT", "IPAddr"
 	IsArray    string // "true" if is array.
 	ArraySize  string // MAX(n)
 	SizeFromID string // WmiSizeIs property ID
@@ -12,14 +14,16 @@ type mofParsedProperty struct {
 
 type mofParsedClass struct {
 	Name            string
+	NameW           string // Go literal for []uint16
 	Base            string
+	BaseW           string // Go literal for []uint16
 	GUID            string
 	Version         string
 	EventTypes      string
 	Properties      []mofParsedProperty
 	InheritsGUID    bool
 	InheritsVersion bool
-	MofDefinition   string  // Original MOF class definition text
+	MofDefinition   string // Original MOF class definition text
 	GUIDFirst32Bits string // First 32 bits of GUID for mapping
 }
 

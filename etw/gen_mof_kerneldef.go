@@ -13,7 +13,9 @@ package etw
 // mofFileIo_V2 class definition
 var mofFileIo_V2 = &MofClassDef{
 	Name: "FileIo_V2",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 2,
 }
@@ -29,16 +31,18 @@ var mofFileIo_V2 = &MofClassDef{
 // mofFileIo_V2_MapFile class definition
 var mofFileIo_V2_MapFile = &MofClassDef{
 	Name: "FileIo_V2_MapFile",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', '_', 'M', 'a', 'p', 'F', 'i', 'l', 'e', 0},
 	Base: "FileIo_V2",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 37,  38,  39,  40 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ViewBase", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "MiscInfo", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 4, Name: "ViewSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 5, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "ViewBase", NameW: []uint16{'V', 'i', 'e', 'w', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "MiscInfo", NameW: []uint16{'M', 'i', 's', 'c', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 4, Name: "ViewSize", NameW: []uint16{'V', 'i', 'e', 'w', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 5, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -58,19 +62,21 @@ var mofFileIo_V2_MapFile = &MofClassDef{
 // mofFileIo_V2_DirEnum class definition
 var mofFileIo_V2_DirEnum = &MofClassDef{
 	Name: "FileIo_V2_DirEnum",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', '_', 'D', 'i', 'r', 'E', 'n', 'u', 'm', 0},
 	Base: "FileIo_V2",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 72,  77 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "TTID", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "Length", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "InfoClass", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "FileIndex", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "Length", NameW: []uint16{'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "InfoClass", NameW: []uint16{'I', 'n', 'f', 'o', 'C', 'l', 'a', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "FileIndex", NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -82,14 +88,16 @@ var mofFileIo_V2_DirEnum = &MofClassDef{
 // mofFileIo_V2_OpEnd class definition
 var mofFileIo_V2_OpEnd = &MofClassDef{
 	Name: "FileIo_V2_OpEnd",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', '_', 'O', 'p', 'E', 'n', 'd', 0},
 	Base: "FileIo_V2",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 76 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ExtraInfo", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "NtStatus", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ExtraInfo", NameW: []uint16{'E', 'x', 't', 'r', 'a', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "NtStatus", NameW: []uint16{'N', 't', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -103,15 +111,17 @@ var mofFileIo_V2_OpEnd = &MofClassDef{
 // mofFileIo_V2_SimpleOp class definition
 var mofFileIo_V2_SimpleOp = &MofClassDef{
 	Name: "FileIo_V2_SimpleOp",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', '_', 'S', 'i', 'm', 'p', 'l', 'e', 'O', 'p', 0},
 	Base: "FileIo_V2",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 65,  66,  73 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "TTID", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "FileKey", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -127,18 +137,20 @@ var mofFileIo_V2_SimpleOp = &MofClassDef{
 // mofFileIo_V2_ReadWrite class definition
 var mofFileIo_V2_ReadWrite = &MofClassDef{
 	Name: "FileIo_V2_ReadWrite",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', '_', 'R', 'e', 'a', 'd', 'W', 'r', 'i', 't', 'e', 0},
 	Base: "FileIo_V2",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 67,  68 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Offset", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "TTID", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "IoSize", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "IoFlags", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Offset", NameW: []uint16{'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "IoSize", NameW: []uint16{'I', 'o', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "IoFlags", NameW: []uint16{'I', 'o', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -154,17 +166,19 @@ var mofFileIo_V2_ReadWrite = &MofClassDef{
 // mofFileIo_V2_Info class definition
 var mofFileIo_V2_Info = &MofClassDef{
 	Name: "FileIo_V2_Info",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', '_', 'I', 'n', 'f', 'o', 0},
 	Base: "FileIo_V2",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 69,  70,  71,  74,  75 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "TTID", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "ExtraInfo", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "InfoClass", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "ExtraInfo", NameW: []uint16{'E', 'x', 't', 'r', 'a', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "InfoClass", NameW: []uint16{'I', 'n', 'f', 'o', 'C', 'l', 'a', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -179,13 +193,15 @@ var mofFileIo_V2_Info = &MofClassDef{
 // mofFileIo_V2_Name class definition
 var mofFileIo_V2_Name = &MofClassDef{
 	Name: "FileIo_V2_Name",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', '_', 'N', 'a', 'm', 'e', 0},
 	Base: "FileIo_V2",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 0,  32,  35,  36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -204,18 +220,20 @@ var mofFileIo_V2_Name = &MofClassDef{
 // mofFileIo_V2_Create class definition
 var mofFileIo_V2_Create = &MofClassDef{
 	Name: "FileIo_V2_Create",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', '_', 'C', 'r', 'e', 'a', 't', 'e', 0},
 	Base: "FileIo_V2",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 64 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "TTID", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "CreateOptions", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "FileAttributes", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ShareAccess", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "OpenPath", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "CreateOptions", NameW: []uint16{'C', 'r', 'e', 'a', 't', 'e', 'O', 'p', 't', 'i', 'o', 'n', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "FileAttributes", NameW: []uint16{'F', 'i', 'l', 'e', 'A', 't', 't', 'r', 'i', 'b', 'u', 't', 'e', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ShareAccess", NameW: []uint16{'S', 'h', 'a', 'r', 'e', 'A', 'c', 'c', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "OpenPath", NameW: []uint16{'O', 'p', 'e', 'n', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -224,7 +242,9 @@ var mofFileIo_V2_Create = &MofClassDef{
 // mofPerfInfo_V0 class definition
 var mofPerfInfo_V0 = &MofClassDef{
 	Name: "PerfInfo_V0",
+	NameW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}"),
 	Version: 0,
 }
@@ -236,13 +256,15 @@ var mofPerfInfo_V0 = &MofClassDef{
 // mofMark_V0 class definition
 var mofMark_V0 = &MofClassDef{
 	Name: "Mark_V0",
+	NameW: []uint16{'M', 'a', 'r', 'k', '_', 'V', '0', 0},
 	Base: "PerfInfo_V0",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '0', 0},
 	GUID: mofPerfInfo_V0.GUID,
 	Version: mofPerfInfo_V0.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Message", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 2, Name: "Padding", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 1},
+		{ID: 1, Name: "Message", NameW: []uint16{'M', 'e', 's', 's', 'a', 'g', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 2, Name: "Padding", NameW: []uint16{'P', 'a', 'd', 'd', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 1},
 	},
 }
 
@@ -251,7 +273,9 @@ var mofMark_V0 = &MofClassDef{
 // mofObTrace class definition
 var mofObTrace = &MofClassDef{
 	Name: "ObTrace",
+	NameW: []uint16{'O', 'b', 'T', 'r', 'a', 'c', 'e', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{89497f50-effe-4440-8cf2-ce6b1cdcaca7}"),
 	Version: 2,
 }
@@ -264,14 +288,16 @@ var mofObTrace = &MofClassDef{
 // mofObReferenceEvent class definition
 var mofObReferenceEvent = &MofClassDef{
 	Name: "ObReferenceEvent",
+	NameW: []uint16{'O', 'b', 'R', 'e', 'f', 'e', 'r', 'e', 'n', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "ObTrace",
+	BaseW: []uint16{'O', 'b', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 50,  51 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Object", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "Tag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "Count", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Object", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "Tag", NameW: []uint16{'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "Count", NameW: []uint16{'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -286,14 +312,16 @@ var mofObReferenceEvent = &MofClassDef{
 // mofObTypeEvent class definition
 var mofObTypeEvent = &MofClassDef{
 	Name: "ObTypeEvent",
+	NameW: []uint16{'O', 'b', 'T', 'y', 'p', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "ObTrace",
+	BaseW: []uint16{'O', 'b', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 36,  37 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ObjectType", InType: TDH_INTYPE_UINT16},
-		{ID: 2, Name: "Reserved", InType: TDH_INTYPE_UINT16},
-		{ID: 3, Name: "TypeName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ObjectType", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 2, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 3, Name: "TypeName", NameW: []uint16{'T', 'y', 'p', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -310,16 +338,18 @@ var mofObTypeEvent = &MofClassDef{
 // mofObHandleRundownEvent class definition
 var mofObHandleRundownEvent = &MofClassDef{
 	Name: "ObHandleRundownEvent",
+	NameW: []uint16{'O', 'b', 'H', 'a', 'n', 'd', 'l', 'e', 'R', 'u', 'n', 'd', 'o', 'w', 'n', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "ObTrace",
+	BaseW: []uint16{'O', 'b', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 38,  39 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Object", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "Handle", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "ObjectType", InType: TDH_INTYPE_UINT16},
-		{ID: 5, Name: "ObjectName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Object", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "Handle", NameW: []uint16{'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "ObjectType", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 5, Name: "ObjectName", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -330,13 +360,15 @@ var mofObHandleRundownEvent = &MofClassDef{
 // mofObObjectEvent class definition
 var mofObObjectEvent = &MofClassDef{
 	Name: "ObObjectEvent",
+	NameW: []uint16{'O', 'b', 'O', 'b', 'j', 'e', 'c', 't', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "ObTrace",
+	BaseW: []uint16{'O', 'b', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 48,  49 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Object", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ObjectType", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "Object", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ObjectType", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -350,16 +382,18 @@ var mofObObjectEvent = &MofClassDef{
 // mofObHandleDuplicateEvent class definition
 var mofObHandleDuplicateEvent = &MofClassDef{
 	Name: "ObHandleDuplicateEvent",
+	NameW: []uint16{'O', 'b', 'H', 'a', 'n', 'd', 'l', 'e', 'D', 'u', 'p', 'l', 'i', 'c', 'a', 't', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "ObTrace",
+	BaseW: []uint16{'O', 'b', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Object", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "SourceHandle", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "TargetHandle", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "TargetProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 5, Name: "ObjectType", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "Object", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "SourceHandle", NameW: []uint16{'S', 'o', 'u', 'r', 'c', 'e', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "TargetHandle", NameW: []uint16{'T', 'a', 'r', 'g', 'e', 't', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "TargetProcessId", NameW: []uint16{'T', 'a', 'r', 'g', 'e', 't', 'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 5, Name: "ObjectType", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -375,15 +409,17 @@ var mofObHandleDuplicateEvent = &MofClassDef{
 // mofObHandleEvent class definition
 var mofObHandleEvent = &MofClassDef{
 	Name: "ObHandleEvent",
+	NameW: []uint16{'O', 'b', 'H', 'a', 'n', 'd', 'l', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "ObTrace",
+	BaseW: []uint16{'O', 'b', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 32,  33 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Object", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "Handle", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "ObjectType", InType: TDH_INTYPE_UINT16},
-		{ID: 4, Name: "ObjectName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Object", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "Handle", NameW: []uint16{'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "ObjectType", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 4, Name: "ObjectName", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -392,7 +428,9 @@ var mofObHandleEvent = &MofClassDef{
 // mofPageFault_V2 class definition
 var mofPageFault_V2 = &MofClassDef{
 	Name: "PageFault_V2",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 2,
 }
@@ -408,16 +446,18 @@ var mofPageFault_V2 = &MofClassDef{
 // mofPageFault_HeapRangeRundown_V3 class definition
 var mofPageFault_HeapRangeRundown_V3 = &MofClassDef{
 	Name: "PageFault_HeapRangeRundown_V3",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'H', 'e', 'a', 'p', 'R', 'a', 'n', 'g', 'e', 'R', 'u', 'n', 'd', 'o', 'w', 'n', '_', 'V', '3', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: 3,
 	EventTypes: []uint8{ 100 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "HeapHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "HRFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "HRPid", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "HRRangeCount", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "Reserved", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "HeapHandle", NameW: []uint16{'H', 'e', 'a', 'p', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "HRFlags", NameW: []uint16{'H', 'R', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "HRPid", NameW: []uint16{'H', 'R', 'P', 'i', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "HRRangeCount", NameW: []uint16{'H', 'R', 'R', 'a', 'n', 'g', 'e', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -432,17 +472,19 @@ var mofPageFault_HeapRangeRundown_V3 = &MofClassDef{
 // mofPageFault_HardFault class definition
 var mofPageFault_HardFault = &MofClassDef{
 	Name: "PageFault_HardFault",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'H', 'a', 'r', 'd', 'F', 'a', 'u', 'l', 't', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME},
-		{ID: 2, Name: "ReadOffset", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 3, Name: "VirtualAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 6, Name: "ByteCount", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME, Extension: "WmiTime"},
+		{ID: 2, Name: "ReadOffset", NameW: []uint16{'R', 'e', 'a', 'd', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 3, Name: "VirtualAddress", NameW: []uint16{'V', 'i', 'r', 't', 'u', 'a', 'l', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 6, Name: "ByteCount", NameW: []uint16{'B', 'y', 't', 'e', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -451,20 +493,24 @@ var mofPageFault_HardFault = &MofClassDef{
 //   [ WmiDataId(1), pointer, read ] uint32 BaseAddress;
 //   [ WmiDataId(2), extension("SizeT"), read ] object RegionSize;
 //   [ WmiDataId(3), read ] uint32 ProcessId;
+//   [ WmiDataId(4), format("x"), read ] uint32 Flags;
 //   [ WmiDataId(5), extension("SizeT"), read ] object CommitSizeInBytes;
 // };
 // mofPageFault_VirtualAllocRundown class definition
 var mofPageFault_VirtualAllocRundown = &MofClassDef{
 	Name: "PageFault_VirtualAllocRundown",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', 'i', 'r', 't', 'u', 'a', 'l', 'A', 'l', 'l', 'o', 'c', 'R', 'u', 'n', 'd', 'o', 'w', 'n', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 128,  129 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "RegionSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 3, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "CommitSizeInBytes", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "RegionSize", NameW: []uint16{'R', 'e', 'g', 'i', 'o', 'n', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 3, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Flags", NameW: []uint16{'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 5, Name: "CommitSizeInBytes", NameW: []uint16{'C', 'o', 'm', 'm', 'i', 't', 'S', 'i', 'z', 'e', 'I', 'n', 'B', 'y', 't', 'e', 's', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
 	},
 }
 
@@ -473,35 +519,43 @@ var mofPageFault_VirtualAllocRundown = &MofClassDef{
 //   [ WmiDataId(1), pointer, read ] uint32 BaseAddress;
 //   [ WmiDataId(2), extension("SizeT"), read ] object RegionSize;
 //   [ WmiDataId(3), read ] uint32 ProcessId;
+//   [ WmiDataId(4), format("x"), read ] uint32 Flags;
 // };
 // mofPageFault_VirtualAlloc class definition
 var mofPageFault_VirtualAlloc = &MofClassDef{
 	Name: "PageFault_VirtualAlloc",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', 'i', 'r', 't', 'u', 'a', 'l', 'A', 'l', 'l', 'o', 'c', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 98,  99 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "RegionSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 3, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "RegionSize", NameW: []uint16{'R', 'e', 'g', 'i', 'o', 'n', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 3, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Flags", NameW: []uint16{'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
 // [dynamic:ToInstance, EventType{134}] class PageFault_MemReset : PageFault_V2 {
 //   [ WmiDataId(1), pointer, read ] uint32 BaseAddress;
 //   [ WmiDataId(2), extension("SizeT"), read ] object SizeInBytes;
+//   [ WmiDataId(3), format("x"), read ] uint32 Flags;
 // };
 // mofPageFault_MemReset class definition
 var mofPageFault_MemReset = &MofClassDef{
 	Name: "PageFault_MemReset",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'M', 'e', 'm', 'R', 'e', 's', 'e', 't', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 134 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "SizeInBytes", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "SizeInBytes", NameW: []uint16{'S', 'i', 'z', 'e', 'I', 'n', 'B', 'y', 't', 'e', 's', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 3, Name: "Flags", NameW: []uint16{'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -515,15 +569,17 @@ var mofPageFault_MemReset = &MofClassDef{
 // mofPageFault_HeapRangeRundown_V2 class definition
 var mofPageFault_HeapRangeRundown_V2 = &MofClassDef{
 	Name: "PageFault_HeapRangeRundown_V2",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'H', 'e', 'a', 'p', 'R', 'a', 'n', 'g', 'e', 'R', 'u', 'n', 'd', 'o', 'w', 'n', '_', 'V', '2', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 100 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "HeapHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "HRFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "HRPid", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "HRRangeCount", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "HeapHandle", NameW: []uint16{'H', 'e', 'a', 'p', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "HRFlags", NameW: []uint16{'H', 'R', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "HRPid", NameW: []uint16{'H', 'R', 'P', 'i', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "HRRangeCount", NameW: []uint16{'H', 'R', 'R', 'a', 'n', 'g', 'e', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -534,12 +590,14 @@ var mofPageFault_HeapRangeRundown_V2 = &MofClassDef{
 // mofPageFault_HeapRangeDestroy class definition
 var mofPageFault_HeapRangeDestroy = &MofClassDef{
 	Name: "PageFault_HeapRangeDestroy",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'H', 'e', 'a', 'p', 'R', 'a', 'n', 'g', 'e', 'D', 'e', 's', 't', 'r', 'o', 'y', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 104 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "HeapHandle", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "HeapHandle", NameW: []uint16{'H', 'e', 'a', 'p', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -551,14 +609,16 @@ var mofPageFault_HeapRangeDestroy = &MofClassDef{
 // mofPageFault_TypeGroup1 class definition
 var mofPageFault_TypeGroup1 = &MofClassDef{
 	Name: "PageFault_TypeGroup1",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14, 
                                15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "VirtualAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ProgramCounter", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "VirtualAddress", NameW: []uint16{'V', 'i', 'r', 't', 'u', 'a', 'l', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ProgramCounter", NameW: []uint16{'P', 'r', 'o', 'g', 'r', 'a', 'm', 'C', 'o', 'u', 'n', 't', 'e', 'r', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -572,15 +632,17 @@ var mofPageFault_TypeGroup1 = &MofClassDef{
 // mofPageFault_ImageLoadBacked class definition
 var mofPageFault_ImageLoadBacked = &MofClassDef{
 	Name: "PageFault_ImageLoadBacked",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'I', 'm', 'a', 'g', 'e', 'L', 'o', 'a', 'd', 'B', 'a', 'c', 'k', 'e', 'd', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 105 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "DeviceChar", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "FileChar", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "LoadFlags", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "DeviceChar", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'C', 'h', 'a', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "FileChar", NameW: []uint16{'F', 'i', 'l', 'e', 'C', 'h', 'a', 'r', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "LoadFlags", NameW: []uint16{'L', 'o', 'a', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -593,14 +655,16 @@ var mofPageFault_ImageLoadBacked = &MofClassDef{
 // mofPageFault_HeapRangeTypeGroup class definition
 var mofPageFault_HeapRangeTypeGroup = &MofClassDef{
 	Name: "PageFault_HeapRangeTypeGroup",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'H', 'e', 'a', 'p', 'R', 'a', 'n', 'g', 'e', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 102,  103 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "HeapHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "HRAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "HRSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
+		{ID: 1, Name: "HeapHandle", NameW: []uint16{'H', 'e', 'a', 'p', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "HRAddress", NameW: []uint16{'H', 'R', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "HRSize", NameW: []uint16{'H', 'R', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
 	},
 }
 
@@ -613,14 +677,16 @@ var mofPageFault_HeapRangeTypeGroup = &MofClassDef{
 // mofPageFault_HeapRangeCreate class definition
 var mofPageFault_HeapRangeCreate = &MofClassDef{
 	Name: "PageFault_HeapRangeCreate",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'H', 'e', 'a', 'p', 'R', 'a', 'n', 'g', 'e', 'C', 'r', 'e', 'a', 't', 'e', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 101 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "HeapHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FirstRangeSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 3, Name: "HRCreateFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "HeapHandle", NameW: []uint16{'H', 'e', 'a', 'p', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FirstRangeSize", NameW: []uint16{'F', 'i', 'r', 's', 't', 'R', 'a', 'n', 'g', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 3, Name: "HRCreateFlags", NameW: []uint16{'H', 'R', 'C', 'r', 'e', 'a', 't', 'e', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -632,13 +698,15 @@ var mofPageFault_HeapRangeCreate = &MofClassDef{
 // mofPageFault_VirtualRotate class definition
 var mofPageFault_VirtualRotate = &MofClassDef{
 	Name: "PageFault_VirtualRotate",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', 'i', 'r', 't', 'u', 'a', 'l', 'R', 'o', 't', 'a', 't', 'e', 0},
 	Base: "PageFault_V2",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'V', '2', 0},
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 127 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "SizeInBytes", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "SizeInBytes", NameW: []uint16{'S', 'i', 'z', 'e', 'I', 'n', 'B', 'y', 't', 'e', 's', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
 	},
 }
 
@@ -647,7 +715,9 @@ var mofPageFault_VirtualRotate = &MofClassDef{
 // mofPerfInfo_V2 class definition
 var mofPerfInfo_V2 = &MofClassDef{
 	Name: "PerfInfo_V2",
+	NameW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}"),
 	Version: 2,
 }
@@ -660,14 +730,16 @@ var mofPerfInfo_V2 = &MofClassDef{
 // mofFinalizeKTimer2 class definition
 var mofFinalizeKTimer2 = &MofClassDef{
 	Name: "FinalizeKTimer2",
+	NameW: []uint16{'F', 'i', 'n', 'a', 'l', 'i', 'z', 'e', 'K', 'T', 'i', 'm', 'e', 'r', '2', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 108 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Timer", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "DisableCallback", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "DisableContext", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "Timer", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "DisableCallback", NameW: []uint16{'D', 'i', 's', 'a', 'b', 'l', 'e', 'C', 'a', 'l', 'l', 'b', 'a', 'c', 'k', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "DisableContext", NameW: []uint16{'D', 'i', 's', 'a', 'b', 'l', 'e', 'C', 'o', 'n', 't', 'e', 'x', 't', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -677,12 +749,14 @@ var mofFinalizeKTimer2 = &MofClassDef{
 // mofWDF_ISR class definition
 var mofWDF_ISR = &MofClassDef{
 	Name: "WDF_ISR",
+	NameW: []uint16{'W', 'D', 'F', '_', 'I', 'S', 'R', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 96,  97 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Routine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -692,12 +766,14 @@ var mofWDF_ISR = &MofClassDef{
 // mofWDF_DPC class definition
 var mofWDF_DPC = &MofClassDef{
 	Name: "WDF_DPC",
+	NameW: []uint16{'W', 'D', 'F', '_', 'D', 'P', 'C', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 98 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Routine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -707,12 +783,14 @@ var mofWDF_DPC = &MofClassDef{
 // mofISR_Unexpected class definition
 var mofISR_Unexpected = &MofClassDef{
 	Name: "ISR_Unexpected",
+	NameW: []uint16{'I', 'S', 'R', '_', 'U', 'n', 'e', 'x', 'p', 'e', 'c', 't', 'e', 'd', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 92 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Vector", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "Vector", NameW: []uint16{'V', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -725,15 +803,17 @@ var mofISR_Unexpected = &MofClassDef{
 // mofSampledProfile class definition
 var mofSampledProfile = &MofClassDef{
 	Name: "SampledProfile",
+	NameW: []uint16{'S', 'a', 'm', 'p', 'l', 'e', 'd', 'P', 'r', 'o', 'f', 'i', 'l', 'e', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 46 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InstructionPointer", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "Count", InType: TDH_INTYPE_UINT16},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "InstructionPointer", NameW: []uint16{'I', 'n', 's', 't', 'r', 'u', 'c', 't', 'i', 'o', 'n', 'P', 'o', 'i', 'n', 't', 'e', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "Count", NameW: []uint16{'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -743,12 +823,14 @@ var mofSampledProfile = &MofClassDef{
 // mofCancelKTimer2 class definition
 var mofCancelKTimer2 = &MofClassDef{
 	Name: "CancelKTimer2",
+	NameW: []uint16{'C', 'a', 'n', 'c', 'e', 'l', 'K', 'T', 'i', 'm', 'e', 'r', '2', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 106 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Timer", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "Timer", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -761,15 +843,17 @@ var mofCancelKTimer2 = &MofClassDef{
 // mofPmcCounterProfile class definition
 var mofPmcCounterProfile = &MofClassDef{
 	Name: "PmcCounterProfile",
+	NameW: []uint16{'P', 'm', 'c', 'C', 'o', 'u', 'n', 't', 'e', 'r', 'P', 'r', 'o', 'f', 'i', 'l', 'e', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 47 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InstructionPointer", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "ProfileSource", InType: TDH_INTYPE_UINT16},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "InstructionPointer", NameW: []uint16{'I', 'n', 's', 't', 'r', 'u', 'c', 't', 'i', 'o', 'n', 'P', 'o', 'i', 'n', 't', 'e', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "ProfileSource", NameW: []uint16{'P', 'r', 'o', 'f', 'i', 'l', 'e', 'S', 'o', 'u', 'r', 'c', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -784,13 +868,15 @@ var mofPmcCounterProfile = &MofClassDef{
 // mofPmcCounterConfig_V2 class definition
 var mofPmcCounterConfig_V2 = &MofClassDef{
 	Name: "PmcCounterConfig_V2",
+	NameW: []uint16{'P', 'm', 'c', 'C', 'o', 'u', 'n', 't', 'e', 'r', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 48 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "CounterCount", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "CounterName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 1},
+		{ID: 1, Name: "CounterCount", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "CounterName", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 1},
 	},
 }
 
@@ -800,12 +886,14 @@ var mofPmcCounterConfig_V2 = &MofClassDef{
 // mofSysCallExit class definition
 var mofSysCallExit = &MofClassDef{
 	Name: "SysCallExit",
+	NameW: []uint16{'S', 'y', 's', 'C', 'a', 'l', 'l', 'E', 'x', 'i', 't', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 52 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "SysCallNtStatus", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "SysCallNtStatus", NameW: []uint16{'S', 'y', 's', 'C', 'a', 'l', 'l', 'N', 't', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -820,17 +908,19 @@ var mofSysCallExit = &MofClassDef{
 // mofISR_MSI class definition
 var mofISR_MSI = &MofClassDef{
 	Name: "ISR_MSI",
+	NameW: []uint16{'I', 'S', 'R', '_', 'M', 'S', 'I', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 50 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME},
-		{ID: 2, Name: "Routine", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ReturnValue", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "Vector", InType: TDH_INTYPE_UINT16},
-		{ID: 5, Name: "Reserved", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "MessageNumber", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME, Extension: "WmiTime"},
+		{ID: 2, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ReturnValue", NameW: []uint16{'R', 'e', 't', 'u', 'r', 'n', 'V', 'a', 'l', 'u', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "Vector", NameW: []uint16{'V', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 5, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "MessageNumber", NameW: []uint16{'M', 'e', 's', 's', 'a', 'g', 'e', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -843,15 +933,17 @@ var mofISR_MSI = &MofClassDef{
 // mofDisableKTimer2 class definition
 var mofDisableKTimer2 = &MofClassDef{
 	Name: "DisableKTimer2",
+	NameW: []uint16{'D', 'i', 's', 'a', 'b', 'l', 'e', 'K', 'T', 'i', 'm', 'e', 'r', '2', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 107 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Timer", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "DisableCallback", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "DisableContext", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "TimerFlags", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "Timer", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "DisableCallback", NameW: []uint16{'D', 'i', 's', 'a', 'b', 'l', 'e', 'C', 'a', 'l', 'l', 'b', 'a', 'c', 'k', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "DisableContext", NameW: []uint16{'D', 'i', 's', 'a', 'b', 'l', 'e', 'C', 'o', 'n', 't', 'e', 'x', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "TimerFlags", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -868,18 +960,20 @@ var mofDisableKTimer2 = &MofClassDef{
 // mofSetOrExpireKTimer2 class definition
 var mofSetOrExpireKTimer2 = &MofClassDef{
 	Name: "SetOrExpireKTimer2",
+	NameW: []uint16{'S', 'e', 't', 'O', 'r', 'E', 'x', 'p', 'i', 'r', 'e', 'K', 'T', 'i', 'm', 'e', 'r', '2', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 104,  105 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DueTime", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "MaximumDueTime", InType: TDH_INTYPE_UINT64},
-		{ID: 3, Name: "Period", InType: TDH_INTYPE_UINT64},
-		{ID: 4, Name: "Timer", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "Callback", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "CallbackContext", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "TimerFlags", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "DueTime", NameW: []uint16{'D', 'u', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "MaximumDueTime", NameW: []uint16{'M', 'a', 'x', 'i', 'm', 'u', 'm', 'D', 'u', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 3, Name: "Period", NameW: []uint16{'P', 'e', 'r', 'i', 'o', 'd', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 4, Name: "Timer", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "Callback", NameW: []uint16{'C', 'a', 'l', 'l', 'b', 'a', 'c', 'k', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "CallbackContext", NameW: []uint16{'C', 'a', 'l', 'l', 'b', 'a', 'c', 'k', 'C', 'o', 'n', 't', 'e', 'x', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "TimerFlags", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -893,16 +987,18 @@ var mofSetOrExpireKTimer2 = &MofClassDef{
 // mofISR class definition
 var mofISR = &MofClassDef{
 	Name: "ISR",
+	NameW: []uint16{'I', 'S', 'R', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 67,  95 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME},
-		{ID: 2, Name: "Routine", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ReturnValue", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "Vector", InType: TDH_INTYPE_UINT16},
-		{ID: 5, Name: "Reserved", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME, Extension: "WmiTime"},
+		{ID: 2, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ReturnValue", NameW: []uint16{'R', 'e', 't', 'u', 'r', 'n', 'V', 'a', 'l', 'u', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "Vector", NameW: []uint16{'V', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 5, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -915,14 +1011,16 @@ var mofISR = &MofClassDef{
 // mofPmcCounterCorruption_V2 class definition
 var mofPmcCounterCorruption_V2 = &MofClassDef{
 	Name: "PmcCounterCorruption_V2",
+	NameW: []uint16{'P', 'm', 'c', 'C', 'o', 'u', 'n', 't', 'e', 'r', 'C', 'o', 'r', 'r', 'u', 'p', 't', 'i', 'o', 'n', '_', 'V', '2', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 49 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessorNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "CounterCount", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "CounterStatus", InType: TDH_INTYPE_POINTER, SizeFromID: 2},
+		{ID: 1, Name: "ProcessorNumber", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "CounterCount", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "CounterStatus", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_POINTER, SizeFromID: 2},
 	},
 }
 
@@ -932,12 +1030,14 @@ var mofPmcCounterCorruption_V2 = &MofClassDef{
 // mofSysCallEnter class definition
 var mofSysCallEnter = &MofClassDef{
 	Name: "SysCallEnter",
+	NameW: []uint16{'S', 'y', 's', 'C', 'a', 'l', 'l', 'E', 'n', 't', 'e', 'r', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 51 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "SysCallAddress", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "SysCallAddress", NameW: []uint16{'S', 'y', 's', 'C', 'a', 'l', 'l', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -948,13 +1048,15 @@ var mofSysCallEnter = &MofClassDef{
 // mofIoTimerEvent class definition
 var mofIoTimerEvent = &MofClassDef{
 	Name: "IoTimerEvent",
+	NameW: []uint16{'I', 'o', 'T', 'i', 'm', 'e', 'r', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 93,  94 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DeviceObject", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "TimerRoutine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "DeviceObject", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "TimerRoutine", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -964,12 +1066,14 @@ var mofIoTimerEvent = &MofClassDef{
 // mofWDF_WorkItem class definition
 var mofWDF_WorkItem = &MofClassDef{
 	Name: "WDF_WorkItem",
+	NameW: []uint16{'W', 'D', 'F', '_', 'W', 'o', 'r', 'k', 'I', 't', 'e', 'm', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 103 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Routine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -977,7 +1081,9 @@ var mofWDF_WorkItem = &MofClassDef{
 // mofDebuggerEnabled class definition
 var mofDebuggerEnabled = &MofClassDef{
 	Name: "DebuggerEnabled",
+	NameW: []uint16{'D', 'e', 'b', 'u', 'g', 'g', 'e', 'r', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 58 },
@@ -992,14 +1098,16 @@ var mofDebuggerEnabled = &MofClassDef{
 // mofSampledProfileInterval_V2 class definition
 var mofSampledProfileInterval_V2 = &MofClassDef{
 	Name: "SampledProfileInterval_V2",
+	NameW: []uint16{'S', 'a', 'm', 'p', 'l', 'e', 'd', 'P', 'r', 'o', 'f', 'i', 'l', 'e', 'I', 'n', 't', 'e', 'r', 'v', 'a', 'l', '_', 'V', '2', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 72,  73,  74 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Source", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "NewInterval", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "OldInterval", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Source", NameW: []uint16{'S', 'o', 'u', 'r', 'c', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "NewInterval", NameW: []uint16{'N', 'e', 'w', 'I', 'n', 't', 'e', 'r', 'v', 'a', 'l', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "OldInterval", NameW: []uint16{'O', 'l', 'd', 'I', 'n', 't', 'e', 'r', 'v', 'a', 'l', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -1011,14 +1119,16 @@ var mofSampledProfileInterval_V2 = &MofClassDef{
 // mofHV_Hypercall class definition
 var mofHV_Hypercall = &MofClassDef{
 	Name: "HV_Hypercall",
+	NameW: []uint16{'H', 'V', '_', 'H', 'y', 'p', 'e', 'r', 'c', 'a', 'l', 'l', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 114 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "CallCode", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "IsFast", InType: TDH_INTYPE_UINT8},
-		{ID: 3, Name: "IsNested", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "CallCode", NameW: []uint16{'C', 'a', 'l', 'l', 'C', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "IsFast", NameW: []uint16{'I', 's', 'F', 'a', 's', 't', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 3, Name: "IsNested", NameW: []uint16{'I', 's', 'N', 'e', 's', 't', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -1029,13 +1139,15 @@ var mofHV_Hypercall = &MofClassDef{
 // mofDPC class definition
 var mofDPC = &MofClassDef{
 	Name: "DPC",
+	NameW: []uint16{'D', 'P', 'C', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 66,  68,  69,  70 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME},
-		{ID: 2, Name: "Routine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME, Extension: "WmiTime"},
+		{ID: 2, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1047,14 +1159,16 @@ var mofDPC = &MofClassDef{
 // mofSpinLockConfig_V2 class definition
 var mofSpinLockConfig_V2 = &MofClassDef{
 	Name: "SpinLockConfig_V2",
+	NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	Base: "PerfInfo_V2",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '2', 0},
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 75,  76 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "SpinLockSpinThreshold", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "SpinLockContentionSampleRate", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "SpinLockAcquireSampleRate", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "SpinLockSpinThreshold", NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'S', 'p', 'i', 'n', 'T', 'h', 'r', 'e', 's', 'h', 'o', 'l', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "SpinLockContentionSampleRate", NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'C', 'o', 'n', 't', 'e', 'n', 't', 'i', 'o', 'n', 'S', 'a', 'm', 'p', 'l', 'e', 'R', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "SpinLockAcquireSampleRate", NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'A', 'c', 'q', 'u', 'i', 'r', 'e', 'S', 'a', 'm', 'p', 'l', 'e', 'R', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -1063,7 +1177,9 @@ var mofSpinLockConfig_V2 = &MofClassDef{
 // mofUdpIp class definition
 var mofUdpIp = &MofClassDef{
 	Name: "UdpIp",
+	NameW: []uint16{'U', 'd', 'p', 'I', 'p', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}"),
 	Version: 2,
 }
@@ -1075,13 +1191,15 @@ var mofUdpIp = &MofClassDef{
 // mofUdpIp_Fail class definition
 var mofUdpIp_Fail = &MofClassDef{
 	Name: "UdpIp_Fail",
+	NameW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'F', 'a', 'i', 'l', 0},
 	Base: "UdpIp",
+	BaseW: []uint16{'U', 'd', 'p', 'I', 'p', 0},
 	GUID: mofUdpIp.GUID,
 	Version: mofUdpIp.Version,
 	EventTypes: []uint8{ 17 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Proto", InType: TDH_INTYPE_UINT16},
-		{ID: 2, Name: "FailureCode", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "Proto", NameW: []uint16{'P', 'r', 'o', 't', 'o', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 2, Name: "FailureCode", NameW: []uint16{'F', 'a', 'i', 'l', 'u', 'r', 'e', 'C', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -1098,19 +1216,21 @@ var mofUdpIp_Fail = &MofClassDef{
 // mofUdpIp_TypeGroup2 class definition
 var mofUdpIp_TypeGroup2 = &MofClassDef{
 	Name: "UdpIp_TypeGroup2",
+	NameW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '2', 0},
 	Base: "UdpIp",
+	BaseW: []uint16{'U', 'd', 'p', 'I', 'p', 0},
 	GUID: mofUdpIp.GUID,
 	Version: mofUdpIp.Version,
 	EventTypes: []uint8{ 26,  27 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "seqnum", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "connid", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6, Extension: "IPAddrV6"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6, Extension: "IPAddrV6"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1127,19 +1247,21 @@ var mofUdpIp_TypeGroup2 = &MofClassDef{
 // mofUdpIp_TypeGroup1 class definition
 var mofUdpIp_TypeGroup1 = &MofClassDef{
 	Name: "UdpIp_TypeGroup1",
+	NameW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "UdpIp",
+	BaseW: []uint16{'U', 'd', 'p', 'I', 'p', 0},
 	GUID: mofUdpIp.GUID,
 	Version: mofUdpIp.Version,
 	EventTypes: []uint8{ 10,  11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "seqnum", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "connid", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddrV4"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddrV4"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1148,7 +1270,9 @@ var mofUdpIp_TypeGroup1 = &MofClassDef{
 // mofThread_V2 class definition
 var mofThread_V2 = &MofClassDef{
 	Name: "Thread_V2",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 2,
 }
@@ -1161,14 +1285,16 @@ var mofThread_V2 = &MofClassDef{
 // mofAutoBoostClearFloor class definition
 var mofAutoBoostClearFloor = &MofClassDef{
 	Name: "AutoBoostClearFloor",
+	NameW: []uint16{'A', 'u', 't', 'o', 'B', 'o', 'o', 's', 't', 'C', 'l', 'e', 'a', 'r', 'F', 'l', 'o', 'o', 'r', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 67 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "LockAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "BoostBitmap", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "LockAddress", NameW: []uint16{'L', 'o', 'c', 'k', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "BoostBitmap", NameW: []uint16{'B', 'o', 'o', 's', 't', 'B', 'i', 't', 'm', 'a', 'p', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -1180,14 +1306,16 @@ var mofAutoBoostClearFloor = &MofClassDef{
 // mofWorkerThread class definition
 var mofWorkerThread = &MofClassDef{
 	Name: "WorkerThread",
+	NameW: []uint16{'W', 'o', 'r', 'k', 'e', 'r', 'T', 'h', 'r', 'e', 'a', 'd', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 57 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "StartTime", InType: TDH_INTYPE_UINT64},
-		{ID: 3, Name: "ThreadRoutine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "StartTime", NameW: []uint16{'S', 't', 'a', 'r', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 3, Name: "ThreadRoutine", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1198,13 +1326,15 @@ var mofWorkerThread = &MofClassDef{
 // mofKernelQueueEnqueue class definition
 var mofKernelQueueEnqueue = &MofClassDef{
 	Name: "KernelQueueEnqueue",
+	NameW: []uint16{'K', 'e', 'r', 'n', 'e', 'l', 'Q', 'u', 'e', 'u', 'e', 'E', 'n', 'q', 'u', 'e', 'u', 'e', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 62 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Entry", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "Entry", NameW: []uint16{'E', 'n', 't', 'r', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -1225,23 +1355,25 @@ var mofKernelQueueEnqueue = &MofClassDef{
 // mofCSwitch_V2 class definition
 var mofCSwitch_V2 = &MofClassDef{
 	Name: "CSwitch_V2",
+	NameW: []uint16{'C', 'S', 'w', 'i', 't', 'c', 'h', '_', 'V', '2', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "NewThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "OldThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "NewThreadPriority", InType: TDH_INTYPE_INT8},
-		{ID: 4, Name: "OldThreadPriority", InType: TDH_INTYPE_INT8},
-		{ID: 5, Name: "PreviousCState", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "SpareByte", InType: TDH_INTYPE_INT8},
-		{ID: 7, Name: "OldThreadWaitReason", InType: TDH_INTYPE_INT8},
-		{ID: 8, Name: "OldThreadWaitMode", InType: TDH_INTYPE_INT8},
-		{ID: 9, Name: "OldThreadState", InType: TDH_INTYPE_INT8},
-		{ID: 10, Name: "OldThreadWaitIdealProcessor", InType: TDH_INTYPE_INT8},
-		{ID: 11, Name: "NewThreadWaitTime", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 12, Name: "Reserved", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "NewThreadId", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "OldThreadId", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "NewThreadPriority", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 4, Name: "OldThreadPriority", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 5, Name: "PreviousCState", NameW: []uint16{'P', 'r', 'e', 'v', 'i', 'o', 'u', 's', 'C', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "SpareByte", NameW: []uint16{'S', 'p', 'a', 'r', 'e', 'B', 'y', 't', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 7, Name: "OldThreadWaitReason", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 8, Name: "OldThreadWaitMode", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'M', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 9, Name: "OldThreadState", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 10, Name: "OldThreadWaitIdealProcessor", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'I', 'd', 'e', 'a', 'l', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 11, Name: "NewThreadWaitTime", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 12, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -1252,13 +1384,15 @@ var mofCSwitch_V2 = &MofClassDef{
 // mofSubProcessTagChanged class definition
 var mofSubProcessTagChanged = &MofClassDef{
 	Name: "SubProcessTagChanged",
+	NameW: []uint16{'S', 'u', 'b', 'P', 'r', 'o', 'c', 'e', 's', 's', 'T', 'a', 'g', 'C', 'h', 'a', 'n', 'g', 'e', 'd', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 69 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "OldTag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "NewTag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "OldTag", NameW: []uint16{'O', 'l', 'd', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "NewTag", NameW: []uint16{'N', 'e', 'w', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -1279,23 +1413,25 @@ var mofSubProcessTagChanged = &MofClassDef{
 // mofSpinLock class definition
 var mofSpinLock = &MofClassDef{
 	Name: "SpinLock",
+	NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 41 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "SpinLockAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "CallerAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "AcquireTime", InType: TDH_INTYPE_UINT64},
-		{ID: 4, Name: "ReleaseTime", InType: TDH_INTYPE_UINT64},
-		{ID: 5, Name: "WaitTimeInCycles", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "SpinCount", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "ThreadId", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "InterruptCount", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "Irql", InType: TDH_INTYPE_UINT8},
-		{ID: 10, Name: "AcquireDepth", InType: TDH_INTYPE_UINT8},
-		{ID: 11, Name: "Flag", InType: TDH_INTYPE_UINT8},
-		{ID: 12, Name: "Reserved", InType: TDH_INTYPE_UINT8, IsArray: true, ArraySize: 5},
+		{ID: 1, Name: "SpinLockAddress", NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "CallerAddress", NameW: []uint16{'C', 'a', 'l', 'l', 'e', 'r', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "AcquireTime", NameW: []uint16{'A', 'c', 'q', 'u', 'i', 'r', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 4, Name: "ReleaseTime", NameW: []uint16{'R', 'e', 'l', 'e', 'a', 's', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 5, Name: "WaitTimeInCycles", NameW: []uint16{'W', 'a', 'i', 't', 'T', 'i', 'm', 'e', 'I', 'n', 'C', 'y', 'c', 'l', 'e', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "SpinCount", NameW: []uint16{'S', 'p', 'i', 'n', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "InterruptCount", NameW: []uint16{'I', 'n', 't', 'e', 'r', 'r', 'u', 'p', 't', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "Irql", NameW: []uint16{'I', 'r', 'q', 'l', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 10, Name: "AcquireDepth", NameW: []uint16{'A', 'c', 'q', 'u', 'i', 'r', 'e', 'D', 'e', 'p', 't', 'h', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 11, Name: "Flag", NameW: []uint16{'F', 'l', 'a', 'g', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 12, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8, IsArray: true, ArraySize: 5},
 	},
 }
 
@@ -1310,17 +1446,19 @@ var mofSpinLock = &MofClassDef{
 // mofThreadMigration class definition
 var mofThreadMigration = &MofClassDef{
 	Name: "ThreadMigration",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'M', 'i', 'g', 'r', 'a', 't', 'i', 'o', 'n', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 61 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "SourceProcessorIndex", InType: TDH_INTYPE_UINT16},
-		{ID: 3, Name: "TargetProcessorIndex", InType: TDH_INTYPE_UINT16},
-		{ID: 4, Name: "Priority", InType: TDH_INTYPE_UINT8},
-		{ID: 5, Name: "IdealProcessorAdjust", InType: TDH_INTYPE_BOOLEAN},
-		{ID: 6, Name: "OldIdealProcessorIndex", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "SourceProcessorIndex", NameW: []uint16{'S', 'o', 'u', 'r', 'c', 'e', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 3, Name: "TargetProcessorIndex", NameW: []uint16{'T', 'a', 'r', 'g', 'e', 't', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 4, Name: "Priority", NameW: []uint16{'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 5, Name: "IdealProcessorAdjust", NameW: []uint16{'I', 'd', 'e', 'a', 'l', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'A', 'd', 'j', 'u', 's', 't', 0}, InType: TDH_INTYPE_BOOLEAN},
+		{ID: 6, Name: "OldIdealProcessorIndex", NameW: []uint16{'O', 'l', 'd', 'I', 'd', 'e', 'a', 'l', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -1332,14 +1470,16 @@ var mofThreadMigration = &MofClassDef{
 // mofKernelQueueDequeue class definition
 var mofKernelQueueDequeue = &MofClassDef{
 	Name: "KernelQueueDequeue",
+	NameW: []uint16{'K', 'e', 'r', 'n', 'e', 'l', 'Q', 'u', 'e', 'u', 'e', 'D', 'e', 'q', 'u', 'e', 'u', 'e', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 63 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "EntryCount", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "Entries", InType: TDH_INTYPE_POINTER, SizeFromID: 2},
+		{ID: 1, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "EntryCount", NameW: []uint16{'E', 'n', 't', 'r', 'y', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "Entries", NameW: []uint16{'E', 'n', 't', 'r', 'i', 'e', 's', 0}, InType: TDH_INTYPE_POINTER, SizeFromID: 2},
 	},
 }
 
@@ -1354,17 +1494,19 @@ var mofKernelQueueDequeue = &MofClassDef{
 // mofAutoBoostSetFloor class definition
 var mofAutoBoostSetFloor = &MofClassDef{
 	Name: "AutoBoostSetFloor",
+	NameW: []uint16{'A', 'u', 't', 'o', 'B', 'o', 'o', 's', 't', 'S', 'e', 't', 'F', 'l', 'o', 'o', 'r', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 66 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Lock", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "NewCpuPriorityFloor", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "OldCpuPriority", InType: TDH_INTYPE_UINT8},
-		{ID: 5, Name: "IoPriorities", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "BoostFlags", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "Lock", NameW: []uint16{'L', 'o', 'c', 'k', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "NewCpuPriorityFloor", NameW: []uint16{'N', 'e', 'w', 'C', 'p', 'u', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 'F', 'l', 'o', 'o', 'r', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "OldCpuPriority", NameW: []uint16{'O', 'l', 'd', 'C', 'p', 'u', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 5, Name: "IoPriorities", NameW: []uint16{'I', 'o', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'i', 'e', 's', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "BoostFlags", NameW: []uint16{'B', 'o', 'o', 's', 't', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -1377,15 +1519,17 @@ var mofAutoBoostSetFloor = &MofClassDef{
 // mofThreadAffinity class definition
 var mofThreadAffinity = &MofClassDef{
 	Name: "ThreadAffinity",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 53 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Affinity", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "Group", InType: TDH_INTYPE_UINT16},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "Affinity", NameW: []uint16{'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "Group", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -1396,12 +1540,14 @@ var mofThreadAffinity = &MofClassDef{
 // mofWorkerThread_StartStop_V2 class definition
 var mofWorkerThread_StartStop_V2 = &MofClassDef{
 	Name: "WorkerThread_StartStop_V2",
+	NameW: []uint16{'W', 'o', 'r', 'k', 'e', 'r', 'T', 'h', 'r', 'e', 'a', 'd', '_', 'S', 't', 'a', 'r', 't', 'S', 't', 'o', 'p', '_', 'V', '2', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 64,  65 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "CallbackRoutine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "CallbackRoutine", NameW: []uint16{'C', 'a', 'l', 'l', 'b', 'a', 'c', 'k', 'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1416,14 +1562,16 @@ var mofWorkerThread_StartStop_V2 = &MofClassDef{
 // mofThreadSetName class definition
 var mofThreadSetName = &MofClassDef{
 	Name: "ThreadSetName",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'S', 'e', 't', 'N', 'a', 'm', 'e', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 72 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "ThreadName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "ThreadName", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -1431,7 +1579,9 @@ var mofThreadSetName = &MofClassDef{
 // mofCompCS class definition
 var mofCompCS = &MofClassDef{
 	Name: "CompCS",
+	NameW: []uint16{'C', 'o', 'm', 'p', 'C', 'S', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 37 },
@@ -1444,13 +1594,15 @@ var mofCompCS = &MofClassDef{
 // mofAutoBoostEntryExhaustion class definition
 var mofAutoBoostEntryExhaustion = &MofClassDef{
 	Name: "AutoBoostEntryExhaustion",
+	NameW: []uint16{'A', 'u', 't', 'o', 'B', 'o', 'o', 's', 't', 'E', 'n', 't', 'r', 'y', 'E', 'x', 'h', 'a', 'u', 's', 't', 'i', 'o', 'n', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 68 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "LockAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "LockAddress", NameW: []uint16{'L', 'o', 'c', 'k', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -1464,16 +1616,18 @@ var mofAutoBoostEntryExhaustion = &MofClassDef{
 // mofReadyThread class definition
 var mofReadyThread = &MofClassDef{
 	Name: "ReadyThread",
+	NameW: []uint16{'R', 'e', 'a', 'd', 'y', 'T', 'h', 'r', 'e', 'a', 'd', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 50 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "AdjustReason", InType: TDH_INTYPE_INT8},
-		{ID: 3, Name: "AdjustIncrement", InType: TDH_INTYPE_INT8},
-		{ID: 4, Name: "Flag", InType: TDH_INTYPE_INT8},
-		{ID: 5, Name: "Reserved", InType: TDH_INTYPE_INT8},
+		{ID: 1, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "AdjustReason", NameW: []uint16{'A', 'd', 'j', 'u', 's', 't', 'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 3, Name: "AdjustIncrement", NameW: []uint16{'A', 'd', 'j', 'u', 's', 't', 'I', 'n', 'c', 'r', 'e', 'm', 'e', 'n', 't', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 4, Name: "Flag", NameW: []uint16{'F', 'l', 'a', 'g', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 5, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_INT8},
 	},
 }
 
@@ -1486,15 +1640,17 @@ var mofReadyThread = &MofClassDef{
 // mofAntiStarvationBoost class definition
 var mofAntiStarvationBoost = &MofClassDef{
 	Name: "AntiStarvationBoost",
+	NameW: []uint16{'A', 'n', 't', 'i', 'S', 't', 'a', 'r', 'v', 'a', 't', 'i', 'o', 'n', 'B', 'o', 'o', 's', 't', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 60 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ProcessorIndex", InType: TDH_INTYPE_UINT16},
-		{ID: 3, Name: "Priority", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ProcessorIndex", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 3, Name: "Priority", NameW: []uint16{'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -1514,21 +1670,23 @@ var mofAntiStarvationBoost = &MofClassDef{
 // mofThread_V2_TypeGroup1 class definition
 var mofThread_V2_TypeGroup1 = &MofClassDef{
 	Name: "Thread_V2_TypeGroup1",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Thread_V2",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '2', 0},
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "StackBase", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "StackLimit", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "UserStackBase", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "UserStackLimit", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "StartAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "Win32StartAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 9, Name: "TebBase", InType: TDH_INTYPE_POINTER},
-		{ID: 10, Name: "SubProcessTag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "StackBase", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "StackLimit", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'L', 'i', 'm', 'i', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "UserStackBase", NameW: []uint16{'U', 's', 'e', 'r', 'S', 't', 'a', 'c', 'k', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "UserStackLimit", NameW: []uint16{'U', 's', 'e', 'r', 'S', 't', 'a', 'c', 'k', 'L', 'i', 'm', 'i', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "StartAddr", NameW: []uint16{'S', 't', 'a', 'r', 't', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "Win32StartAddr", NameW: []uint16{'W', 'i', 'n', '3', '2', 'S', 't', 'a', 'r', 't', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 9, Name: "TebBase", NameW: []uint16{'T', 'e', 'b', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 10, Name: "SubProcessTag", NameW: []uint16{'S', 'u', 'b', 'P', 'r', 'o', 'c', 'e', 's', 's', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -1537,7 +1695,9 @@ var mofThread_V2_TypeGroup1 = &MofClassDef{
 // mofUdpIp_V0 class definition
 var mofUdpIp_V0 = &MofClassDef{
 	Name: "UdpIp_V0",
+	NameW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}"),
 	Version: 0,
 }
@@ -1554,18 +1714,20 @@ var mofUdpIp_V0 = &MofClassDef{
 // mofUdpIp_V0_TypeGroup1 class definition
 var mofUdpIp_V0_TypeGroup1 = &MofClassDef{
 	Name: "UdpIp_V0_TypeGroup1",
+	NameW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'V', '0', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "UdpIp_V0",
+	BaseW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'V', '0', 0},
 	GUID: mofUdpIp_V0.GUID,
 	Version: mofUdpIp_V0.Version,
 	EventTypes: []uint8{ 10,  11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "context", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 3, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 4, Name: "size", InType: TDH_INTYPE_UINT16},
-		{ID: 5, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 6, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "dsize", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "context", NameW: []uint16{'c', 'o', 'n', 't', 'e', 'x', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 3, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 4, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 5, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 6, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "dsize", NameW: []uint16{'d', 's', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -1574,7 +1736,9 @@ var mofUdpIp_V0_TypeGroup1 = &MofClassDef{
 // mofStackWalk class definition
 var mofStackWalk = &MofClassDef{
 	Name: "StackWalk",
+	NameW: []uint16{'S', 't', 'a', 'c', 'k', 'W', 'a', 'l', 'k', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{def2fe46-7bd6-4b80-bd94-f57fe20d0ce3}"),
 	Version: 2,
 }
@@ -1587,13 +1751,15 @@ var mofStackWalk = &MofClassDef{
 // mofStackWalk_TypeGroup1 class definition
 var mofStackWalk_TypeGroup1 = &MofClassDef{
 	Name: "StackWalk_TypeGroup1",
+	NameW: []uint16{'S', 't', 'a', 'c', 'k', 'W', 'a', 'l', 'k', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "StackWalk",
+	BaseW: []uint16{'S', 't', 'a', 'c', 'k', 'W', 'a', 'l', 'k', 0},
 	GUID: mofStackWalk.GUID,
 	Version: mofStackWalk.Version,
 	EventTypes: []uint8{ 34,  35,  36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "key", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "StackFrame", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "key", NameW: []uint16{'k', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "StackFrame", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'F', 'r', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1606,15 +1772,17 @@ var mofStackWalk_TypeGroup1 = &MofClassDef{
 // mofStackWalk_Key class definition
 var mofStackWalk_Key = &MofClassDef{
 	Name: "StackWalk_Key",
+	NameW: []uint16{'S', 't', 'a', 'c', 'k', 'W', 'a', 'l', 'k', '_', 'K', 'e', 'y', 0},
 	Base: "StackWalk",
+	BaseW: []uint16{'S', 't', 'a', 'c', 'k', 'W', 'a', 'l', 'k', 0},
 	GUID: mofStackWalk.GUID,
 	Version: mofStackWalk.Version,
 	EventTypes: []uint8{ 37,  38 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "EventTimeStamp", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "StackProcess", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "StackThread", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "StackKey", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "EventTimeStamp", NameW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'i', 'm', 'e', 'S', 't', 'a', 'm', 'p', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "StackProcess", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'P', 'r', 'o', 'c', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "StackThread", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'T', 'h', 'r', 'e', 'a', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "StackKey", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1658,46 +1826,48 @@ var mofStackWalk_Key = &MofClassDef{
 // mofStackWalk_Event class definition
 var mofStackWalk_Event = &MofClassDef{
 	Name: "StackWalk_Event",
+	NameW: []uint16{'S', 't', 'a', 'c', 'k', 'W', 'a', 'l', 'k', '_', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "StackWalk",
+	BaseW: []uint16{'S', 't', 'a', 'c', 'k', 'W', 'a', 'l', 'k', 0},
 	GUID: mofStackWalk.GUID,
 	Version: mofStackWalk.Version,
 	EventTypes: []uint8{ 32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "EventTimeStamp", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "StackProcess", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "StackThread", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Stack1", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "Stack2", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "Stack3", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "Stack4", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "Stack5", InType: TDH_INTYPE_POINTER},
-		{ID: 9, Name: "Stack6", InType: TDH_INTYPE_POINTER},
-		{ID: 10, Name: "Stack7", InType: TDH_INTYPE_POINTER},
-		{ID: 11, Name: "Stack8", InType: TDH_INTYPE_POINTER},
-		{ID: 12, Name: "Stack9", InType: TDH_INTYPE_POINTER},
-		{ID: 13, Name: "Stack10", InType: TDH_INTYPE_POINTER},
-		{ID: 14, Name: "Stack11", InType: TDH_INTYPE_POINTER},
-		{ID: 15, Name: "Stack12", InType: TDH_INTYPE_POINTER},
-		{ID: 16, Name: "Stack13", InType: TDH_INTYPE_POINTER},
-		{ID: 17, Name: "Stack14", InType: TDH_INTYPE_POINTER},
-		{ID: 18, Name: "Stack15", InType: TDH_INTYPE_POINTER},
-		{ID: 19, Name: "Stack16", InType: TDH_INTYPE_POINTER},
-		{ID: 20, Name: "Stack17", InType: TDH_INTYPE_POINTER},
-		{ID: 21, Name: "Stack18", InType: TDH_INTYPE_POINTER},
-		{ID: 22, Name: "Stack19", InType: TDH_INTYPE_POINTER},
-		{ID: 23, Name: "Stack20", InType: TDH_INTYPE_POINTER},
-		{ID: 24, Name: "Stack21", InType: TDH_INTYPE_POINTER},
-		{ID: 25, Name: "Stack22", InType: TDH_INTYPE_POINTER},
-		{ID: 26, Name: "Stack23", InType: TDH_INTYPE_POINTER},
-		{ID: 27, Name: "Stack24", InType: TDH_INTYPE_POINTER},
-		{ID: 28, Name: "Stack25", InType: TDH_INTYPE_POINTER},
-		{ID: 29, Name: "Stack26", InType: TDH_INTYPE_POINTER},
-		{ID: 30, Name: "Stack27", InType: TDH_INTYPE_POINTER},
-		{ID: 31, Name: "Stack28", InType: TDH_INTYPE_POINTER},
-		{ID: 32, Name: "Stack29", InType: TDH_INTYPE_POINTER},
-		{ID: 33, Name: "Stack30", InType: TDH_INTYPE_POINTER},
-		{ID: 34, Name: "Stack31", InType: TDH_INTYPE_POINTER},
-		{ID: 35, Name: "Stack32", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "EventTimeStamp", NameW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'i', 'm', 'e', 'S', 't', 'a', 'm', 'p', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "StackProcess", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'P', 'r', 'o', 'c', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "StackThread", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'T', 'h', 'r', 'e', 'a', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Stack1", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "Stack2", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "Stack3", NameW: []uint16{'S', 't', 'a', 'c', 'k', '3', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "Stack4", NameW: []uint16{'S', 't', 'a', 'c', 'k', '4', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "Stack5", NameW: []uint16{'S', 't', 'a', 'c', 'k', '5', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 9, Name: "Stack6", NameW: []uint16{'S', 't', 'a', 'c', 'k', '6', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 10, Name: "Stack7", NameW: []uint16{'S', 't', 'a', 'c', 'k', '7', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 11, Name: "Stack8", NameW: []uint16{'S', 't', 'a', 'c', 'k', '8', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 12, Name: "Stack9", NameW: []uint16{'S', 't', 'a', 'c', 'k', '9', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 13, Name: "Stack10", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '0', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 14, Name: "Stack11", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '1', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 15, Name: "Stack12", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '2', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 16, Name: "Stack13", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '3', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 17, Name: "Stack14", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '4', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 18, Name: "Stack15", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '5', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 19, Name: "Stack16", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '6', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 20, Name: "Stack17", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '7', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 21, Name: "Stack18", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '8', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 22, Name: "Stack19", NameW: []uint16{'S', 't', 'a', 'c', 'k', '1', '9', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 23, Name: "Stack20", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '0', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 24, Name: "Stack21", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '1', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 25, Name: "Stack22", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '2', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 26, Name: "Stack23", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '3', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 27, Name: "Stack24", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '4', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 28, Name: "Stack25", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '5', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 29, Name: "Stack26", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '6', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 30, Name: "Stack27", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '7', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 31, Name: "Stack28", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '8', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 32, Name: "Stack29", NameW: []uint16{'S', 't', 'a', 'c', 'k', '2', '9', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 33, Name: "Stack30", NameW: []uint16{'S', 't', 'a', 'c', 'k', '3', '0', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 34, Name: "Stack31", NameW: []uint16{'S', 't', 'a', 'c', 'k', '3', '1', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 35, Name: "Stack32", NameW: []uint16{'S', 't', 'a', 'c', 'k', '3', '2', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1706,7 +1876,9 @@ var mofStackWalk_Event = &MofClassDef{
 // mofDiskIo_V1 class definition
 var mofDiskIo_V1 = &MofClassDef{
 	Name: "DiskIo_V1",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 1,
 }
@@ -1719,13 +1891,15 @@ var mofDiskIo_V1 = &MofClassDef{
 // mofV1_DriverMajorFunctionReturn class definition
 var mofV1_DriverMajorFunctionReturn = &MofClassDef{
 	Name: "V1_DriverMajorFunctionReturn",
+	NameW: []uint16{'V', '1', '_', 'D', 'r', 'i', 'v', 'e', 'r', 'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 'R', 'e', 't', 'u', 'r', 'n', 0},
 	Base: "DiskIo_V1",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '1', 0},
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Irp", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1737,14 +1911,16 @@ var mofV1_DriverMajorFunctionReturn = &MofClassDef{
 // mofV1_DriverCompleteRequest class definition
 var mofV1_DriverCompleteRequest = &MofClassDef{
 	Name: "V1_DriverCompleteRequest",
+	NameW: []uint16{'V', '1', '_', 'D', 'r', 'i', 'v', 'e', 'r', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'e', 'R', 'e', 'q', 'u', 'e', 's', 't', 0},
 	Base: "DiskIo_V1",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '1', 0},
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 52 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "RoutineAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "RoutineAddr", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -1756,13 +1932,15 @@ var mofV1_DriverCompleteRequest = &MofClassDef{
 // mofV1_DriverCompleteRequestReturn class definition
 var mofV1_DriverCompleteRequestReturn = &MofClassDef{
 	Name: "V1_DriverCompleteRequestReturn",
+	NameW: []uint16{'V', '1', '_', 'D', 'r', 'i', 'v', 'e', 'r', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'e', 'R', 'e', 'q', 'u', 'e', 's', 't', 'R', 'e', 't', 'u', 'r', 'n', 0},
 	Base: "DiskIo_V1",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '1', 0},
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 53 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -1778,18 +1956,20 @@ var mofV1_DriverCompleteRequestReturn = &MofClassDef{
 // mofDiskIo_V1_TypeGroup1 class definition
 var mofDiskIo_V1_TypeGroup1 = &MofClassDef{
 	Name: "DiskIo_V1_TypeGroup1",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "DiskIo_V1",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '1', 0},
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 10,  11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "IrpFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "TransferSize", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "ResponseTime", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ByteOffset", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "HighResResponseTime", InType: TDH_INTYPE_UINT64},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "IrpFlags", NameW: []uint16{'I', 'r', 'p', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "TransferSize", NameW: []uint16{'T', 'r', 'a', 'n', 's', 'f', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "ResponseTime", NameW: []uint16{'R', 'e', 's', 'p', 'o', 'n', 's', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ByteOffset", NameW: []uint16{'B', 'y', 't', 'e', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "HighResResponseTime", NameW: []uint16{'H', 'i', 'g', 'h', 'R', 'e', 's', 'R', 'e', 's', 'p', 'o', 'n', 's', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
 	},
 }
 
@@ -1805,17 +1985,19 @@ var mofDiskIo_V1_TypeGroup1 = &MofClassDef{
 // mofV1_DriverMajorFunctionCall class definition
 var mofV1_DriverMajorFunctionCall = &MofClassDef{
 	Name: "V1_DriverMajorFunctionCall",
+	NameW: []uint16{'V', '1', '_', 'D', 'r', 'i', 'v', 'e', 'r', 'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 'C', 'a', 'l', 'l', 0},
 	Base: "DiskIo_V1",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '1', 0},
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "RoutineAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "MajorFunction", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "MinorFunction", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "FileObject", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "RoutineAddr", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "MajorFunction", NameW: []uint16{'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "MinorFunction", NameW: []uint16{'M', 'i', 'n', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -1824,7 +2006,9 @@ var mofV1_DriverMajorFunctionCall = &MofClassDef{
 // mofUmsEvent class definition
 var mofUmsEvent = &MofClassDef{
 	Name: "UmsEvent",
+	NameW: []uint16{'U', 'm', 's', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{9aec974b-5b8e-4118-9b92-3186d8002ce5}"),
 	Version: 2,
 }
@@ -1839,16 +2023,18 @@ var mofUmsEvent = &MofClassDef{
 // mofUmsContextSwitch class definition
 var mofUmsContextSwitch = &MofClassDef{
 	Name: "UmsContextSwitch",
+	NameW: []uint16{'U', 'm', 's', 'C', 'o', 'n', 't', 'e', 'x', 't', 'S', 'w', 'i', 't', 'c', 'h', 0},
 	Base: "UmsEvent",
+	BaseW: []uint16{'U', 'm', 's', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ScheduledThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "SwitchCount", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "KernelYieldCount", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "MixedYieldCount", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "YieldCount", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "ScheduledThreadId", NameW: []uint16{'S', 'c', 'h', 'e', 'd', 'u', 'l', 'e', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "SwitchCount", NameW: []uint16{'S', 'w', 'i', 't', 'c', 'h', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "KernelYieldCount", NameW: []uint16{'K', 'e', 'r', 'n', 'e', 'l', 'Y', 'i', 'e', 'l', 'd', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "MixedYieldCount", NameW: []uint16{'M', 'i', 'x', 'e', 'd', 'Y', 'i', 'e', 'l', 'd', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "YieldCount", NameW: []uint16{'Y', 'i', 'e', 'l', 'd', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -1861,15 +2047,17 @@ var mofUmsContextSwitch = &MofClassDef{
 // mofUmsDirectedSwitchEnd class definition
 var mofUmsDirectedSwitchEnd = &MofClassDef{
 	Name: "UmsDirectedSwitchEnd",
+	NameW: []uint16{'U', 'm', 's', 'D', 'i', 'r', 'e', 'c', 't', 'e', 'd', 'S', 'w', 'i', 't', 'c', 'h', 'E', 'n', 'd', 0},
 	Base: "UmsEvent",
+	BaseW: []uint16{'U', 'm', 's', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 33 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ScheduledThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "PrimaryThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "SwitchFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ScheduledThreadId", NameW: []uint16{'S', 'c', 'h', 'e', 'd', 'u', 'l', 'e', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "PrimaryThreadId", NameW: []uint16{'P', 'r', 'i', 'm', 'a', 'r', 'y', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "SwitchFlags", NameW: []uint16{'S', 'w', 'i', 't', 'c', 'h', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -1881,14 +2069,16 @@ var mofUmsDirectedSwitchEnd = &MofClassDef{
 // mofUmsScheduledPark class definition
 var mofUmsScheduledPark = &MofClassDef{
 	Name: "UmsScheduledPark",
+	NameW: []uint16{'U', 'm', 's', 'S', 'c', 'h', 'e', 'd', 'u', 'l', 'e', 'd', 'P', 'a', 'r', 'k', 0},
 	Base: "UmsEvent",
+	BaseW: []uint16{'U', 'm', 's', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ScheduledThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "ParkFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ScheduledThreadId", NameW: []uint16{'S', 'c', 'h', 'e', 'd', 'u', 'l', 'e', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "ParkFlags", NameW: []uint16{'P', 'a', 'r', 'k', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -1902,16 +2092,18 @@ var mofUmsScheduledPark = &MofClassDef{
 // mofUmsDisassociate class definition
 var mofUmsDisassociate = &MofClassDef{
 	Name: "UmsDisassociate",
+	NameW: []uint16{'U', 'm', 's', 'D', 'i', 's', 'a', 's', 's', 'o', 'c', 'i', 'a', 't', 'e', 0},
 	Base: "UmsEvent",
+	BaseW: []uint16{'U', 'm', 's', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ScheduledThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "PrimaryThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "UmsApcControlFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 5, Name: "Status", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ScheduledThreadId", NameW: []uint16{'S', 'c', 'h', 'e', 'd', 'u', 'l', 'e', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "PrimaryThreadId", NameW: []uint16{'P', 'r', 'i', 'm', 'a', 'r', 'y', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "UmsApcControlFlags", NameW: []uint16{'U', 'm', 's', 'A', 'p', 'c', 'C', 'o', 'n', 't', 'r', 'o', 'l', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 5, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -1924,15 +2116,17 @@ var mofUmsDisassociate = &MofClassDef{
 // mofUmsDirectedSwitchStart class definition
 var mofUmsDirectedSwitchStart = &MofClassDef{
 	Name: "UmsDirectedSwitchStart",
+	NameW: []uint16{'U', 'm', 's', 'D', 'i', 'r', 'e', 'c', 't', 'e', 'd', 'S', 'w', 'i', 't', 'c', 'h', 'S', 't', 'a', 'r', 't', 0},
 	Base: "UmsEvent",
+	BaseW: []uint16{'U', 'm', 's', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ScheduledThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "PrimaryThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "SwitchFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ScheduledThreadId", NameW: []uint16{'S', 'c', 'h', 'e', 'd', 'u', 'l', 'e', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "PrimaryThreadId", NameW: []uint16{'P', 'r', 'i', 'm', 'a', 'r', 'y', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "SwitchFlags", NameW: []uint16{'S', 'w', 'i', 't', 'c', 'h', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -1941,7 +2135,9 @@ var mofUmsDirectedSwitchStart = &MofClassDef{
 // mofPerfInfo class definition
 var mofPerfInfo = &MofClassDef{
 	Name: "PerfInfo",
+	NameW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}"),
 	Version: 3,
 }
@@ -1959,15 +2155,17 @@ var mofPerfInfo = &MofClassDef{
 // mofSampledProfileInterval_V3 class definition
 var mofSampledProfileInterval_V3 = &MofClassDef{
 	Name: "SampledProfileInterval_V3",
+	NameW: []uint16{'S', 'a', 'm', 'p', 'l', 'e', 'd', 'P', 'r', 'o', 'f', 'i', 'l', 'e', 'I', 'n', 't', 'e', 'r', 'v', 'a', 'l', '_', 'V', '3', 0},
 	Base: "PerfInfo",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', 0},
 	GUID: mofPerfInfo.GUID,
 	Version: mofPerfInfo.Version,
 	EventTypes: []uint8{ 73,  74 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Source", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "NewInterval", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "OldInterval", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "SourceName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Source", NameW: []uint16{'S', 'o', 'u', 'r', 'c', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "NewInterval", NameW: []uint16{'N', 'e', 'w', 'I', 'n', 't', 'e', 'r', 'v', 'a', 'l', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "OldInterval", NameW: []uint16{'O', 'l', 'd', 'I', 'n', 't', 'e', 'r', 'v', 'a', 'l', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "SourceName", NameW: []uint16{'S', 'o', 'u', 'r', 'c', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -1980,15 +2178,17 @@ var mofSampledProfileInterval_V3 = &MofClassDef{
 // mofSpinLockConfig_V3 class definition
 var mofSpinLockConfig_V3 = &MofClassDef{
 	Name: "SpinLockConfig_V3",
+	NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', 0},
 	Base: "PerfInfo",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', 0},
 	GUID: mofPerfInfo.GUID,
 	Version: mofPerfInfo.Version,
 	EventTypes: []uint8{ 75,  76 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "SpinLockSpinThreshold", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "SpinLockContentionSampleRate", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "SpinLockAcquireSampleRate", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "SpinLockHoldThreshold", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "SpinLockSpinThreshold", NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'S', 'p', 'i', 'n', 'T', 'h', 'r', 'e', 's', 'h', 'o', 'l', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "SpinLockContentionSampleRate", NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'C', 'o', 'n', 't', 'e', 'n', 't', 'i', 'o', 'n', 'S', 'a', 'm', 'p', 'l', 'e', 'R', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "SpinLockAcquireSampleRate", NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'A', 'c', 'q', 'u', 'i', 'r', 'e', 'S', 'a', 'm', 'p', 'l', 'e', 'R', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "SpinLockHoldThreshold", NameW: []uint16{'S', 'p', 'i', 'n', 'L', 'o', 'c', 'k', 'H', 'o', 'l', 'd', 'T', 'h', 'r', 'e', 's', 'h', 'o', 'l', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -1997,7 +2197,9 @@ var mofSpinLockConfig_V3 = &MofClassDef{
 // mofTcpIp_V1 class definition
 var mofTcpIp_V1 = &MofClassDef{
 	Name: "TcpIp_V1",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}"),
 	Version: 1,
 }
@@ -2008,12 +2210,14 @@ var mofTcpIp_V1 = &MofClassDef{
 // mofTcpIp_V1_Fail class definition
 var mofTcpIp_V1_Fail = &MofClassDef{
 	Name: "TcpIp_V1_Fail",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', '_', 'F', 'a', 'i', 'l', 0},
 	Base: "TcpIp_V1",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', 0},
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 17 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Proto", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Proto", NameW: []uint16{'P', 'r', 'o', 't', 'o', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2031,19 +2235,21 @@ var mofTcpIp_V1_Fail = &MofClassDef{
 // mofTcpIp_V1_TypeGroup3 class definition
 var mofTcpIp_V1_TypeGroup3 = &MofClassDef{
 	Name: "TcpIp_V1_TypeGroup3",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '3', 0},
 	Base: "TcpIp_V1",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', 0},
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 18,  19,  20,  21,  22 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "connid", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "seqnum", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2062,21 +2268,23 @@ var mofTcpIp_V1_TypeGroup3 = &MofClassDef{
 // mofTcpIp_V1_Send class definition
 var mofTcpIp_V1_Send = &MofClassDef{
 	Name: "TcpIp_V1_Send",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', '_', 'S', 'e', 'n', 'd', 0},
 	Base: "TcpIp_V1",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', 0},
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 10 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "startime", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "endtime", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "connid", InType: TDH_INTYPE_POINTER},
-		{ID: 10, Name: "seqnum", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "startime", NameW: []uint16{'s', 't', 'a', 'r', 't', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "endtime", NameW: []uint16{'e', 'n', 'd', 't', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 10, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2094,19 +2302,21 @@ var mofTcpIp_V1_Send = &MofClassDef{
 // mofTcpIp_V1_TypeGroup1 class definition
 var mofTcpIp_V1_TypeGroup1 = &MofClassDef{
 	Name: "TcpIp_V1_TypeGroup1",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "TcpIp_V1",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', 0},
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 13,  14,  16 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "connid", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "seqnum", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2130,26 +2340,28 @@ var mofTcpIp_V1_TypeGroup1 = &MofClassDef{
 // mofTcpIp_V1_TypeGroup2 class definition
 var mofTcpIp_V1_TypeGroup2 = &MofClassDef{
 	Name: "TcpIp_V1_TypeGroup2",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '2', 0},
 	Base: "TcpIp_V1",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', 0},
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 12,  15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "mss", InType: TDH_INTYPE_UINT16},
-		{ID: 8, Name: "sackopt", InType: TDH_INTYPE_UINT16},
-		{ID: 9, Name: "tsopt", InType: TDH_INTYPE_UINT16},
-		{ID: 10, Name: "wsopt", InType: TDH_INTYPE_UINT16},
-		{ID: 11, Name: "rcvwin", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "rcvwinscale", InType: TDH_INTYPE_INT16},
-		{ID: 13, Name: "sndwinscale", InType: TDH_INTYPE_INT16},
-		{ID: 14, Name: "connid", InType: TDH_INTYPE_POINTER},
-		{ID: 15, Name: "seqnum", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "mss", NameW: []uint16{'m', 's', 's', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 8, Name: "sackopt", NameW: []uint16{'s', 'a', 'c', 'k', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 9, Name: "tsopt", NameW: []uint16{'t', 's', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 10, Name: "wsopt", NameW: []uint16{'w', 's', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 11, Name: "rcvwin", NameW: []uint16{'r', 'c', 'v', 'w', 'i', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "rcvwinscale", NameW: []uint16{'r', 'c', 'v', 'w', 'i', 'n', 's', 'c', 'a', 'l', 'e', 0}, InType: TDH_INTYPE_INT16},
+		{ID: 13, Name: "sndwinscale", NameW: []uint16{'s', 'n', 'd', 'w', 'i', 'n', 's', 'c', 'a', 'l', 'e', 0}, InType: TDH_INTYPE_INT16},
+		{ID: 14, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 15, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2166,19 +2378,21 @@ var mofTcpIp_V1_TypeGroup2 = &MofClassDef{
 // mofTcpIp_V1_Receive class definition
 var mofTcpIp_V1_Receive = &MofClassDef{
 	Name: "TcpIp_V1_Receive",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', '_', 'R', 'e', 'c', 'e', 'i', 'v', 'e', 0},
 	Base: "TcpIp_V1",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '1', 0},
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "connid", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "seqnum", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2187,7 +2401,9 @@ var mofTcpIp_V1_Receive = &MofClassDef{
 // mofEventTraceEvent class definition
 var mofEventTraceEvent = &MofClassDef{
 	Name: "EventTraceEvent",
+	NameW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{68fdd900-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 2,
 }
@@ -2200,12 +2416,14 @@ var mofEventTraceEvent = &MofClassDef{
 // mofHeader_BuildInfo_TypeGroup class definition
 var mofHeader_BuildInfo_TypeGroup = &MofClassDef{
 	Name: "Header_BuildInfo_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'B', 'u', 'i', 'l', 'd', 'I', 'n', 'f', 'o', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 66 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BuildString", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BuildString", NameW: []uint16{'B', 'u', 'i', 'l', 'd', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2218,14 +2436,16 @@ var mofHeader_BuildInfo_TypeGroup = &MofClassDef{
 // mofHeader_DbgIdRSDS_TypeGroup class definition
 var mofHeader_DbgIdRSDS_TypeGroup = &MofClassDef{
 	Name: "Header_DbgIdRSDS_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'D', 'b', 'g', 'I', 'd', 'R', 'S', 'D', 'S', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 64 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Guid", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID},
-		{ID: 2, Name: "Age", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "PdbName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Guid", NameW: []uint16{'G', 'u', 'i', 'd', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID"},
+		{ID: 2, Name: "Age", NameW: []uint16{'A', 'g', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "PdbName", NameW: []uint16{'P', 'd', 'b', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2248,17 +2468,19 @@ var mofHeader_DbgIdRSDS_TypeGroup = &MofClassDef{
 // mofHeader_PartitionInfoExtensionV2_TypeGroup class definition
 var mofHeader_PartitionInfoExtensionV2_TypeGroup = &MofClassDef{
 	Name: "Header_PartitionInfoExtensionV2_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'I', 'n', 'f', 'o', 'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: 2,
 	EventTypes: []uint8{ 80 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "EventVersion", InType: TDH_INTYPE_UINT16},
-		{ID: 2, Name: "Reserved", InType: TDH_INTYPE_UINT16},
-		{ID: 3, Name: "PartitionType", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "QpcOffsetFromRoot", InType: TDH_INTYPE_INT64},
-		{ID: 5, Name: "PartitionId", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "ParentId", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "EventVersion", NameW: []uint16{'E', 'v', 'e', 'n', 't', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 2, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 3, Name: "PartitionType", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "QpcOffsetFromRoot", NameW: []uint16{'Q', 'p', 'c', 'O', 'f', 'f', 's', 'e', 't', 'F', 'r', 'o', 'm', 'R', 'o', 'o', 't', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 5, Name: "PartitionId", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "ParentId", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'd', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2277,20 +2499,22 @@ var mofHeader_PartitionInfoExtensionV2_TypeGroup = &MofClassDef{
 // mofHeader_Extension_TypeGroup class definition
 var mofHeader_Extension_TypeGroup = &MofClassDef{
 	Name: "Header_Extension_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 5,  32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "GroupMask1", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "GroupMask2", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "GroupMask3", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "GroupMask4", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 5, Name: "GroupMask5", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 6, Name: "GroupMask6", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 7, Name: "GroupMask7", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 8, Name: "GroupMask8", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 9, Name: "KernelEventVersion", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "GroupMask1", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '1', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "GroupMask2", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '2', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "GroupMask3", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '3', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "GroupMask4", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '4', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 5, Name: "GroupMask5", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '5', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 6, Name: "GroupMask6", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '6', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 7, Name: "GroupMask7", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '7', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 8, Name: "GroupMask8", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '8', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 9, Name: "KernelEventVersion", NameW: []uint16{'K', 'e', 'r', 'n', 'e', 'l', 'E', 'v', 'e', 'n', 't', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -2303,14 +2527,16 @@ var mofHeader_Extension_TypeGroup = &MofClassDef{
 // mofHeader_LastDroppedTimes_TypeGroup class definition
 var mofHeader_LastDroppedTimes_TypeGroup = &MofClassDef{
 	Name: "Header_LastDroppedTimes_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'L', 'a', 's', 't', 'D', 'r', 'o', 'p', 'p', 'e', 'd', 'T', 'i', 'm', 'e', 's', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 82 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "TimeStampCount", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Padding", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "TimeStamp", InType: TDH_INTYPE_UINT64, SizeFromID: 1},
+		{ID: 1, Name: "TimeStampCount", NameW: []uint16{'T', 'i', 'm', 'e', 'S', 't', 'a', 'm', 'p', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Padding", NameW: []uint16{'P', 'a', 'd', 'd', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "TimeStamp", NameW: []uint16{'T', 'i', 'm', 'e', 'S', 't', 'a', 'm', 'p', 0}, InType: TDH_INTYPE_UINT64, SizeFromID: 1},
 	},
 }
 
@@ -2327,17 +2553,19 @@ var mofHeader_LastDroppedTimes_TypeGroup = &MofClassDef{
 // mofHeader_PartitionInfoExtension_TypeGroup class definition
 var mofHeader_PartitionInfoExtension_TypeGroup = &MofClassDef{
 	Name: "Header_PartitionInfoExtension_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'I', 'n', 'f', 'o', 'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: 0,
 	EventTypes: []uint8{ 80 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "EventVersion", InType: TDH_INTYPE_UINT16},
-		{ID: 2, Name: "Reserved", InType: TDH_INTYPE_UINT16},
-		{ID: 3, Name: "PartitionType", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "QpcOffsetFromRoot", InType: TDH_INTYPE_INT64},
-		{ID: 5, Name: "PartitionId", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID},
-		{ID: 6, Name: "ParentId", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID},
+		{ID: 1, Name: "EventVersion", NameW: []uint16{'E', 'v', 'e', 'n', 't', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 2, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 3, Name: "PartitionType", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "QpcOffsetFromRoot", NameW: []uint16{'Q', 'p', 'c', 'O', 'f', 'f', 's', 'e', 't', 'F', 'r', 'o', 'm', 'R', 'o', 'o', 't', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 5, Name: "PartitionId", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID"},
+		{ID: 6, Name: "ParentId", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'd', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID"},
 	},
 }
 
@@ -2376,34 +2604,36 @@ var mofHeader_PartitionInfoExtension_TypeGroup = &MofClassDef{
 // mofEventTrace_Header class definition
 var mofEventTrace_Header = &MofClassDef{
 	Name: "EventTrace_Header",
+	NameW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', '_', 'H', 'e', 'a', 'd', 'e', 'r', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 0 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BufferSize", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Version", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "ProviderVersion", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "NumberOfProcessors", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "EndTime", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "TimerResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "MaxFileSize", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "LogFileMode", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 9, Name: "BuffersWritten", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "StartBuffers", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "PointerSize", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "EventsLost", InType: TDH_INTYPE_UINT32},
-		{ID: 13, Name: "CPUSpeed", InType: TDH_INTYPE_UINT32},
-		{ID: 14, Name: "LoggerName", InType: TDH_INTYPE_POINTER},
-		{ID: 15, Name: "LogFileName", InType: TDH_INTYPE_POINTER},
-		{ID: 16, Name: "TimeZoneInformation", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_NULL, IsArray: true, ArraySize: 176},
-		{ID: 17, Name: "BootTime", InType: TDH_INTYPE_UINT64},
-		{ID: 18, Name: "PerfFreq", InType: TDH_INTYPE_UINT64},
-		{ID: 19, Name: "StartTime", InType: TDH_INTYPE_UINT64},
-		{ID: 20, Name: "ReservedFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 21, Name: "BuffersLost", InType: TDH_INTYPE_UINT32},
-		{ID: 22, Name: "SessionNameString", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 23, Name: "LogFileNameString", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BufferSize", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Version", NameW: []uint16{'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "ProviderVersion", NameW: []uint16{'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "NumberOfProcessors", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "EndTime", NameW: []uint16{'E', 'n', 'd', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "TimerResolution", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "MaxFileSize", NameW: []uint16{'M', 'a', 'x', 'F', 'i', 'l', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "LogFileMode", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'M', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 9, Name: "BuffersWritten", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 's', 'W', 'r', 'i', 't', 't', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "StartBuffers", NameW: []uint16{'S', 't', 'a', 'r', 't', 'B', 'u', 'f', 'f', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "PointerSize", NameW: []uint16{'P', 'o', 'i', 'n', 't', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "EventsLost", NameW: []uint16{'E', 'v', 'e', 'n', 't', 's', 'L', 'o', 's', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 13, Name: "CPUSpeed", NameW: []uint16{'C', 'P', 'U', 'S', 'p', 'e', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 14, Name: "LoggerName", NameW: []uint16{'L', 'o', 'g', 'g', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 15, Name: "LogFileName", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 16, Name: "TimeZoneInformation", NameW: []uint16{'T', 'i', 'm', 'e', 'Z', 'o', 'n', 'e', 'I', 'n', 'f', 'o', 'r', 'm', 'a', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_NULL, Extension: "NoPrint", IsArray: true, ArraySize: 176},
+		{ID: 17, Name: "BootTime", NameW: []uint16{'B', 'o', 'o', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 18, Name: "PerfFreq", NameW: []uint16{'P', 'e', 'r', 'f', 'F', 'r', 'e', 'q', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 19, Name: "StartTime", NameW: []uint16{'S', 't', 'a', 'r', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 20, Name: "ReservedFlags", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 21, Name: "BuffersLost", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 's', 'L', 'o', 's', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 22, Name: "SessionNameString", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'N', 'a', 'm', 'e', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 23, Name: "LogFileNameString", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2419,14 +2649,16 @@ var mofEventTrace_Header = &MofClassDef{
 // mofHeader_ProviderBinaryPath_TypeGroup class definition
 var mofHeader_ProviderBinaryPath_TypeGroup = &MofClassDef{
 	Name: "Header_ProviderBinaryPath_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r', 'B', 'i', 'n', 'a', 'r', 'y', 'P', 'a', 't', 'h', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 67 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "GuidCount", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Guid", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, SizeFromID: 1},
-		{ID: 3, Name: "BinaryPath", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "GuidCount", NameW: []uint16{'G', 'u', 'i', 'd', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Guid", NameW: []uint16{'G', 'u', 'i', 'd', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID", SizeFromID: 1},
+		{ID: 3, Name: "BinaryPath", NameW: []uint16{'B', 'i', 'n', 'a', 'r', 'y', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2434,7 +2666,9 @@ var mofHeader_ProviderBinaryPath_TypeGroup = &MofClassDef{
 // mofRDComplete class definition
 var mofRDComplete = &MofClassDef{
 	Name: "RDComplete",
+	NameW: []uint16{'R', 'D', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'e', 0},
 	Base: "EventTraceEvent",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 8 },
@@ -2445,7 +2679,9 @@ var mofRDComplete = &MofClassDef{
 // mofMMCSSTrace class definition
 var mofMMCSSTrace = &MofClassDef{
 	Name: "MMCSSTrace",
+	NameW: []uint16{'M', 'M', 'C', 'S', 'S', 'T', 'r', 'a', 'c', 'e', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{f8f10121-b617-4a56-868b-9df1b27fe32c}"),
 	Version: 0,
 }
@@ -2459,15 +2695,17 @@ var mofMMCSSTrace = &MofClassDef{
 // mofMMCSSEvent class definition
 var mofMMCSSEvent = &MofClassDef{
 	Name: "MMCSSEvent",
+	NameW: []uint16{'M', 'M', 'C', 'S', 'S', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "MMCSSTrace",
+	BaseW: []uint16{'M', 'M', 'C', 'S', 'S', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofMMCSSTrace.GUID,
 	Version: mofMMCSSTrace.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ScheduledPID", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ScheduledTID", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "SchedulingPriority", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "TaskIndex", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "ScheduledPID", NameW: []uint16{'S', 'c', 'h', 'e', 'd', 'u', 'l', 'e', 'd', 'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ScheduledTID", NameW: []uint16{'S', 'c', 'h', 'e', 'd', 'u', 'l', 'e', 'd', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "SchedulingPriority", NameW: []uint16{'S', 'c', 'h', 'e', 'd', 'u', 'l', 'i', 'n', 'g', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "TaskIndex", NameW: []uint16{'T', 'a', 's', 'k', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2477,12 +2715,14 @@ var mofMMCSSEvent = &MofClassDef{
 // mofMMCSSWakeup class definition
 var mofMMCSSWakeup = &MofClassDef{
 	Name: "MMCSSWakeup",
+	NameW: []uint16{'M', 'M', 'C', 'S', 'S', 'W', 'a', 'k', 'e', 'u', 'p', 0},
 	Base: "MMCSSTrace",
+	BaseW: []uint16{'M', 'M', 'C', 'S', 'S', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofMMCSSTrace.GUID,
 	Version: mofMMCSSTrace.Version,
 	EventTypes: []uint8{ 35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Reason", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "Reason", NameW: []uint16{'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -2491,7 +2731,9 @@ var mofMMCSSWakeup = &MofClassDef{
 // mofMMCSS_TypeGroup class definition
 var mofMMCSS_TypeGroup = &MofClassDef{
 	Name: "MMCSS_TypeGroup",
+	NameW: []uint16{'M', 'M', 'C', 'S', 'S', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "MMCSSTrace",
+	BaseW: []uint16{'M', 'M', 'C', 'S', 'S', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofMMCSSTrace.GUID,
 	Version: mofMMCSSTrace.Version,
 	EventTypes: []uint8{ 32,  33,  36,  37 },
@@ -2502,7 +2744,9 @@ var mofMMCSS_TypeGroup = &MofClassDef{
 // mofSystemConfig_V1 class definition
 var mofSystemConfig_V1 = &MofClassDef{
 	Name: "SystemConfig_V1",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 1,
 }
@@ -2528,26 +2772,28 @@ var mofSystemConfig_V1 = &MofClassDef{
 // mofSystemConfig_V1_LogDisk class definition
 var mofSystemConfig_V1_LogDisk = &MofClassDef{
 	Name: "SystemConfig_V1_LogDisk",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'L', 'o', 'g', 'D', 'i', 's', 'k', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 12 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "StartOffset", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "PartitionSize", InType: TDH_INTYPE_UINT64},
-		{ID: 3, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Size", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "DriveType", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "DriveLetterString", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 4},
-		{ID: 7, Name: "Pad1", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "PartitionNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "SectorsPerCluster", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "BytesPerSector", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "Pad2", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "NumberOfFreeClusters", InType: TDH_INTYPE_INT64},
-		{ID: 13, Name: "TotalNumberOfClusters", InType: TDH_INTYPE_INT64},
-		{ID: 14, Name: "FileSystem", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 16},
-		{ID: 15, Name: "VolumeExt", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "StartOffset", NameW: []uint16{'S', 't', 'a', 'r', 't', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "PartitionSize", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 3, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Size", NameW: []uint16{'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "DriveType", NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "DriveLetterString", NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'L', 'e', 't', 't', 'e', 'r', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 4},
+		{ID: 7, Name: "Pad1", NameW: []uint16{'P', 'a', 'd', '1', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "PartitionNumber", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "SectorsPerCluster", NameW: []uint16{'S', 'e', 'c', 't', 'o', 'r', 's', 'P', 'e', 'r', 'C', 'l', 'u', 's', 't', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "BytesPerSector", NameW: []uint16{'B', 'y', 't', 'e', 's', 'P', 'e', 'r', 'S', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "Pad2", NameW: []uint16{'P', 'a', 'd', '2', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "NumberOfFreeClusters", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'F', 'r', 'e', 'e', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 13, Name: "TotalNumberOfClusters", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 14, Name: "FileSystem", NameW: []uint16{'F', 'i', 'l', 'e', 'S', 'y', 's', 't', 'e', 'm', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 16},
+		{ID: 15, Name: "VolumeExt", NameW: []uint16{'V', 'o', 'l', 'u', 'm', 'e', 'E', 'x', 't', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2572,26 +2818,28 @@ var mofSystemConfig_V1_LogDisk = &MofClassDef{
 // mofSystemConfig_V1_PhyDisk class definition
 var mofSystemConfig_V1_PhyDisk = &MofClassDef{
 	Name: "SystemConfig_V1_PhyDisk",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'P', 'h', 'y', 'D', 'i', 's', 'k', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "BytesPerSector", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "SectorsPerTrack", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "TracksPerCylinder", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "Cylinders", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "SCSIPort", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "SCSIPath", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "SCSITarget", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "SCSILun", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "Manufacturer", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 11, Name: "PartitionCount", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "WriteCacheEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 13, Name: "Pad", InType: TDH_INTYPE_UINT8},
-		{ID: 14, Name: "BootDriveLetter", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 3},
-		{ID: 15, Name: "Spare", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 2},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "BytesPerSector", NameW: []uint16{'B', 'y', 't', 'e', 's', 'P', 'e', 'r', 'S', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "SectorsPerTrack", NameW: []uint16{'S', 'e', 'c', 't', 'o', 'r', 's', 'P', 'e', 'r', 'T', 'r', 'a', 'c', 'k', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "TracksPerCylinder", NameW: []uint16{'T', 'r', 'a', 'c', 'k', 's', 'P', 'e', 'r', 'C', 'y', 'l', 'i', 'n', 'd', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "Cylinders", NameW: []uint16{'C', 'y', 'l', 'i', 'n', 'd', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "SCSIPort", NameW: []uint16{'S', 'C', 'S', 'I', 'P', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "SCSIPath", NameW: []uint16{'S', 'C', 'S', 'I', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "SCSITarget", NameW: []uint16{'S', 'C', 'S', 'I', 'T', 'a', 'r', 'g', 'e', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "SCSILun", NameW: []uint16{'S', 'C', 'S', 'I', 'L', 'u', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "Manufacturer", NameW: []uint16{'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 11, Name: "PartitionCount", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "WriteCacheEnabled", NameW: []uint16{'W', 'r', 'i', 't', 'e', 'C', 'a', 'c', 'h', 'e', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 13, Name: "Pad", NameW: []uint16{'P', 'a', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 14, Name: "BootDriveLetter", NameW: []uint16{'B', 'o', 'o', 't', 'D', 'r', 'i', 'v', 'e', 'L', 'e', 't', 't', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 3},
+		{ID: 15, Name: "Spare", NameW: []uint16{'S', 'p', 'a', 'r', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 2},
 	},
 }
 
@@ -2608,15 +2856,17 @@ var mofSystemConfig_V1_PhyDisk = &MofClassDef{
 // mofSystemConfig_V1_IRQ class definition
 var mofSystemConfig_V1_IRQ = &MofClassDef{
 	Name: "SystemConfig_V1_IRQ",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'I', 'R', 'Q', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 21 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IRQAffinity", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 2, Name: "IRQNum", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "DeviceDescriptionLen", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IRQAffinity", NameW: []uint16{'I', 'R', 'Q', 'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 2, Name: "IRQNum", NameW: []uint16{'I', 'R', 'Q', 'N', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "DeviceDescriptionLen", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'L', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2634,19 +2884,21 @@ var mofSystemConfig_V1_IRQ = &MofClassDef{
 // mofSystemConfig_V1_CPU class definition
 var mofSystemConfig_V1_CPU = &MofClassDef{
 	Name: "SystemConfig_V1_CPU",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'C', 'P', 'U', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 10 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MHz", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "NumberOfProcessors", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "MemSize", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "PageSize", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "AllocationGranularity", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ComputerName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 7, Name: "DomainName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 132},
-		{ID: 8, Name: "HyperThreadingFlag", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "MHz", NameW: []uint16{'M', 'H', 'z', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "NumberOfProcessors", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "MemSize", NameW: []uint16{'M', 'e', 'm', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "PageSize", NameW: []uint16{'P', 'a', 'g', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "AllocationGranularity", NameW: []uint16{'A', 'l', 'l', 'o', 'c', 'a', 't', 'i', 'o', 'n', 'G', 'r', 'a', 'n', 'u', 'l', 'a', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ComputerName", NameW: []uint16{'C', 'o', 'm', 'p', 'u', 't', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 7, Name: "DomainName", NameW: []uint16{'D', 'o', 'm', 'a', 'i', 'n', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 132},
+		{ID: 8, Name: "HyperThreadingFlag", NameW: []uint16{'H', 'y', 'p', 'e', 'r', 'T', 'h', 'r', 'e', 'a', 'd', 'i', 'n', 'g', 'F', 'l', 'a', 'g', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -2664,19 +2916,21 @@ var mofSystemConfig_V1_CPU = &MofClassDef{
 // mofSystemConfig_V1_Power class definition
 var mofSystemConfig_V1_Power = &MofClassDef{
 	Name: "SystemConfig_V1_Power",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'P', 'o', 'w', 'e', 'r', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 16 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "S1", InType: TDH_INTYPE_UINT8},
-		{ID: 2, Name: "S2", InType: TDH_INTYPE_UINT8},
-		{ID: 3, Name: "S3", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "S4", InType: TDH_INTYPE_UINT8},
-		{ID: 5, Name: "S5", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "Pad1", InType: TDH_INTYPE_UINT8},
-		{ID: 7, Name: "Pad2", InType: TDH_INTYPE_UINT8},
-		{ID: 8, Name: "Pad3", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "S1", NameW: []uint16{'S', '1', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 2, Name: "S2", NameW: []uint16{'S', '2', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 3, Name: "S3", NameW: []uint16{'S', '3', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "S4", NameW: []uint16{'S', '4', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 5, Name: "S5", NameW: []uint16{'S', '5', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "Pad1", NameW: []uint16{'P', 'a', 'd', '1', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 7, Name: "Pad2", NameW: []uint16{'P', 'a', 'd', '2', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 8, Name: "Pad3", NameW: []uint16{'P', 'a', 'd', '3', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -2697,22 +2951,24 @@ var mofSystemConfig_V1_Power = &MofClassDef{
 // mofSystemConfig_V1_Video class definition
 var mofSystemConfig_V1_Video = &MofClassDef{
 	Name: "SystemConfig_V1_Video",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'V', 'i', 'd', 'e', 'o', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 14 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MemorySize", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "XResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "YResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "BitsPerPixel", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "VRefresh", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ChipType", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 7, Name: "DACType", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 8, Name: "AdapterString", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 9, Name: "BiosString", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 10, Name: "DeviceId", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 11, Name: "StateFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "MemorySize", NameW: []uint16{'M', 'e', 'm', 'o', 'r', 'y', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "XResolution", NameW: []uint16{'X', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "YResolution", NameW: []uint16{'Y', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "BitsPerPixel", NameW: []uint16{'B', 'i', 't', 's', 'P', 'e', 'r', 'P', 'i', 'x', 'e', 'l', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "VRefresh", NameW: []uint16{'V', 'R', 'e', 'f', 'r', 'e', 's', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ChipType", NameW: []uint16{'C', 'h', 'i', 'p', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 7, Name: "DACType", NameW: []uint16{'D', 'A', 'C', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 8, Name: "AdapterString", NameW: []uint16{'A', 'd', 'a', 'p', 't', 'e', 'r', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 9, Name: "BiosString", NameW: []uint16{'B', 'i', 'o', 's', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 10, Name: "DeviceId", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'd', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 11, Name: "StateFlags", NameW: []uint16{'S', 't', 'a', 't', 'e', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -2726,15 +2982,17 @@ var mofSystemConfig_V1_Video = &MofClassDef{
 // mofSystemConfig_V1_Services class definition
 var mofSystemConfig_V1_Services = &MofClassDef{
 	Name: "SystemConfig_V1_Services",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'S', 'e', 'r', 'v', 'i', 'c', 'e', 's', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ServiceName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 34},
-		{ID: 2, Name: "DisplayName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 3, Name: "ProcessName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 34},
-		{ID: 4, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "ServiceName", NameW: []uint16{'S', 'e', 'r', 'v', 'i', 'c', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 34},
+		{ID: 2, Name: "DisplayName", NameW: []uint16{'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 3, Name: "ProcessName", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 34},
+		{ID: 4, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2759,17 +3017,19 @@ var mofSystemConfig_V1_Services = &MofClassDef{
 // mofSystemConfig_V1_PnP class definition
 var mofSystemConfig_V1_PnP = &MofClassDef{
 	Name: "SystemConfig_V1_PnP",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'P', 'n', 'P', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 22 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IDLength", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "DescriptionLength", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "FriendlyNameLength", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DeviceID", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "FriendlyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IDLength", NameW: []uint16{'I', 'D', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "DescriptionLength", NameW: []uint16{'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "FriendlyNameLength", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DeviceID", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "FriendlyName", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2795,27 +3055,29 @@ var mofSystemConfig_V1_PnP = &MofClassDef{
 // mofSystemConfig_V1_NIC class definition
 var mofSystemConfig_V1_NIC = &MofClassDef{
 	Name: "SystemConfig_V1_NIC",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', '_', 'N', 'I', 'C', 0},
 	Base: "SystemConfig_V1",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '1', 0},
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 13 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "NICName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 2, Name: "Index", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "PhysicalAddrLen", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "PhysicalAddr", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 8},
-		{ID: 5, Name: "Size", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "IpAddress", InType: TDH_INTYPE_INT32},
-		{ID: 7, Name: "SubnetMask", InType: TDH_INTYPE_INT32},
-		{ID: 8, Name: "DhcpServer", InType: TDH_INTYPE_INT32},
-		{ID: 9, Name: "Gateway", InType: TDH_INTYPE_INT32},
-		{ID: 10, Name: "PrimaryWinsServer", InType: TDH_INTYPE_INT32},
-		{ID: 11, Name: "SecondaryWinsServer", InType: TDH_INTYPE_INT32},
-		{ID: 12, Name: "DnsServer1", InType: TDH_INTYPE_INT32},
-		{ID: 13, Name: "DnsServer2", InType: TDH_INTYPE_INT32},
-		{ID: 14, Name: "DnsServer3", InType: TDH_INTYPE_INT32},
-		{ID: 15, Name: "DnsServer4", InType: TDH_INTYPE_INT32},
-		{ID: 16, Name: "Data", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "NICName", NameW: []uint16{'N', 'I', 'C', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 2, Name: "Index", NameW: []uint16{'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "PhysicalAddrLen", NameW: []uint16{'P', 'h', 'y', 's', 'i', 'c', 'a', 'l', 'A', 'd', 'd', 'r', 'L', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "PhysicalAddr", NameW: []uint16{'P', 'h', 'y', 's', 'i', 'c', 'a', 'l', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 8},
+		{ID: 5, Name: "Size", NameW: []uint16{'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "IpAddress", NameW: []uint16{'I', 'p', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 7, Name: "SubnetMask", NameW: []uint16{'S', 'u', 'b', 'n', 'e', 't', 'M', 'a', 's', 'k', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 8, Name: "DhcpServer", NameW: []uint16{'D', 'h', 'c', 'p', 'S', 'e', 'r', 'v', 'e', 'r', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 9, Name: "Gateway", NameW: []uint16{'G', 'a', 't', 'e', 'w', 'a', 'y', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 10, Name: "PrimaryWinsServer", NameW: []uint16{'P', 'r', 'i', 'm', 'a', 'r', 'y', 'W', 'i', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 11, Name: "SecondaryWinsServer", NameW: []uint16{'S', 'e', 'c', 'o', 'n', 'd', 'a', 'r', 'y', 'W', 'i', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 12, Name: "DnsServer1", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', '1', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 13, Name: "DnsServer2", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', '2', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 14, Name: "DnsServer3", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', '3', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 15, Name: "DnsServer4", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', '4', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 16, Name: "Data", NameW: []uint16{'D', 'a', 't', 'a', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2824,7 +3086,9 @@ var mofSystemConfig_V1_NIC = &MofClassDef{
 // mofRegistry class definition
 var mofRegistry = &MofClassDef{
 	Name: "Registry",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}"),
 	Version: 2,
 }
@@ -2840,14 +3104,16 @@ var mofRegistry = &MofClassDef{
 // mofRegistry_HiveDirty class definition
 var mofRegistry_HiveDirty = &MofClassDef{
 	Name: "Registry_HiveDirty",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'H', 'i', 'v', 'e', 'D', 'i', 'r', 't', 'y', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 40 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Hive", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "LinkPath", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 3, Name: "DirtyReason", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Hive", NameW: []uint16{'H', 'i', 'v', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "LinkPath", NameW: []uint16{'L', 'i', 'n', 'k', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 3, Name: "DirtyReason", NameW: []uint16{'D', 'i', 'r', 't', 'y', 'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2857,12 +3123,14 @@ var mofRegistry_HiveDirty = &MofClassDef{
 // mofRegistry_Config class definition
 var mofRegistry_Config = &MofClassDef{
 	Name: "Registry_Config",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'C', 'o', 'n', 'f', 'i', 'g', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "CurrentControlSet", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "CurrentControlSet", NameW: []uint16{'C', 'u', 'r', 'r', 'e', 'n', 't', 'C', 'o', 'n', 't', 'r', 'o', 'l', 'S', 'e', 't', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -2880,14 +3148,16 @@ var mofRegistry_Config = &MofClassDef{
 // mofRegistry_HiveDestroy class definition
 var mofRegistry_HiveDestroy = &MofClassDef{
 	Name: "Registry_HiveDestroy",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'H', 'i', 'v', 'e', 'D', 'e', 's', 't', 'r', 'o', 'y', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 37 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Hive", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 3, Name: "Path", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Hive", NameW: []uint16{'H', 'i', 'v', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 3, Name: "Path", NameW: []uint16{'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2907,22 +3177,24 @@ var mofRegistry_HiveDestroy = &MofClassDef{
 // mofRegistry_Counters class definition
 var mofRegistry_Counters = &MofClassDef{
 	Name: "Registry_Counters",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'C', 'o', 'u', 'n', 't', 'e', 'r', 's', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Counter1", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "Counter2", InType: TDH_INTYPE_UINT64},
-		{ID: 3, Name: "Counter3", InType: TDH_INTYPE_UINT64},
-		{ID: 4, Name: "Counter4", InType: TDH_INTYPE_UINT64},
-		{ID: 5, Name: "Counter5", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "Counter6", InType: TDH_INTYPE_UINT64},
-		{ID: 7, Name: "Counter7", InType: TDH_INTYPE_UINT64},
-		{ID: 8, Name: "Counter8", InType: TDH_INTYPE_UINT64},
-		{ID: 9, Name: "Counter9", InType: TDH_INTYPE_UINT64},
-		{ID: 10, Name: "Counter10", InType: TDH_INTYPE_UINT64},
-		{ID: 11, Name: "Counter11", InType: TDH_INTYPE_UINT64},
+		{ID: 1, Name: "Counter1", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '1', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "Counter2", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '2', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 3, Name: "Counter3", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '3', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 4, Name: "Counter4", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '4', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 5, Name: "Counter5", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '5', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "Counter6", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '6', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 7, Name: "Counter7", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '7', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 8, Name: "Counter8", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '8', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 9, Name: "Counter9", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '9', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 10, Name: "Counter10", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '1', '0', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 11, Name: "Counter11", NameW: []uint16{'C', 'o', 'u', 'n', 't', 'e', 'r', '1', '1', 0}, InType: TDH_INTYPE_UINT64},
 	},
 }
 
@@ -2943,17 +3215,19 @@ var mofRegistry_Counters = &MofClassDef{
 // mofRegistry_TypeGroup1 class definition
 var mofRegistry_TypeGroup1 = &MofClassDef{
 	Name: "Registry_TypeGroup1",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14,  15,  16,  17,  18,  19, 
              20,  21,  22,  23,  24,  25,  26,  27,  28,  29 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_INT64},
-		{ID: 2, Name: "Status", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "Index", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "KeyHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "KeyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 2, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "Index", NameW: []uint16{'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "KeyHandle", NameW: []uint16{'K', 'e', 'y', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "KeyName", NameW: []uint16{'K', 'e', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2970,16 +3244,18 @@ var mofRegistry_TypeGroup1 = &MofClassDef{
 // mofRegistry_HiveInitialize class definition
 var mofRegistry_HiveInitialize = &MofClassDef{
 	Name: "Registry_HiveInitialize",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'H', 'i', 'v', 'e', 'I', 'n', 'i', 't', 'i', 'a', 'l', 'i', 'z', 'e', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Hive", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "OperationType", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "PoolTag", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Size", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Hive", NameW: []uint16{'H', 'i', 'v', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "OperationType", NameW: []uint16{'O', 'p', 'e', 'r', 'a', 't', 'i', 'o', 'n', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "PoolTag", NameW: []uint16{'P', 'o', 'o', 'l', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Size", NameW: []uint16{'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -2996,16 +3272,18 @@ var mofRegistry_HiveInitialize = &MofClassDef{
 // mofRegistry_TxR class definition
 var mofRegistry_TxR = &MofClassDef{
 	Name: "Registry_TxR",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'T', 'x', 'R', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 30,  31,  32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "TxrGUID", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID},
-		{ID: 2, Name: "Status", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "UowCount", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "OperationTime", InType: TDH_INTYPE_UINT64},
-		{ID: 5, Name: "Hive", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "TxrGUID", NameW: []uint16{'T', 'x', 'r', 'G', 'U', 'I', 'D', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID"},
+		{ID: 2, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "UowCount", NameW: []uint16{'U', 'o', 'w', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "OperationTime", NameW: []uint16{'O', 'p', 'e', 'r', 'a', 't', 'i', 'o', 'n', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 5, Name: "Hive", NameW: []uint16{'H', 'i', 'v', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3025,16 +3303,18 @@ var mofRegistry_TxR = &MofClassDef{
 // mofRegistry_HiveRundown class definition
 var mofRegistry_HiveRundown = &MofClassDef{
 	Name: "Registry_HiveRundown",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'H', 'i', 'v', 'e', 'R', 'u', 'n', 'd', 'o', 'w', 'n', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 39 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Size", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "Hive", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "LoadedKeyCount", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "LinkPath", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Size", NameW: []uint16{'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "Hive", NameW: []uint16{'H', 'i', 'v', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "LoadedKeyCount", NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'd', 'K', 'e', 'y', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "LinkPath", NameW: []uint16{'L', 'i', 'n', 'k', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3049,16 +3329,18 @@ var mofRegistry_HiveRundown = &MofClassDef{
 // mofRegistry_ChangeNotification class definition
 var mofRegistry_ChangeNotification = &MofClassDef{
 	Name: "Registry_ChangeNotification",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'C', 'h', 'a', 'n', 'g', 'e', 'N', 'o', 't', 'i', 'f', 'i', 'c', 'a', 't', 'i', 'o', 'n', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 48 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Notification", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "KeyHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "Type", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "WatchSubtree", InType: TDH_INTYPE_UINT8},
-		{ID: 5, Name: "Primary", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "Notification", NameW: []uint16{'N', 'o', 't', 'i', 'f', 'i', 'c', 'a', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "KeyHandle", NameW: []uint16{'K', 'e', 'y', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "Type", NameW: []uint16{'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "WatchSubtree", NameW: []uint16{'W', 'a', 't', 'c', 'h', 'S', 'u', 'b', 't', 'r', 'e', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 5, Name: "Primary", NameW: []uint16{'P', 'r', 'i', 'm', 'a', 'r', 'y', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -3072,13 +3354,15 @@ var mofRegistry_ChangeNotification = &MofClassDef{
 // mofRegistry_HiveLink class definition
 var mofRegistry_HiveLink = &MofClassDef{
 	Name: "Registry_HiveLink",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'H', 'i', 'v', 'e', 'L', 'i', 'n', 'k', 0},
 	Base: "Registry",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 38 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Hive", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "Path", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Hive", NameW: []uint16{'H', 'i', 'v', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "Path", NameW: []uint16{'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3087,7 +3371,9 @@ var mofRegistry_HiveLink = &MofClassDef{
 // mofPageFault class definition
 var mofPageFault = &MofClassDef{
 	Name: "PageFault",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 3,
 }
@@ -3103,16 +3389,18 @@ var mofPageFault = &MofClassDef{
 // mofPageFault_HeapRangeRundown_V4 class definition
 var mofPageFault_HeapRangeRundown_V4 = &MofClassDef{
 	Name: "PageFault_HeapRangeRundown_V4",
+	NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', '_', 'H', 'e', 'a', 'p', 'R', 'a', 'n', 'g', 'e', 'R', 'u', 'n', 'd', 'o', 'w', 'n', '_', 'V', '4', 0},
 	Base: "PageFault",
+	BaseW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', 0},
 	GUID: mofPageFault.GUID,
 	Version: 4,
 	EventTypes: []uint8{ 100 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "HeapHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "HRFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "HRPid", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "HRRangeCount", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "HRHeapTag", InType: TDH_INTYPE_UINT64},
+		{ID: 1, Name: "HeapHandle", NameW: []uint16{'H', 'e', 'a', 'p', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "HRFlags", NameW: []uint16{'H', 'R', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "HRPid", NameW: []uint16{'H', 'R', 'P', 'i', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "HRRangeCount", NameW: []uint16{'H', 'R', 'R', 'a', 'n', 'g', 'e', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "HRHeapTag", NameW: []uint16{'H', 'R', 'H', 'e', 'a', 'p', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT64},
 	},
 }
 
@@ -3121,7 +3409,9 @@ var mofPageFault_HeapRangeRundown_V4 = &MofClassDef{
 // mofEventTraceEvent_V0 class definition
 var mofEventTraceEvent_V0 = &MofClassDef{
 	Name: "EventTraceEvent_V0",
+	NameW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{68fdd900-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 0,
 }
@@ -3130,7 +3420,9 @@ var mofEventTraceEvent_V0 = &MofClassDef{
 // mofRDComplete_V0 class definition
 var mofRDComplete_V0 = &MofClassDef{
 	Name: "RDComplete_V0",
+	NameW: []uint16{'R', 'D', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'e', '_', 'V', '0', 0},
 	Base: "EventTraceEvent_V0",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', '_', 'V', '0', 0},
 	GUID: mofEventTraceEvent_V0.GUID,
 	Version: mofEventTraceEvent_V0.Version,
 	EventTypes: []uint8{ 8 },
@@ -3150,19 +3442,21 @@ var mofRDComplete_V0 = &MofClassDef{
 // mofHeader_Extension_V0_TypeGroup class definition
 var mofHeader_Extension_V0_TypeGroup = &MofClassDef{
 	Name: "Header_Extension_V0_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', '_', 'V', '0', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent_V0",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', '_', 'V', '0', 0},
 	GUID: mofEventTraceEvent_V0.GUID,
 	Version: mofEventTraceEvent_V0.Version,
 	EventTypes: []uint8{ 5,  32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "GroupMask1", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "GroupMask2", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "GroupMask3", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "GroupMask4", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 5, Name: "GroupMask5", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 6, Name: "GroupMask6", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 7, Name: "GroupMask7", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 8, Name: "GroupMask8", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "GroupMask1", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '1', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "GroupMask2", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '2', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "GroupMask3", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '3', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "GroupMask4", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '4', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 5, Name: "GroupMask5", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '5', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 6, Name: "GroupMask6", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '6', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 7, Name: "GroupMask7", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '7', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 8, Name: "GroupMask8", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '8', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -3202,34 +3496,36 @@ var mofHeader_Extension_V0_TypeGroup = &MofClassDef{
 // mofEventTrace_V0_Header class definition
 var mofEventTrace_V0_Header = &MofClassDef{
 	Name: "EventTrace_V0_Header",
+	NameW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', '_', 'V', '0', '_', 'H', 'e', 'a', 'd', 'e', 'r', 0},
 	Base: "EventTraceEvent_V0",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', '_', 'V', '0', 0},
 	GUID: mofEventTraceEvent_V0.GUID,
 	Version: mofEventTraceEvent_V0.Version,
 	EventTypes: []uint8{ 0 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BufferSize", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Version", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "ProviderVersion", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "NumberOfProcessors", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "EndTime", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "TimerResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "MaxFileSize", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "LogFileMode", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 9, Name: "BuffersWritten", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "StartBuffers", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "PointerSize", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "EventsLost", InType: TDH_INTYPE_UINT32},
-		{ID: 13, Name: "CPUSpeed", InType: TDH_INTYPE_UINT32},
-		{ID: 14, Name: "LoggerName", InType: TDH_INTYPE_POINTER},
-		{ID: 15, Name: "LogFileName", InType: TDH_INTYPE_POINTER},
-		{ID: 16, Name: "TimeZoneInformation", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_NULL, IsArray: true, ArraySize: 176},
-		{ID: 17, Name: "BootTime", InType: TDH_INTYPE_UINT64},
-		{ID: 18, Name: "PerfFreq", InType: TDH_INTYPE_UINT64},
-		{ID: 19, Name: "StartTime", InType: TDH_INTYPE_UINT64},
-		{ID: 20, Name: "ReservedFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 21, Name: "BuffersLost", InType: TDH_INTYPE_UINT32},
-		{ID: 22, Name: "SessionNameString", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 23, Name: "LogFileNameString", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BufferSize", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Version", NameW: []uint16{'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "ProviderVersion", NameW: []uint16{'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "NumberOfProcessors", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "EndTime", NameW: []uint16{'E', 'n', 'd', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "TimerResolution", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "MaxFileSize", NameW: []uint16{'M', 'a', 'x', 'F', 'i', 'l', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "LogFileMode", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'M', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 9, Name: "BuffersWritten", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 's', 'W', 'r', 'i', 't', 't', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "StartBuffers", NameW: []uint16{'S', 't', 'a', 'r', 't', 'B', 'u', 'f', 'f', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "PointerSize", NameW: []uint16{'P', 'o', 'i', 'n', 't', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "EventsLost", NameW: []uint16{'E', 'v', 'e', 'n', 't', 's', 'L', 'o', 's', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 13, Name: "CPUSpeed", NameW: []uint16{'C', 'P', 'U', 'S', 'p', 'e', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 14, Name: "LoggerName", NameW: []uint16{'L', 'o', 'g', 'g', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 15, Name: "LogFileName", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 16, Name: "TimeZoneInformation", NameW: []uint16{'T', 'i', 'm', 'e', 'Z', 'o', 'n', 'e', 'I', 'n', 'f', 'o', 'r', 'm', 'a', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_NULL, Extension: "NoPrint", IsArray: true, ArraySize: 176},
+		{ID: 17, Name: "BootTime", NameW: []uint16{'B', 'o', 'o', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 18, Name: "PerfFreq", NameW: []uint16{'P', 'e', 'r', 'f', 'F', 'r', 'e', 'q', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 19, Name: "StartTime", NameW: []uint16{'S', 't', 'a', 'r', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 20, Name: "ReservedFlags", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 21, Name: "BuffersLost", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 's', 'L', 'o', 's', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 22, Name: "SessionNameString", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'N', 'a', 'm', 'e', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 23, Name: "LogFileNameString", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3238,7 +3534,9 @@ var mofEventTrace_V0_Header = &MofClassDef{
 // mofProcess_V1 class definition
 var mofProcess_V1 = &MofClassDef{
 	Name: "Process_V1",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 1,
 }
@@ -3257,18 +3555,20 @@ var mofProcess_V1 = &MofClassDef{
 // mofProcess_V1_TypeGroup1 class definition
 var mofProcess_V1_TypeGroup1 = &MofClassDef{
 	Name: "Process_V1_TypeGroup1",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Process_V1",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '1', 0},
 	GUID: mofProcess_V1.GUID,
 	Version: mofProcess_V1.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PageDirectoryBase", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "ParentId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "SessionId", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
-		{ID: 6, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "PageDirectoryBase", NameW: []uint16{'P', 'a', 'g', 'e', 'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "ParentId", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "SessionId", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ExitStatus", NameW: []uint16{'E', 'x', 'i', 't', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 6, Name: "UserSID", NameW: []uint16{'U', 's', 'e', 'r', 'S', 'I', 'D', 0}, InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 7, Name: "ImageFileName", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3277,7 +3577,9 @@ var mofProcess_V1_TypeGroup1 = &MofClassDef{
 // mofPerfInfo_V1 class definition
 var mofPerfInfo_V1 = &MofClassDef{
 	Name: "PerfInfo_V1",
+	NameW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}"),
 	Version: 1,
 }
@@ -3290,14 +3592,16 @@ var mofPerfInfo_V1 = &MofClassDef{
 // mofSampledProfile_V1 class definition
 var mofSampledProfile_V1 = &MofClassDef{
 	Name: "SampledProfile_V1",
+	NameW: []uint16{'S', 'a', 'm', 'p', 'l', 'e', 'd', 'P', 'r', 'o', 'f', 'i', 'l', 'e', '_', 'V', '1', 0},
 	Base: "PerfInfo_V1",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '1', 0},
 	GUID: mofPerfInfo_V1.GUID,
 	Version: mofPerfInfo_V1.Version,
 	EventTypes: []uint8{ 46 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InstructionPointer", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ThreadId", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "Count", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "InstructionPointer", NameW: []uint16{'I', 'n', 's', 't', 'r', 'u', 'c', 't', 'i', 'o', 'n', 'P', 'o', 'i', 'n', 't', 'e', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "Count", NameW: []uint16{'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -3308,13 +3612,15 @@ var mofSampledProfile_V1 = &MofClassDef{
 // mofDPC_V1 class definition
 var mofDPC_V1 = &MofClassDef{
 	Name: "DPC_V1",
+	NameW: []uint16{'D', 'P', 'C', '_', 'V', '1', 0},
 	Base: "PerfInfo_V1",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '1', 0},
 	GUID: mofPerfInfo_V1.GUID,
 	Version: mofPerfInfo_V1.Version,
 	EventTypes: []uint8{ 68,  69 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME},
-		{ID: 2, Name: "Routine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME, Extension: "WmiTime"},
+		{ID: 2, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -3326,14 +3632,16 @@ var mofDPC_V1 = &MofClassDef{
 // mofISR_V1 class definition
 var mofISR_V1 = &MofClassDef{
 	Name: "ISR_V1",
+	NameW: []uint16{'I', 'S', 'R', '_', 'V', '1', 0},
 	Base: "PerfInfo_V1",
+	BaseW: []uint16{'P', 'e', 'r', 'f', 'I', 'n', 'f', 'o', '_', 'V', '1', 0},
 	GUID: mofPerfInfo_V1.GUID,
 	Version: mofPerfInfo_V1.Version,
 	EventTypes: []uint8{ 67,  95 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME},
-		{ID: 2, Name: "Routine", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ReturnValue", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME, Extension: "WmiTime"},
+		{ID: 2, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ReturnValue", NameW: []uint16{'R', 'e', 't', 'u', 'r', 'n', 'V', 'a', 'l', 'u', 'e', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -3342,7 +3650,9 @@ var mofISR_V1 = &MofClassDef{
 // mofImage_V2 class definition
 var mofImage_V2 = &MofClassDef{
 	Name: "Image_V2",
+	NameW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '2', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}"),
 	Version: 2,
 }
@@ -3353,12 +3663,14 @@ var mofImage_V2 = &MofClassDef{
 // mofKernelImageBase class definition
 var mofKernelImageBase = &MofClassDef{
 	Name: "KernelImageBase",
+	NameW: []uint16{'K', 'e', 'r', 'n', 'e', 'l', 'I', 'm', 'a', 'g', 'e', 'B', 'a', 's', 'e', 0},
 	Base: "Image_V2",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '2', 0},
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 33 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ImageBase", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "ImageBase", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -3367,7 +3679,9 @@ var mofKernelImageBase = &MofClassDef{
 // mofLoaderBasicEvent class definition
 var mofLoaderBasicEvent = &MofClassDef{
 	Name: "LoaderBasicEvent",
+	NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'r', 'B', 'a', 's', 'i', 'c', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "Image_V2",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '2', 0},
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 128,  129,  130,  131,  132,  133,  134, 
@@ -3387,15 +3701,17 @@ var mofLoaderBasicEvent = &MofClassDef{
 // mofLoaderCodedEvent class definition
 var mofLoaderCodedEvent = &MofClassDef{
 	Name: "LoaderCodedEvent",
+	NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'r', 'C', 'o', 'd', 'e', 'd', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "Image_V2",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '2', 0},
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 160,  161,  162,  163,  164 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 2, Name: "ErrorOpcode", InType: TDH_INTYPE_UINT8, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "Code", InType: TDH_INTYPE_INT8},
-		{ID: 4, Name: "String", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 2, Name: "ErrorOpcode", NameW: []uint16{'E', 'r', 'r', 'o', 'r', 'O', 'p', 'c', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT8, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "Code", NameW: []uint16{'C', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 4, Name: "String", NameW: []uint16{'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3406,13 +3722,15 @@ var mofLoaderCodedEvent = &MofClassDef{
 // mofLoaderBaseEvent class definition
 var mofLoaderBaseEvent = &MofClassDef{
 	Name: "LoaderBaseEvent",
+	NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'r', 'B', 'a', 's', 'e', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "Image_V2",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '2', 0},
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 144,  145,  146,  147,  148,  149, 
                                150 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
 	},
 }
 
@@ -3436,23 +3754,25 @@ var mofLoaderBaseEvent = &MofClassDef{
 // mofImage_Load_V2 class definition
 var mofImage_Load_V2 = &MofClassDef{
 	Name: "Image_Load_V2",
+	NameW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'L', 'o', 'a', 'd', '_', 'V', '2', 0},
 	Base: "Image_V2",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '2', 0},
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 10,  2,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ImageBase", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ImageSize", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "ImageChecksum", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "TimeDateStamp", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "Reserved0", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "DefaultBase", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "Reserved1", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "Reserved2", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "Reserved3", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "Reserved4", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ImageBase", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ImageSize", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "ImageChecksum", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'C', 'h', 'e', 'c', 'k', 's', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "TimeDateStamp", NameW: []uint16{'T', 'i', 'm', 'e', 'D', 'a', 't', 'e', 'S', 't', 'a', 'm', 'p', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "Reserved0", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '0', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "DefaultBase", NameW: []uint16{'D', 'e', 'f', 'a', 'u', 'l', 't', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "Reserved1", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '1', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "Reserved2", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '2', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "Reserved3", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '3', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "Reserved4", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '4', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3462,12 +3782,14 @@ var mofImage_Load_V2 = &MofClassDef{
 // mofHypercallPage class definition
 var mofHypercallPage = &MofClassDef{
 	Name: "HypercallPage",
+	NameW: []uint16{'H', 'y', 'p', 'e', 'r', 'c', 'a', 'l', 'l', 'P', 'a', 'g', 'e', 0},
 	Base: "Image_V2",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '2', 0},
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "HypercallPageVa", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "HypercallPageVa", NameW: []uint16{'H', 'y', 'p', 'e', 'r', 'c', 'a', 'l', 'l', 'P', 'a', 'g', 'e', 'V', 'a', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -3476,7 +3798,9 @@ var mofHypercallPage = &MofClassDef{
 // mofUdpIp_V1 class definition
 var mofUdpIp_V1 = &MofClassDef{
 	Name: "UdpIp_V1",
+	NameW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}"),
 	Version: 1,
 }
@@ -3492,17 +3816,19 @@ var mofUdpIp_V1 = &MofClassDef{
 // mofUdpIp_V1_TypeGroup1 class definition
 var mofUdpIp_V1_TypeGroup1 = &MofClassDef{
 	Name: "UdpIp_V1_TypeGroup1",
+	NameW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "UdpIp_V1",
+	BaseW: []uint16{'U', 'd', 'p', 'I', 'p', '_', 'V', '1', 0},
 	GUID: mofUdpIp_V1.GUID,
 	Version: mofUdpIp_V1.Version,
 	EventTypes: []uint8{ 10,  11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
 	},
 }
 
@@ -3511,7 +3837,9 @@ var mofUdpIp_V1_TypeGroup1 = &MofClassDef{
 // mofRegistry_V0 class definition
 var mofRegistry_V0 = &MofClassDef{
 	Name: "Registry_V0",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}"),
 	Version: 0,
 }
@@ -3529,16 +3857,18 @@ var mofRegistry_V0 = &MofClassDef{
 // mofRegistry_V0_TypeGroup1 class definition
 var mofRegistry_V0_TypeGroup1 = &MofClassDef{
 	Name: "Registry_V0_TypeGroup1",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'V', '0', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Registry_V0",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'V', '0', 0},
 	GUID: mofRegistry_V0.GUID,
 	Version: mofRegistry_V0.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20, 
                                21 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Status", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "KeyHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ElapsedTime", InType: TDH_INTYPE_INT64},
-		{ID: 4, Name: "KeyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "KeyHandle", NameW: []uint16{'K', 'e', 'y', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ElapsedTime", NameW: []uint16{'E', 'l', 'a', 'p', 's', 'e', 'd', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 4, Name: "KeyName", NameW: []uint16{'K', 'e', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3547,7 +3877,9 @@ var mofRegistry_V0_TypeGroup1 = &MofClassDef{
 // mofProcess_V0 class definition
 var mofProcess_V0 = &MofClassDef{
 	Name: "Process_V0",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 0,
 }
@@ -3563,15 +3895,17 @@ var mofProcess_V0 = &MofClassDef{
 // mofProcess_V0_TypeGroup1 class definition
 var mofProcess_V0_TypeGroup1 = &MofClassDef{
 	Name: "Process_V0_TypeGroup1",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '0', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Process_V0",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '0', 0},
 	GUID: mofProcess_V0.GUID,
 	Version: mofProcess_V0.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ParentId", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING},
-		{ID: 4, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ParentId", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'd', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "UserSID", NameW: []uint16{'U', 's', 'e', 'r', 'S', 'I', 'D', 0}, InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 4, Name: "ImageFileName", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3580,7 +3914,9 @@ var mofProcess_V0_TypeGroup1 = &MofClassDef{
 // mofFileIo class definition
 var mofFileIo = &MofClassDef{
 	Name: "FileIo",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 3,
 }
@@ -3597,18 +3933,20 @@ var mofFileIo = &MofClassDef{
 // mofFileIo_ReadWrite class definition
 var mofFileIo_ReadWrite = &MofClassDef{
 	Name: "FileIo_ReadWrite",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'R', 'e', 'a', 'd', 'W', 'r', 'i', 't', 'e', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 67,  68 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Offset", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "TTID", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "IoSize", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "IoFlags", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Offset", NameW: []uint16{'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "IoSize", NameW: []uint16{'I', 'o', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "IoFlags", NameW: []uint16{'I', 'o', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -3627,18 +3965,20 @@ var mofFileIo_ReadWrite = &MofClassDef{
 // mofFileIo_Create class definition
 var mofFileIo_Create = &MofClassDef{
 	Name: "FileIo_Create",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'C', 'r', 'e', 'a', 't', 'e', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 64 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "TTID", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "CreateOptions", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "FileAttributes", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ShareAccess", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "OpenPath", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "CreateOptions", NameW: []uint16{'C', 'r', 'e', 'a', 't', 'e', 'O', 'p', 't', 'i', 'o', 'n', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "FileAttributes", NameW: []uint16{'F', 'i', 'l', 'e', 'A', 't', 't', 'r', 'i', 'b', 'u', 't', 'e', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ShareAccess", NameW: []uint16{'S', 'h', 'a', 'r', 'e', 'A', 'c', 'c', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "OpenPath", NameW: []uint16{'O', 'p', 'e', 'n', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3653,17 +3993,19 @@ var mofFileIo_Create = &MofClassDef{
 // mofFltIoInit class definition
 var mofFltIoInit = &MofClassDef{
 	Name: "FltIoInit",
+	NameW: []uint16{'F', 'l', 't', 'I', 'o', 'I', 'n', 'i', 't', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 96,  97 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "RoutineAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileContext", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "CallbackDataPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "MajorFunction", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "RoutineAddr", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileContext", NameW: []uint16{'F', 'i', 'l', 'e', 'C', 'o', 'n', 't', 'e', 'x', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "CallbackDataPtr", NameW: []uint16{'C', 'a', 'l', 'l', 'b', 'a', 'c', 'k', 'D', 'a', 't', 'a', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "MajorFunction", NameW: []uint16{'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -3679,18 +4021,20 @@ var mofFltIoInit = &MofClassDef{
 // mofFltIoFailure class definition
 var mofFltIoFailure = &MofClassDef{
 	Name: "FltIoFailure",
+	NameW: []uint16{'F', 'l', 't', 'I', 'o', 'F', 'a', 'i', 'l', 'u', 'r', 'e', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 100,  101 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "RoutineAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileContext", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "CallbackDataPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "MajorFunction", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "Status", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "RoutineAddr", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileContext", NameW: []uint16{'F', 'i', 'l', 'e', 'C', 'o', 'n', 't', 'e', 'x', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "CallbackDataPtr", NameW: []uint16{'C', 'a', 'l', 'l', 'b', 'a', 'c', 'k', 'D', 'a', 't', 'a', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "MajorFunction", NameW: []uint16{'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -3704,13 +4048,15 @@ var mofFltIoFailure = &MofClassDef{
 // mofFileIo_Name class definition
 var mofFileIo_Name = &MofClassDef{
 	Name: "FileIo_Name",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'N', 'a', 'm', 'e', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 0,  32,  35,  36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3725,17 +4071,19 @@ var mofFileIo_Name = &MofClassDef{
 // mofFileIo_Info class definition
 var mofFileIo_Info = &MofClassDef{
 	Name: "FileIo_Info",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'I', 'n', 'f', 'o', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 69,  70,  71,  74,  75 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "ExtraInfo", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "TTID", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "InfoClass", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "ExtraInfo", NameW: []uint16{'E', 'x', 't', 'r', 'a', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "InfoClass", NameW: []uint16{'I', 'n', 'f', 'o', 'C', 'l', 'a', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -3748,15 +4096,17 @@ var mofFileIo_Info = &MofClassDef{
 // mofFileIo_SimpleOp class definition
 var mofFileIo_SimpleOp = &MofClassDef{
 	Name: "FileIo_SimpleOp",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'S', 'i', 'm', 'p', 'l', 'e', 'O', 'p', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 65,  66,  73 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "TTID", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -3772,18 +4122,20 @@ var mofFileIo_SimpleOp = &MofClassDef{
 // mofFltIoCompletion class definition
 var mofFltIoCompletion = &MofClassDef{
 	Name: "FltIoCompletion",
+	NameW: []uint16{'F', 'l', 't', 'I', 'o', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'i', 'o', 'n', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 98,  99 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME},
-		{ID: 2, Name: "RoutineAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "FileContext", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "CallbackDataPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "MajorFunction", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_DATETIME, Extension: "WmiTime"},
+		{ID: 2, Name: "RoutineAddr", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "FileContext", NameW: []uint16{'F', 'i', 'l', 'e', 'C', 'o', 'n', 't', 'e', 'x', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "CallbackDataPtr", NameW: []uint16{'C', 'a', 'l', 'l', 'b', 'a', 'c', 'k', 'D', 'a', 't', 'a', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "MajorFunction", NameW: []uint16{'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -3803,19 +4155,21 @@ var mofFltIoCompletion = &MofClassDef{
 // mofFileIo_DirEnum class definition
 var mofFileIo_DirEnum = &MofClassDef{
 	Name: "FileIo_DirEnum",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'D', 'i', 'r', 'E', 'n', 'u', 'm', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 72,  77 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "TTID", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "Length", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "InfoClass", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "FileIndex", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "Length", NameW: []uint16{'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "InfoClass", NameW: []uint16{'I', 'n', 'f', 'o', 'C', 'l', 'a', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "FileIndex", NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3835,18 +4189,20 @@ var mofFileIo_DirEnum = &MofClassDef{
 // mofFileIo_PathOperation class definition
 var mofFileIo_PathOperation = &MofClassDef{
 	Name: "FileIo_PathOperation",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'P', 'a', 't', 'h', 'O', 'p', 'e', 'r', 'a', 't', 'i', 'o', 'n', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 79,  80,  81 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "ExtraInfo", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "TTID", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "InfoClass", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "ExtraInfo", NameW: []uint16{'E', 'x', 't', 'r', 'a', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "InfoClass", NameW: []uint16{'I', 'n', 'f', 'o', 'C', 'l', 'a', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -3858,14 +4214,16 @@ var mofFileIo_PathOperation = &MofClassDef{
 // mofFileIo_OpEnd class definition
 var mofFileIo_OpEnd = &MofClassDef{
 	Name: "FileIo_OpEnd",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'O', 'p', 'E', 'n', 'd', 0},
 	Base: "FileIo",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 76 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ExtraInfo", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "NtStatus", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ExtraInfo", NameW: []uint16{'E', 'x', 't', 'r', 'a', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "NtStatus", NameW: []uint16{'N', 't', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -3875,7 +4233,9 @@ var mofFileIo_OpEnd = &MofClassDef{
 // mofSplitIo class definition
 var mofSplitIo = &MofClassDef{
 	Name: "SplitIo",
+	NameW: []uint16{'S', 'p', 'l', 'i', 't', 'I', 'o', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{d837ca92-12b9-44a5-ad6a-3a65b3578aa8}"),
 	Version: 2,
 }
@@ -3888,13 +4248,15 @@ var mofSplitIo = &MofClassDef{
 // mofSplitIo_Info class definition
 var mofSplitIo_Info = &MofClassDef{
 	Name: "SplitIo_Info",
+	NameW: []uint16{'S', 'p', 'l', 'i', 't', 'I', 'o', '_', 'I', 'n', 'f', 'o', 0},
 	Base: "SplitIo",
+	BaseW: []uint16{'S', 'p', 'l', 'i', 't', 'I', 'o', 0},
 	GUID: mofSplitIo.GUID,
 	Version: mofSplitIo.Version,
 	EventTypes: []uint8{ 32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ParentIrp", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ChildIrp", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "ParentIrp", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ChildIrp", NameW: []uint16{'C', 'h', 'i', 'l', 'd', 'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -3903,7 +4265,9 @@ var mofSplitIo_Info = &MofClassDef{
 // mofTcpIp class definition
 var mofTcpIp = &MofClassDef{
 	Name: "TcpIp",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}"),
 	Version: 2,
 }
@@ -3922,19 +4286,21 @@ var mofTcpIp = &MofClassDef{
 // mofTcpIp_TypeGroup3 class definition
 var mofTcpIp_TypeGroup3 = &MofClassDef{
 	Name: "TcpIp_TypeGroup3",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '3', 0},
 	Base: "TcpIp",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', 0},
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 27,  29,  30,  32,  34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "seqnum", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "connid", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6, Extension: "IPAddrV6"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6, Extension: "IPAddrV6"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -3953,21 +4319,23 @@ var mofTcpIp_TypeGroup3 = &MofClassDef{
 // mofTcpIp_SendIPV4 class definition
 var mofTcpIp_SendIPV4 = &MofClassDef{
 	Name: "TcpIp_SendIPV4",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'S', 'e', 'n', 'd', 'I', 'P', 'V', '4', 0},
 	Base: "TcpIp",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', 0},
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 10 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "startime", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "endtime", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "seqnum", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "connid", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddrV4"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddrV4"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "startime", NameW: []uint16{'s', 't', 'a', 'r', 't', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "endtime", NameW: []uint16{'e', 'n', 'd', 't', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -3978,13 +4346,15 @@ var mofTcpIp_SendIPV4 = &MofClassDef{
 // mofTcpIp_Fail class definition
 var mofTcpIp_Fail = &MofClassDef{
 	Name: "TcpIp_Fail",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'F', 'a', 'i', 'l', 0},
 	Base: "TcpIp",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', 0},
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 17 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Proto", InType: TDH_INTYPE_UINT16},
-		{ID: 2, Name: "FailureCode", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "Proto", NameW: []uint16{'P', 'r', 'o', 't', 'o', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 2, Name: "FailureCode", NameW: []uint16{'F', 'a', 'i', 'l', 'u', 'r', 'e', 'C', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -4008,26 +4378,28 @@ var mofTcpIp_Fail = &MofClassDef{
 // mofTcpIp_TypeGroup2 class definition
 var mofTcpIp_TypeGroup2 = &MofClassDef{
 	Name: "TcpIp_TypeGroup2",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '2', 0},
 	Base: "TcpIp",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', 0},
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 12,  15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "mss", InType: TDH_INTYPE_UINT16},
-		{ID: 8, Name: "sackopt", InType: TDH_INTYPE_UINT16},
-		{ID: 9, Name: "tsopt", InType: TDH_INTYPE_UINT16},
-		{ID: 10, Name: "wsopt", InType: TDH_INTYPE_UINT16},
-		{ID: 11, Name: "rcvwin", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "rcvwinscale", InType: TDH_INTYPE_INT16},
-		{ID: 13, Name: "sndwinscale", InType: TDH_INTYPE_INT16},
-		{ID: 14, Name: "seqnum", InType: TDH_INTYPE_UINT32},
-		{ID: 15, Name: "connid", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddrV4"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddrV4"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "mss", NameW: []uint16{'m', 's', 's', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 8, Name: "sackopt", NameW: []uint16{'s', 'a', 'c', 'k', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 9, Name: "tsopt", NameW: []uint16{'t', 's', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 10, Name: "wsopt", NameW: []uint16{'w', 's', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 11, Name: "rcvwin", NameW: []uint16{'r', 'c', 'v', 'w', 'i', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "rcvwinscale", NameW: []uint16{'r', 'c', 'v', 'w', 'i', 'n', 's', 'c', 'a', 'l', 'e', 0}, InType: TDH_INTYPE_INT16},
+		{ID: 13, Name: "sndwinscale", NameW: []uint16{'s', 'n', 'd', 'w', 'i', 'n', 's', 'c', 'a', 'l', 'e', 0}, InType: TDH_INTYPE_INT16},
+		{ID: 14, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 15, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -4046,21 +4418,23 @@ var mofTcpIp_TypeGroup2 = &MofClassDef{
 // mofTcpIp_SendIPV6 class definition
 var mofTcpIp_SendIPV6 = &MofClassDef{
 	Name: "TcpIp_SendIPV6",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'S', 'e', 'n', 'd', 'I', 'P', 'V', '6', 0},
 	Base: "TcpIp",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', 0},
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 26 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "startime", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "endtime", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "seqnum", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "connid", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6, Extension: "IPAddrV6"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6, Extension: "IPAddrV6"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "startime", NameW: []uint16{'s', 't', 'a', 'r', 't', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "endtime", NameW: []uint16{'e', 'n', 'd', 't', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -4078,19 +4452,21 @@ var mofTcpIp_SendIPV6 = &MofClassDef{
 // mofTcpIp_TypeGroup1 class definition
 var mofTcpIp_TypeGroup1 = &MofClassDef{
 	Name: "TcpIp_TypeGroup1",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "TcpIp",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', 0},
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 11,  13,  14,  16,  18 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "seqnum", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "connid", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddrV4"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddrV4"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -4114,26 +4490,28 @@ var mofTcpIp_TypeGroup1 = &MofClassDef{
 // mofTcpIp_TypeGroup4 class definition
 var mofTcpIp_TypeGroup4 = &MofClassDef{
 	Name: "TcpIp_TypeGroup4",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '4', 0},
 	Base: "TcpIp",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', 0},
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 28,  31 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PID", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "daddr", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6},
-		{ID: 4, Name: "saddr", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6},
-		{ID: 5, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 6, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 7, Name: "mss", InType: TDH_INTYPE_UINT16},
-		{ID: 8, Name: "sackopt", InType: TDH_INTYPE_UINT16},
-		{ID: 9, Name: "tsopt", InType: TDH_INTYPE_UINT16},
-		{ID: 10, Name: "wsopt", InType: TDH_INTYPE_UINT16},
-		{ID: 11, Name: "rcvwin", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "rcvwinscale", InType: TDH_INTYPE_INT16},
-		{ID: 13, Name: "sndwinscale", InType: TDH_INTYPE_INT16},
-		{ID: 14, Name: "seqnum", InType: TDH_INTYPE_UINT32},
-		{ID: 15, Name: "connid", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6, Extension: "IPAddrV6"},
+		{ID: 4, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_IPV6, Extension: "IPAddrV6"},
+		{ID: 5, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 6, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 7, Name: "mss", NameW: []uint16{'m', 's', 's', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 8, Name: "sackopt", NameW: []uint16{'s', 'a', 'c', 'k', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 9, Name: "tsopt", NameW: []uint16{'t', 's', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 10, Name: "wsopt", NameW: []uint16{'w', 's', 'o', 'p', 't', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 11, Name: "rcvwin", NameW: []uint16{'r', 'c', 'v', 'w', 'i', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "rcvwinscale", NameW: []uint16{'r', 'c', 'v', 'w', 'i', 'n', 's', 'c', 'a', 'l', 'e', 0}, InType: TDH_INTYPE_INT16},
+		{ID: 13, Name: "sndwinscale", NameW: []uint16{'s', 'n', 'd', 'w', 'i', 'n', 's', 'c', 'a', 'l', 'e', 0}, InType: TDH_INTYPE_INT16},
+		{ID: 14, Name: "seqnum", NameW: []uint16{'s', 'e', 'q', 'n', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 15, Name: "connid", NameW: []uint16{'c', 'o', 'n', 'n', 'i', 'd', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -4142,7 +4520,9 @@ var mofTcpIp_TypeGroup4 = &MofClassDef{
 // mofThread_V0 class definition
 var mofThread_V0 = &MofClassDef{
 	Name: "Thread_V0",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 0,
 }
@@ -4155,13 +4535,15 @@ var mofThread_V0 = &MofClassDef{
 // mofThread_V0_TypeGroup1 class definition
 var mofThread_V0_TypeGroup1 = &MofClassDef{
 	Name: "Thread_V0_TypeGroup1",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '0', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Thread_V0",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '0', 0},
 	GUID: mofThread_V0.GUID,
 	Version: mofThread_V0.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -4170,7 +4552,9 @@ var mofThread_V0_TypeGroup1 = &MofClassDef{
 // mofRegistry_V1 class definition
 var mofRegistry_V1 = &MofClassDef{
 	Name: "Registry_V1",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}"),
 	Version: 1,
 }
@@ -4189,17 +4573,19 @@ var mofRegistry_V1 = &MofClassDef{
 // mofRegistry_V1_TypeGroup1 class definition
 var mofRegistry_V1_TypeGroup1 = &MofClassDef{
 	Name: "Registry_V1_TypeGroup1",
+	NameW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Registry_V1",
+	BaseW: []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'V', '1', 0},
 	GUID: mofRegistry_V1.GUID,
 	Version: mofRegistry_V1.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21, 
                                22 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Status", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "KeyHandle", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ElapsedTime", InType: TDH_INTYPE_INT64},
-		{ID: 4, Name: "Index", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "KeyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "KeyHandle", NameW: []uint16{'K', 'e', 'y', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ElapsedTime", NameW: []uint16{'E', 'l', 'a', 'p', 's', 'e', 'd', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 4, Name: "Index", NameW: []uint16{'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "KeyName", NameW: []uint16{'K', 'e', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4208,7 +4594,9 @@ var mofRegistry_V1_TypeGroup1 = &MofClassDef{
 // mofImage_V0 class definition
 var mofImage_V0 = &MofClassDef{
 	Name: "Image_V0",
+	NameW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}"),
 	Version: 0,
 }
@@ -4224,14 +4612,16 @@ var mofImage_V0 = &MofClassDef{
 // mofImage_V0_Load class definition
 var mofImage_V0_Load = &MofClassDef{
 	Name: "Image_V0_Load",
+	NameW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '0', '_', 'L', 'o', 'a', 'd', 0},
 	Base: "Image_V0",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '0', 0},
 	GUID: mofImage_V0.GUID,
 	Version: mofImage_V0.Version,
 	EventTypes: []uint8{ 10 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ModuleSize", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "ImageFileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ModuleSize", NameW: []uint16{'M', 'o', 'd', 'u', 'l', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "ImageFileName", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4240,7 +4630,9 @@ var mofImage_V0_Load = &MofClassDef{
 // mofSystemConfig_V4 class definition
 var mofSystemConfig_V4 = &MofClassDef{
 	Name: "SystemConfig_V4",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '4', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 4,
 }
@@ -4279,18 +4671,20 @@ var mofSystemConfig_V4 = &MofClassDef{
 // mofSystemConfig_V4_MobilePlatform class definition
 var mofSystemConfig_V4_MobilePlatform = &MofClassDef{
 	Name: "SystemConfig_V4_MobilePlatform",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '4', '_', 'M', 'o', 'b', 'i', 'l', 'e', 'P', 'l', 'a', 't', 'f', 'o', 'r', 'm', 0},
 	Base: "SystemConfig_V4",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '4', 0},
 	GUID: mofSystemConfig_V4.GUID,
 	Version: mofSystemConfig_V4.Version,
 	EventTypes: []uint8{ 32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DeviceManufacturer", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 2, Name: "DeviceManufacturerDisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 3, Name: "DeviceModel", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 4, Name: "DeviceModelDisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "MobileOperator", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "SocVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "BspVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "DeviceManufacturer", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 2, Name: "DeviceManufacturerDisplayName", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 3, Name: "DeviceModel", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'M', 'o', 'd', 'e', 'l', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 4, Name: "DeviceModelDisplayName", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'M', 'o', 'd', 'e', 'l', 'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "MobileOperator", NameW: []uint16{'M', 'o', 'b', 'i', 'l', 'e', 'O', 'p', 'e', 'r', 'a', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "SocVersion", NameW: []uint16{'S', 'o', 'c', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 7, Name: "BspVersion", NameW: []uint16{'B', 's', 'p', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4333,21 +4727,23 @@ var mofSystemConfig_V4_MobilePlatform = &MofClassDef{
 // mofSystemConfig_V4_PnP class definition
 var mofSystemConfig_V4_PnP = &MofClassDef{
 	Name: "SystemConfig_V4_PnP",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '4', '_', 'P', 'n', 'P', 0},
 	Base: "SystemConfig_V4",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '4', 0},
 	GUID: mofSystemConfig_V4.GUID,
 	Version: mofSystemConfig_V4.Version,
 	EventTypes: []uint8{ 22 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ClassGuid", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID},
-		{ID: 2, Name: "UpperFiltersCount", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "LowerFiltersCount", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DeviceID", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "FriendlyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "PdoName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 8, Name: "ServiceName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 9, Name: "UpperFilters", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 2},
-		{ID: 10, Name: "LowerFilters", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 3},
+		{ID: 1, Name: "ClassGuid", NameW: []uint16{'C', 'l', 'a', 's', 's', 'G', 'u', 'i', 'd', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID"},
+		{ID: 2, Name: "UpperFiltersCount", NameW: []uint16{'U', 'p', 'p', 'e', 'r', 'F', 'i', 'l', 't', 'e', 'r', 's', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "LowerFiltersCount", NameW: []uint16{'L', 'o', 'w', 'e', 'r', 'F', 'i', 'l', 't', 'e', 'r', 's', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DeviceID", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "FriendlyName", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 7, Name: "PdoName", NameW: []uint16{'P', 'd', 'o', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 8, Name: "ServiceName", NameW: []uint16{'S', 'e', 'r', 'v', 'i', 'c', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 9, Name: "UpperFilters", NameW: []uint16{'U', 'p', 'p', 'e', 'r', 'F', 'i', 'l', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 2},
+		{ID: 10, Name: "LowerFilters", NameW: []uint16{'L', 'o', 'w', 'e', 'r', 'F', 'i', 'l', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 3},
 	},
 }
 
@@ -4356,7 +4752,9 @@ var mofSystemConfig_V4_PnP = &MofClassDef{
 // mofImage_V1 class definition
 var mofImage_V1 = &MofClassDef{
 	Name: "Image_V1",
+	NameW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}"),
 	Version: 1,
 }
@@ -4373,15 +4771,17 @@ var mofImage_V1 = &MofClassDef{
 // mofImage_V1_Load class definition
 var mofImage_V1_Load = &MofClassDef{
 	Name: "Image_V1_Load",
+	NameW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '1', '_', 'L', 'o', 'a', 'd', 0},
 	Base: "Image_V1",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'V', '1', 0},
 	GUID: mofImage_V1.GUID,
 	Version: mofImage_V1.Version,
 	EventTypes: []uint8{ 10 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ImageBase", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ImageSize", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ImageBase", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ImageSize", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4390,7 +4790,9 @@ var mofImage_V1_Load = &MofClassDef{
 // mofThread_V3 class definition
 var mofThread_V3 = &MofClassDef{
 	Name: "Thread_V3",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '3', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 3,
 }
@@ -4415,25 +4817,27 @@ var mofThread_V3 = &MofClassDef{
 // mofThread_V3_TypeGroup1 class definition
 var mofThread_V3_TypeGroup1 = &MofClassDef{
 	Name: "Thread_V3_TypeGroup1",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '3', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Thread_V3",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '3', 0},
 	GUID: mofThread_V3.GUID,
 	Version: mofThread_V3.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "StackBase", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "StackLimit", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "UserStackBase", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "UserStackLimit", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "Affinity", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "Win32StartAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 9, Name: "TebBase", InType: TDH_INTYPE_POINTER},
-		{ID: 10, Name: "SubProcessTag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 11, Name: "BasePriority", InType: TDH_INTYPE_UINT8},
-		{ID: 12, Name: "PagePriority", InType: TDH_INTYPE_UINT8},
-		{ID: 13, Name: "IoPriority", InType: TDH_INTYPE_UINT8},
-		{ID: 14, Name: "ThreadFlags", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "StackBase", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "StackLimit", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'L', 'i', 'm', 'i', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "UserStackBase", NameW: []uint16{'U', 's', 'e', 'r', 'S', 't', 'a', 'c', 'k', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "UserStackLimit", NameW: []uint16{'U', 's', 'e', 'r', 'S', 't', 'a', 'c', 'k', 'L', 'i', 'm', 'i', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "Affinity", NameW: []uint16{'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "Win32StartAddr", NameW: []uint16{'W', 'i', 'n', '3', '2', 'S', 't', 'a', 'r', 't', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 9, Name: "TebBase", NameW: []uint16{'T', 'e', 'b', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 10, Name: "SubProcessTag", NameW: []uint16{'S', 'u', 'b', 'P', 'r', 'o', 'c', 'e', 's', 's', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 11, Name: "BasePriority", NameW: []uint16{'B', 'a', 's', 'e', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 12, Name: "PagePriority", NameW: []uint16{'P', 'a', 'g', 'e', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 13, Name: "IoPriority", NameW: []uint16{'I', 'o', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 14, Name: "ThreadFlags", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -4447,15 +4851,17 @@ var mofThread_V3_TypeGroup1 = &MofClassDef{
 // mofThreadPriority class definition
 var mofThreadPriority = &MofClassDef{
 	Name: "ThreadPriority",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0},
 	Base: "Thread_V3",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '3', 0},
 	GUID: mofThread_V3.GUID,
 	Version: mofThread_V3.Version,
 	EventTypes: []uint8{ 48,  49,  51,  52 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "OldPriority", InType: TDH_INTYPE_UINT8},
-		{ID: 3, Name: "NewPriority", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT16},
+		{ID: 1, Name: "ThreadId", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "OldPriority", NameW: []uint16{'O', 'l', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 3, Name: "NewPriority", NameW: []uint16{'N', 'e', 'w', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT16},
 	},
 }
 
@@ -4476,23 +4882,25 @@ var mofThreadPriority = &MofClassDef{
 // mofCSwitch_V3 class definition
 var mofCSwitch_V3 = &MofClassDef{
 	Name: "CSwitch_V3",
+	NameW: []uint16{'C', 'S', 'w', 'i', 't', 'c', 'h', '_', 'V', '3', 0},
 	Base: "Thread_V3",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '3', 0},
 	GUID: mofThread_V3.GUID,
 	Version: mofThread_V3.Version,
 	EventTypes: []uint8{ 36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "NewThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "OldThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "NewThreadPriority", InType: TDH_INTYPE_INT8},
-		{ID: 4, Name: "OldThreadPriority", InType: TDH_INTYPE_INT8},
-		{ID: 5, Name: "PreviousCState", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "SpareByte", InType: TDH_INTYPE_INT8},
-		{ID: 7, Name: "OldThreadWaitReason", InType: TDH_INTYPE_INT8},
-		{ID: 8, Name: "ThreadFlags", InType: TDH_INTYPE_INT8},
-		{ID: 9, Name: "OldThreadState", InType: TDH_INTYPE_INT8},
-		{ID: 10, Name: "OldThreadWaitIdealProcessor", InType: TDH_INTYPE_INT8},
-		{ID: 11, Name: "NewThreadWaitTime", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 12, Name: "Reserved", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "NewThreadId", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "OldThreadId", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "NewThreadPriority", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 4, Name: "OldThreadPriority", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 5, Name: "PreviousCState", NameW: []uint16{'P', 'r', 'e', 'v', 'i', 'o', 'u', 's', 'C', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "SpareByte", NameW: []uint16{'S', 'p', 'a', 'r', 'e', 'B', 'y', 't', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 7, Name: "OldThreadWaitReason", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 8, Name: "ThreadFlags", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 9, Name: "OldThreadState", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 10, Name: "OldThreadWaitIdealProcessor", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'I', 'd', 'e', 'a', 'l', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 11, Name: "NewThreadWaitTime", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 12, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -4501,7 +4909,9 @@ var mofCSwitch_V3 = &MofClassDef{
 // mofSystemConfig_V3 class definition
 var mofSystemConfig_V3 = &MofClassDef{
 	Name: "SystemConfig_V3",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 3,
 }
@@ -4560,23 +4970,25 @@ var mofSystemConfig_V3 = &MofClassDef{
 // mofSystemConfig_V3_MobilePlatform class definition
 var mofSystemConfig_V3_MobilePlatform = &MofClassDef{
 	Name: "SystemConfig_V3_MobilePlatform",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', '_', 'M', 'o', 'b', 'i', 'l', 'e', 'P', 'l', 'a', 't', 'f', 'o', 'r', 'm', 0},
 	Base: "SystemConfig_V3",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', 0},
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DeviceManufacturer", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 2, Name: "DeviceManufacturerDisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 3, Name: "DeviceModel", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 4, Name: "DeviceModelDisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "MobileOperator", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "MobileOperatorDisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "HardwareVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 8, Name: "SocVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 9, Name: "RadioHardwareVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 10, Name: "RadioSoftwareVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 11, Name: "BspVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 12, Name: "OemSoftwareVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "DeviceManufacturer", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 2, Name: "DeviceManufacturerDisplayName", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 3, Name: "DeviceModel", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'M', 'o', 'd', 'e', 'l', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 4, Name: "DeviceModelDisplayName", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'M', 'o', 'd', 'e', 'l', 'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "MobileOperator", NameW: []uint16{'M', 'o', 'b', 'i', 'l', 'e', 'O', 'p', 'e', 'r', 'a', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "MobileOperatorDisplayName", NameW: []uint16{'M', 'o', 'b', 'i', 'l', 'e', 'O', 'p', 'e', 'r', 'a', 't', 'o', 'r', 'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 7, Name: "HardwareVersion", NameW: []uint16{'H', 'a', 'r', 'd', 'w', 'a', 'r', 'e', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 8, Name: "SocVersion", NameW: []uint16{'S', 'o', 'c', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 9, Name: "RadioHardwareVersion", NameW: []uint16{'R', 'a', 'd', 'i', 'o', 'H', 'a', 'r', 'd', 'w', 'a', 'r', 'e', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 10, Name: "RadioSoftwareVersion", NameW: []uint16{'R', 'a', 'd', 'i', 'o', 'S', 'o', 'f', 't', 'w', 'a', 'r', 'e', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 11, Name: "BspVersion", NameW: []uint16{'B', 's', 'p', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 12, Name: "OemSoftwareVersion", NameW: []uint16{'O', 'e', 'm', 'S', 'o', 'f', 't', 'w', 'a', 'r', 'e', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4609,19 +5021,21 @@ var mofSystemConfig_V3_MobilePlatform = &MofClassDef{
 // mofSystemConfig_V3_Services class definition
 var mofSystemConfig_V3_Services = &MofClassDef{
 	Name: "SystemConfig_V3_Services",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', '_', 'S', 'e', 'r', 'v', 'i', 'c', 'e', 's', 0},
 	Base: "SystemConfig_V3",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', 0},
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ServiceState", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "SubProcessTag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "ServiceName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "DisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "ProcessName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "LoadOrderGroup", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 8, Name: "SvchostGroup", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ServiceState", NameW: []uint16{'S', 'e', 'r', 'v', 'i', 'c', 'e', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "SubProcessTag", NameW: []uint16{'S', 'u', 'b', 'P', 'r', 'o', 'c', 'e', 's', 's', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "ServiceName", NameW: []uint16{'S', 'e', 'r', 'v', 'i', 'c', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "DisplayName", NameW: []uint16{'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "ProcessName", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 7, Name: "LoadOrderGroup", NameW: []uint16{'L', 'o', 'a', 'd', 'O', 'r', 'd', 'e', 'r', 'G', 'r', 'o', 'u', 'p', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 8, Name: "SvchostGroup", NameW: []uint16{'S', 'v', 'c', 'h', 'o', 's', 't', 'G', 'r', 'o', 'u', 'p', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4640,17 +5054,19 @@ var mofSystemConfig_V3_Services = &MofClassDef{
 // mofSystemConfig_V3_IRQ class definition
 var mofSystemConfig_V3_IRQ = &MofClassDef{
 	Name: "SystemConfig_V3_IRQ",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', '_', 'I', 'R', 'Q', 0},
 	Base: "SystemConfig_V3",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', 0},
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 21 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IRQAffinity", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 2, Name: "IRQGroup", InType: TDH_INTYPE_UINT16},
-		{ID: 3, Name: "Reserved", InType: TDH_INTYPE_UINT16},
-		{ID: 4, Name: "IRQNum", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "DeviceDescriptionLen", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IRQAffinity", NameW: []uint16{'I', 'R', 'Q', 'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 2, Name: "IRQGroup", NameW: []uint16{'I', 'R', 'Q', 'G', 'r', 'o', 'u', 'p', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 3, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 4, Name: "IRQNum", NameW: []uint16{'I', 'R', 'Q', 'N', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "DeviceDescriptionLen", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'L', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4675,26 +5091,28 @@ var mofSystemConfig_V3_IRQ = &MofClassDef{
 // mofSystemConfig_V3_CPU class definition
 var mofSystemConfig_V3_CPU = &MofClassDef{
 	Name: "SystemConfig_V3_CPU",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', '_', 'C', 'P', 'U', 0},
 	Base: "SystemConfig_V3",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', 0},
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 10 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MHz", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "NumberOfProcessors", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "MemSize", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "PageSize", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "AllocationGranularity", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ComputerName", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
-		{ID: 7, Name: "DomainName", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 134},
-		{ID: 8, Name: "HyperThreadingFlag", InType: TDH_INTYPE_POINTER},
-		{ID: 9, Name: "HighestUserAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 10, Name: "ProcessorArchitecture", InType: TDH_INTYPE_UINT16},
-		{ID: 11, Name: "ProcessorLevel", InType: TDH_INTYPE_UINT16},
-		{ID: 12, Name: "ProcessorRevision", InType: TDH_INTYPE_UINT16},
-		{ID: 13, Name: "PaeEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 14, Name: "NxEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 15, Name: "MemorySpeed", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "MHz", NameW: []uint16{'M', 'H', 'z', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "NumberOfProcessors", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "MemSize", NameW: []uint16{'M', 'e', 'm', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "PageSize", NameW: []uint16{'P', 'a', 'g', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "AllocationGranularity", NameW: []uint16{'A', 'l', 'l', 'o', 'c', 'a', 't', 'i', 'o', 'n', 'G', 'r', 'a', 'n', 'u', 'l', 'a', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ComputerName", NameW: []uint16{'C', 'o', 'm', 'p', 'u', 't', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
+		{ID: 7, Name: "DomainName", NameW: []uint16{'D', 'o', 'm', 'a', 'i', 'n', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 134},
+		{ID: 8, Name: "HyperThreadingFlag", NameW: []uint16{'H', 'y', 'p', 'e', 'r', 'T', 'h', 'r', 'e', 'a', 'd', 'i', 'n', 'g', 'F', 'l', 'a', 'g', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 9, Name: "HighestUserAddress", NameW: []uint16{'H', 'i', 'g', 'h', 'e', 's', 't', 'U', 's', 'e', 'r', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 10, Name: "ProcessorArchitecture", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'A', 'r', 'c', 'h', 'i', 't', 'e', 'c', 't', 'u', 'r', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 11, Name: "ProcessorLevel", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'L', 'e', 'v', 'e', 'l', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 12, Name: "ProcessorRevision", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'R', 'e', 'v', 'i', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 13, Name: "PaeEnabled", NameW: []uint16{'P', 'a', 'e', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 14, Name: "NxEnabled", NameW: []uint16{'N', 'x', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 15, Name: "MemorySpeed", NameW: []uint16{'M', 'e', 'm', 'o', 'r', 'y', 'S', 'p', 'e', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -4723,18 +5141,20 @@ var mofSystemConfig_V3_CPU = &MofClassDef{
 // mofSystemConfig_V3_PnP class definition
 var mofSystemConfig_V3_PnP = &MofClassDef{
 	Name: "SystemConfig_V3_PnP",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', '_', 'P', 'n', 'P', 0},
 	Base: "SystemConfig_V3",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '3', 0},
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 22 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IDLength", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "DescriptionLength", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "FriendlyNameLength", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DeviceID", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "FriendlyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "PdoName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IDLength", NameW: []uint16{'I', 'D', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "DescriptionLength", NameW: []uint16{'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "FriendlyNameLength", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DeviceID", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "FriendlyName", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 7, Name: "PdoName", NameW: []uint16{'P', 'd', 'o', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4743,7 +5163,9 @@ var mofSystemConfig_V3_PnP = &MofClassDef{
 // mofFileIo_V0 class definition
 var mofFileIo_V0 = &MofClassDef{
 	Name: "FileIo_V0",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 0,
 }
@@ -4758,13 +5180,15 @@ var mofFileIo_V0 = &MofClassDef{
 // mofFileIo_V0_Name class definition
 var mofFileIo_V0_Name = &MofClassDef{
 	Name: "FileIo_V0_Name",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '0', '_', 'N', 'a', 'm', 'e', 0},
 	Base: "FileIo_V0",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '0', 0},
 	GUID: mofFileIo_V0.GUID,
 	Version: mofFileIo_V0.Version,
 	EventTypes: []uint8{ 0 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4773,7 +5197,9 @@ var mofFileIo_V0_Name = &MofClassDef{
 // mofThread_V4 class definition
 var mofThread_V4 = &MofClassDef{
 	Name: "Thread_V4",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '4', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 4,
 }
@@ -4802,26 +5228,28 @@ var mofThread_V4 = &MofClassDef{
 // mofThread_TypeGroup1 class definition
 var mofThread_TypeGroup1 = &MofClassDef{
 	Name: "Thread_TypeGroup1",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Thread_V4",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '4', 0},
 	GUID: mofThread_V4.GUID,
 	Version: mofThread_V4.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "StackBase", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "StackLimit", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "UserStackBase", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "UserStackLimit", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "Affinity", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "Win32StartAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 9, Name: "TebBase", InType: TDH_INTYPE_POINTER},
-		{ID: 10, Name: "SubProcessTag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 11, Name: "BasePriority", InType: TDH_INTYPE_UINT8},
-		{ID: 12, Name: "PagePriority", InType: TDH_INTYPE_UINT8},
-		{ID: 13, Name: "IoPriority", InType: TDH_INTYPE_UINT8},
-		{ID: 14, Name: "ThreadFlags", InType: TDH_INTYPE_UINT8},
-		{ID: 15, Name: "ThreadName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "StackBase", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "StackLimit", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'L', 'i', 'm', 'i', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "UserStackBase", NameW: []uint16{'U', 's', 'e', 'r', 'S', 't', 'a', 'c', 'k', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "UserStackLimit", NameW: []uint16{'U', 's', 'e', 'r', 'S', 't', 'a', 'c', 'k', 'L', 'i', 'm', 'i', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "Affinity", NameW: []uint16{'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "Win32StartAddr", NameW: []uint16{'W', 'i', 'n', '3', '2', 'S', 't', 'a', 'r', 't', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 9, Name: "TebBase", NameW: []uint16{'T', 'e', 'b', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 10, Name: "SubProcessTag", NameW: []uint16{'S', 'u', 'b', 'P', 'r', 'o', 'c', 'e', 's', 's', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 11, Name: "BasePriority", NameW: []uint16{'B', 'a', 's', 'e', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 12, Name: "PagePriority", NameW: []uint16{'P', 'a', 'g', 'e', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 13, Name: "IoPriority", NameW: []uint16{'I', 'o', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 14, Name: "ThreadFlags", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 15, Name: "ThreadName", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -4842,23 +5270,25 @@ var mofThread_TypeGroup1 = &MofClassDef{
 // mofCSwitch_V4 class definition
 var mofCSwitch_V4 = &MofClassDef{
 	Name: "CSwitch_V4",
+	NameW: []uint16{'C', 'S', 'w', 'i', 't', 'c', 'h', '_', 'V', '4', 0},
 	Base: "Thread_V4",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '4', 0},
 	GUID: mofThread_V4.GUID,
 	Version: mofThread_V4.Version,
 	EventTypes: []uint8{ 36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "NewThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "OldThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "NewThreadPriority", InType: TDH_INTYPE_INT8},
-		{ID: 4, Name: "OldThreadPriority", InType: TDH_INTYPE_INT8},
-		{ID: 5, Name: "PreviousCState", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "SpareByte", InType: TDH_INTYPE_INT8},
-		{ID: 7, Name: "OldThreadWaitReason", InType: TDH_INTYPE_INT8},
-		{ID: 8, Name: "ThreadFlags", InType: TDH_INTYPE_INT8},
-		{ID: 9, Name: "OldThreadState", InType: TDH_INTYPE_INT8},
-		{ID: 10, Name: "OldThreadWaitIdealProcessor", InType: TDH_INTYPE_INT8},
-		{ID: 11, Name: "NewThreadWaitTime", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 12, Name: "Reserved", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "NewThreadId", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "OldThreadId", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "NewThreadPriority", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 4, Name: "OldThreadPriority", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 5, Name: "PreviousCState", NameW: []uint16{'P', 'r', 'e', 'v', 'i', 'o', 'u', 's', 'C', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "SpareByte", NameW: []uint16{'S', 'p', 'a', 'r', 'e', 'B', 'y', 't', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 7, Name: "OldThreadWaitReason", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 8, Name: "ThreadFlags", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 9, Name: "OldThreadState", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 10, Name: "OldThreadWaitIdealProcessor", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'I', 'd', 'e', 'a', 'l', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 11, Name: "NewThreadWaitTime", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 12, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -4867,7 +5297,9 @@ var mofCSwitch_V4 = &MofClassDef{
 // mofDiskIo_V0 class definition
 var mofDiskIo_V0 = &MofClassDef{
 	Name: "DiskIo_V0",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 0,
 }
@@ -4883,17 +5315,19 @@ var mofDiskIo_V0 = &MofClassDef{
 // mofDiskIo_V0_TypeGroup1 class definition
 var mofDiskIo_V0_TypeGroup1 = &MofClassDef{
 	Name: "DiskIo_V0_TypeGroup1",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '0', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "DiskIo_V0",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '0', 0},
 	GUID: mofDiskIo_V0.GUID,
 	Version: mofDiskIo_V0.Version,
 	EventTypes: []uint8{ 10,  11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "IrpFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "TransferSize", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ByteOffset", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "FileObject", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "IrpFlags", NameW: []uint16{'I', 'r', 'p', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "TransferSize", NameW: []uint16{'T', 'r', 'a', 'n', 's', 'f', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ByteOffset", NameW: []uint16{'B', 'y', 't', 'e', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -4902,7 +5336,9 @@ var mofDiskIo_V0_TypeGroup1 = &MofClassDef{
 // mofSystemConfig class definition
 var mofSystemConfig = &MofClassDef{
 	Name: "SystemConfig",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 5,
 }
@@ -4947,23 +5383,25 @@ var mofSystemConfig = &MofClassDef{
 // mofSystemConfig_PnP class definition
 var mofSystemConfig_PnP = &MofClassDef{
 	Name: "SystemConfig_PnP",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'P', 'n', 'P', 0},
 	Base: "SystemConfig",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', 0},
 	GUID: mofSystemConfig.GUID,
 	Version: mofSystemConfig.Version,
 	EventTypes: []uint8{ 22 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ClassGuid", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID},
-		{ID: 2, Name: "UpperFiltersCount", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "LowerFiltersCount", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DevStatus", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "DevProblem", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "DeviceID", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 8, Name: "FriendlyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 9, Name: "PdoName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 10, Name: "ServiceName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 11, Name: "UpperFilters", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 2},
-		{ID: 12, Name: "LowerFilters", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 3},
+		{ID: 1, Name: "ClassGuid", NameW: []uint16{'C', 'l', 'a', 's', 's', 'G', 'u', 'i', 'd', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID"},
+		{ID: 2, Name: "UpperFiltersCount", NameW: []uint16{'U', 'p', 'p', 'e', 'r', 'F', 'i', 'l', 't', 'e', 'r', 's', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "LowerFiltersCount", NameW: []uint16{'L', 'o', 'w', 'e', 'r', 'F', 'i', 'l', 't', 'e', 'r', 's', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DevStatus", NameW: []uint16{'D', 'e', 'v', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "DevProblem", NameW: []uint16{'D', 'e', 'v', 'P', 'r', 'o', 'b', 'l', 'e', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "DeviceID", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 7, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 8, Name: "FriendlyName", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 9, Name: "PdoName", NameW: []uint16{'P', 'd', 'o', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 10, Name: "ServiceName", NameW: []uint16{'S', 'e', 'r', 'v', 'i', 'c', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 11, Name: "UpperFilters", NameW: []uint16{'U', 'p', 'p', 'e', 'r', 'F', 'i', 'l', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 2},
+		{ID: 12, Name: "LowerFilters", NameW: []uint16{'L', 'o', 'w', 'e', 'r', 'F', 'i', 'l', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING, SizeFromID: 3},
 	},
 }
 
@@ -4972,7 +5410,9 @@ var mofSystemConfig_PnP = &MofClassDef{
 // mofProcess class definition
 var mofProcess = &MofClassDef{
 	Name: "Process",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 5,
 }
@@ -4984,6 +5424,7 @@ var mofProcess = &MofClassDef{
 //   [ WmiDataId(4), read ] uint32 SessionId;
 //   [ WmiDataId(5), read ] sint32 ExitStatus;
 //   [ WmiDataId(6), pointer, read ] uint32 DirectoryTableBase;
+//   [ WmiDataId(7), format("x"), read ] uint32 Flags;
 //   [ WmiDataId(8), extension("Sid"), read ] object UserSID;
 //   [ WmiDataId(9), StringTermination("NullTerminated"),
 //     read ] string ImageFileName;
@@ -5004,23 +5445,26 @@ var mofProcess = &MofClassDef{
 // mofProcess_Defunct_TypeGroup1 class definition
 var mofProcess_Defunct_TypeGroup1 = &MofClassDef{
 	Name: "Process_Defunct_TypeGroup1",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'D', 'e', 'f', 'u', 'n', 'c', 't', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Process",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 0},
 	GUID: mofProcess.GUID,
 	Version: mofProcess.Version,
 	EventTypes: []uint8{ 39 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "UniqueProcessKey", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "ParentId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "SessionId", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
-		{ID: 6, Name: "DirectoryTableBase", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING},
-		{ID: 9, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 10, Name: "CommandLine", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 11, Name: "PackageFullName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 12, Name: "ApplicationId", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 13, Name: "ExitTime", InType: TDH_INTYPE_UINT64},
+		{ID: 1, Name: "UniqueProcessKey", NameW: []uint16{'U', 'n', 'i', 'q', 'u', 'e', 'P', 'r', 'o', 'c', 'e', 's', 's', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "ParentId", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "SessionId", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ExitStatus", NameW: []uint16{'E', 'x', 'i', 't', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 6, Name: "DirectoryTableBase", NameW: []uint16{'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'T', 'a', 'b', 'l', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "Flags", NameW: []uint16{'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 8, Name: "UserSID", NameW: []uint16{'U', 's', 'e', 'r', 'S', 'I', 'D', 0}, InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 9, Name: "ImageFileName", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 10, Name: "CommandLine", NameW: []uint16{'C', 'o', 'm', 'm', 'a', 'n', 'd', 'L', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 11, Name: "PackageFullName", NameW: []uint16{'P', 'a', 'c', 'k', 'a', 'g', 'e', 'F', 'u', 'l', 'l', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 12, Name: "ApplicationId", NameW: []uint16{'A', 'p', 'p', 'l', 'i', 'c', 'a', 't', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 13, Name: "ExitTime", NameW: []uint16{'E', 'x', 'i', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
 	},
 }
 
@@ -5029,7 +5473,9 @@ var mofProcess_Defunct_TypeGroup1 = &MofClassDef{
 // mofPoolTrace class definition
 var mofPoolTrace = &MofClassDef{
 	Name: "PoolTrace",
+	NameW: []uint16{'P', 'o', 'o', 'l', 'T', 'r', 'a', 'c', 'e', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{0268a8b6-74fd-4302-9dd0-6e8f1795c0cf}"),
 	Version: 2,
 }
@@ -5043,15 +5489,17 @@ var mofPoolTrace = &MofClassDef{
 // mofPoolAllocFree class definition
 var mofPoolAllocFree = &MofClassDef{
 	Name: "PoolAllocFree",
+	NameW: []uint16{'P', 'o', 'o', 'l', 'A', 'l', 'l', 'o', 'c', 'F', 'r', 'e', 'e', 0},
 	Base: "PoolTrace",
+	BaseW: []uint16{'P', 'o', 'o', 'l', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofPoolTrace.GUID,
 	Version: mofPoolTrace.Version,
 	EventTypes: []uint8{ 32,  34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Type", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Tag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "NumberOfBytes", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 4, Name: "Entry", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "Type", NameW: []uint16{'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Tag", NameW: []uint16{'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "NumberOfBytes", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'B', 'y', 't', 'e', 's', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 4, Name: "Entry", NameW: []uint16{'E', 'n', 't', 'r', 'y', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -5065,16 +5513,18 @@ var mofPoolAllocFree = &MofClassDef{
 // mofSessionPoolAllocFree class definition
 var mofSessionPoolAllocFree = &MofClassDef{
 	Name: "SessionPoolAllocFree",
+	NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'P', 'o', 'o', 'l', 'A', 'l', 'l', 'o', 'c', 'F', 'r', 'e', 'e', 0},
 	Base: "PoolTrace",
+	BaseW: []uint16{'P', 'o', 'o', 'l', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofPoolTrace.GUID,
 	Version: mofPoolTrace.Version,
 	EventTypes: []uint8{ 33,  35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Type", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Tag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "NumberOfBytes", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 4, Name: "Entry", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "SessionId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Type", NameW: []uint16{'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Tag", NameW: []uint16{'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "NumberOfBytes", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'B', 'y', 't', 'e', 's', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 4, Name: "Entry", NameW: []uint16{'E', 'n', 't', 'r', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "SessionId", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5083,7 +5533,9 @@ var mofSessionPoolAllocFree = &MofClassDef{
 // mofPoolSnapshot class definition
 var mofPoolSnapshot = &MofClassDef{
 	Name: "PoolSnapshot",
+	NameW: []uint16{'P', 'o', 'o', 'l', 'S', 'n', 'a', 'p', 's', 'h', 'o', 't', 0},
 	Base: "PoolTrace",
+	BaseW: []uint16{'P', 'o', 'o', 'l', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: mofPoolTrace.GUID,
 	Version: mofPoolTrace.Version,
 	EventTypes: []uint8{ 40,  41,  42,  43,  44,  45,  46, 
@@ -5095,7 +5547,9 @@ var mofPoolSnapshot = &MofClassDef{
 // mofDiskIo class definition
 var mofDiskIo = &MofClassDef{
 	Name: "DiskIo",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 3,
 }
@@ -5108,13 +5562,15 @@ var mofDiskIo = &MofClassDef{
 // mofDiskIo_TypeGroup2 class definition
 var mofDiskIo_TypeGroup2 = &MofClassDef{
 	Name: "DiskIo_TypeGroup2",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '2', 0},
 	Base: "DiskIo",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', 0},
 	GUID: mofDiskIo.GUID,
 	Version: mofDiskIo.Version,
 	EventTypes: []uint8{ 12,  13,  15,  58,  59,  60 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "IssuingThreadId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "IssuingThreadId", NameW: []uint16{'I', 's', 's', 'u', 'i', 'n', 'g', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5133,20 +5589,22 @@ var mofDiskIo_TypeGroup2 = &MofClassDef{
 // mofDiskIo_TypeGroup1 class definition
 var mofDiskIo_TypeGroup1 = &MofClassDef{
 	Name: "DiskIo_TypeGroup1",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "DiskIo",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', 0},
 	GUID: mofDiskIo.GUID,
 	Version: mofDiskIo.Version,
 	EventTypes: []uint8{ 10,  11,  55,  56 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "IrpFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "TransferSize", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ByteOffset", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "HighResResponseTime", InType: TDH_INTYPE_UINT64},
-		{ID: 9, Name: "IssuingThreadId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "IrpFlags", NameW: []uint16{'I', 'r', 'p', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "TransferSize", NameW: []uint16{'T', 'r', 'a', 'n', 's', 'f', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ByteOffset", NameW: []uint16{'B', 'y', 't', 'e', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "HighResResponseTime", NameW: []uint16{'H', 'i', 'g', 'h', 'R', 'e', 's', 'R', 'e', 's', 'p', 'o', 'n', 's', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 9, Name: "IssuingThreadId", NameW: []uint16{'I', 's', 's', 'u', 'i', 'n', 'g', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5160,16 +5618,18 @@ var mofDiskIo_TypeGroup1 = &MofClassDef{
 // mofDiskIo_TypeGroup3 class definition
 var mofDiskIo_TypeGroup3 = &MofClassDef{
 	Name: "DiskIo_TypeGroup3",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '3', 0},
 	Base: "DiskIo",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', 0},
 	GUID: mofDiskIo.GUID,
 	Version: mofDiskIo.Version,
 	EventTypes: []uint8{ 14,  57 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "IrpFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "HighResResponseTime", InType: TDH_INTYPE_UINT64},
-		{ID: 4, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "IssuingThreadId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "IrpFlags", NameW: []uint16{'I', 'r', 'p', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "HighResResponseTime", NameW: []uint16{'H', 'i', 'g', 'h', 'R', 'e', 's', 'R', 'e', 's', 'p', 'o', 'n', 's', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 4, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "IssuingThreadId", NameW: []uint16{'I', 's', 's', 'u', 'i', 'n', 'g', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5178,7 +5638,9 @@ var mofDiskIo_TypeGroup3 = &MofClassDef{
 // mofLost_Event class definition
 var mofLost_Event = &MofClassDef{
 	Name: "Lost_Event",
+	NameW: []uint16{'L', 'o', 's', 't', '_', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{6a399ae0-4bc6-4de9-870b-3657f8947e7e}"),
 	Version: 0,
 }
@@ -5187,7 +5649,9 @@ var mofLost_Event = &MofClassDef{
 // mofRT_LostEvent class definition
 var mofRT_LostEvent = &MofClassDef{
 	Name: "RT_LostEvent",
+	NameW: []uint16{'R', 'T', '_', 'L', 'o', 's', 't', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "Lost_Event",
+	BaseW: []uint16{'L', 'o', 's', 't', '_', 'E', 'v', 'e', 'n', 't', 0},
 	GUID: mofLost_Event.GUID,
 	Version: mofLost_Event.Version,
 	EventTypes: []uint8{ 32,  33,  34 },
@@ -5198,7 +5662,9 @@ var mofRT_LostEvent = &MofClassDef{
 // mofFileIo_V1 class definition
 var mofFileIo_V1 = &MofClassDef{
 	Name: "FileIo_V1",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 1,
 }
@@ -5213,13 +5679,15 @@ var mofFileIo_V1 = &MofClassDef{
 // mofFileIo_V1_Name class definition
 var mofFileIo_V1_Name = &MofClassDef{
 	Name: "FileIo_V1_Name",
+	NameW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '1', '_', 'N', 'a', 'm', 'e', 0},
 	Base: "FileIo_V1",
+	BaseW: []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '1', 0},
 	GUID: mofFileIo_V1.GUID,
 	Version: mofFileIo_V1.Version,
 	EventTypes: []uint8{ 0,  32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -5228,7 +5696,9 @@ var mofFileIo_V1_Name = &MofClassDef{
 // mofEventTraceEvent_V1 class definition
 var mofEventTraceEvent_V1 = &MofClassDef{
 	Name: "EventTraceEvent_V1",
+	NameW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{68fdd900-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 1,
 }
@@ -5269,34 +5739,36 @@ var mofEventTraceEvent_V1 = &MofClassDef{
 // mofEventTrace_V1_Header class definition
 var mofEventTrace_V1_Header = &MofClassDef{
 	Name: "EventTrace_V1_Header",
+	NameW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', '_', 'V', '1', '_', 'H', 'e', 'a', 'd', 'e', 'r', 0},
 	Base: "EventTraceEvent_V1",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', '_', 'V', '1', 0},
 	GUID: mofEventTraceEvent_V1.GUID,
 	Version: mofEventTraceEvent_V1.Version,
 	EventTypes: []uint8{ 0 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BufferSize", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Version", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "ProviderVersion", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "NumberOfProcessors", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "EndTime", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "TimerResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "MaxFileSize", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "LogFileMode", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 9, Name: "BuffersWritten", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "StartBuffers", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "PointerSize", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "EventsLost", InType: TDH_INTYPE_UINT32},
-		{ID: 13, Name: "CPUSpeed", InType: TDH_INTYPE_UINT32},
-		{ID: 14, Name: "LoggerName", InType: TDH_INTYPE_POINTER},
-		{ID: 15, Name: "LogFileName", InType: TDH_INTYPE_POINTER},
-		{ID: 16, Name: "TimeZoneInformation", InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_NULL, IsArray: true, ArraySize: 176},
-		{ID: 17, Name: "BootTime", InType: TDH_INTYPE_UINT64},
-		{ID: 18, Name: "PerfFreq", InType: TDH_INTYPE_UINT64},
-		{ID: 19, Name: "StartTime", InType: TDH_INTYPE_UINT64},
-		{ID: 20, Name: "ReservedFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 21, Name: "BuffersLost", InType: TDH_INTYPE_UINT32},
-		{ID: 22, Name: "SessionNameString", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 23, Name: "LogFileNameString", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BufferSize", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Version", NameW: []uint16{'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "ProviderVersion", NameW: []uint16{'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "NumberOfProcessors", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "EndTime", NameW: []uint16{'E', 'n', 'd', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "TimerResolution", NameW: []uint16{'T', 'i', 'm', 'e', 'r', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "MaxFileSize", NameW: []uint16{'M', 'a', 'x', 'F', 'i', 'l', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "LogFileMode", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'M', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 9, Name: "BuffersWritten", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 's', 'W', 'r', 'i', 't', 't', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "StartBuffers", NameW: []uint16{'S', 't', 'a', 'r', 't', 'B', 'u', 'f', 'f', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "PointerSize", NameW: []uint16{'P', 'o', 'i', 'n', 't', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "EventsLost", NameW: []uint16{'E', 'v', 'e', 'n', 't', 's', 'L', 'o', 's', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 13, Name: "CPUSpeed", NameW: []uint16{'C', 'P', 'U', 'S', 'p', 'e', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 14, Name: "LoggerName", NameW: []uint16{'L', 'o', 'g', 'g', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 15, Name: "LogFileName", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 16, Name: "TimeZoneInformation", NameW: []uint16{'T', 'i', 'm', 'e', 'Z', 'o', 'n', 'e', 'I', 'n', 'f', 'o', 'r', 'm', 'a', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_BINARY, OutType: TDH_OUTTYPE_NULL, Extension: "NoPrint", IsArray: true, ArraySize: 176},
+		{ID: 17, Name: "BootTime", NameW: []uint16{'B', 'o', 'o', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 18, Name: "PerfFreq", NameW: []uint16{'P', 'e', 'r', 'f', 'F', 'r', 'e', 'q', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 19, Name: "StartTime", NameW: []uint16{'S', 't', 'a', 'r', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 20, Name: "ReservedFlags", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 21, Name: "BuffersLost", NameW: []uint16{'B', 'u', 'f', 'f', 'e', 'r', 's', 'L', 'o', 's', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 22, Name: "SessionNameString", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'N', 'a', 'm', 'e', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 23, Name: "LogFileNameString", NameW: []uint16{'L', 'o', 'g', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -5304,7 +5776,9 @@ var mofEventTrace_V1_Header = &MofClassDef{
 // mofRDComplete_V1 class definition
 var mofRDComplete_V1 = &MofClassDef{
 	Name: "RDComplete_V1",
+	NameW: []uint16{'R', 'D', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'e', '_', 'V', '1', 0},
 	Base: "EventTraceEvent_V1",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', '_', 'V', '1', 0},
 	GUID: mofEventTraceEvent_V1.GUID,
 	Version: mofEventTraceEvent_V1.Version,
 	EventTypes: []uint8{ 8 },
@@ -5324,19 +5798,21 @@ var mofRDComplete_V1 = &MofClassDef{
 // mofHeader_Extension_V1_TypeGroup class definition
 var mofHeader_Extension_V1_TypeGroup = &MofClassDef{
 	Name: "Header_Extension_V1_TypeGroup",
+	NameW: []uint16{'H', 'e', 'a', 'd', 'e', 'r', '_', 'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "EventTraceEvent_V1",
+	BaseW: []uint16{'E', 'v', 'e', 'n', 't', 'T', 'r', 'a', 'c', 'e', 'E', 'v', 'e', 'n', 't', '_', 'V', '1', 0},
 	GUID: mofEventTraceEvent_V1.GUID,
 	Version: mofEventTraceEvent_V1.Version,
 	EventTypes: []uint8{ 5,  32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "GroupMask1", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "GroupMask2", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "GroupMask3", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "GroupMask4", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 5, Name: "GroupMask5", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 6, Name: "GroupMask6", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 7, Name: "GroupMask7", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 8, Name: "GroupMask8", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "GroupMask1", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '1', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "GroupMask2", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '2', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "GroupMask3", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '3', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "GroupMask4", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '4', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 5, Name: "GroupMask5", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '5', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 6, Name: "GroupMask6", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '6', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 7, Name: "GroupMask7", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '7', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 8, Name: "GroupMask8", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'M', 'a', 's', 'k', '8', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -5345,7 +5821,9 @@ var mofHeader_Extension_V1_TypeGroup = &MofClassDef{
 // mofDebugger class definition
 var mofDebugger = &MofClassDef{
 	Name: "Debugger",
+	NameW: []uint16{'D', 'e', 'b', 'u', 'g', 'g', 'e', 'r', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{13976d09-a327-438c-950b-7f03192815c7}"),
 	Version: 2,
 }
@@ -5358,14 +5836,16 @@ var mofDebugger = &MofClassDef{
 // mofDebugPrint_Event class definition
 var mofDebugPrint_Event = &MofClassDef{
 	Name: "DebugPrint_Event",
+	NameW: []uint16{'D', 'e', 'b', 'u', 'g', 'P', 'r', 'i', 'n', 't', '_', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "Debugger",
+	BaseW: []uint16{'D', 'e', 'b', 'u', 'g', 'g', 'e', 'r', 0},
 	GUID: mofDebugger.GUID,
 	Version: mofDebugger.Version,
 	EventTypes: []uint8{ 32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Component", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Level", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "Message", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "Component", NameW: []uint16{'C', 'o', 'm', 'p', 'o', 'n', 'e', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Level", NameW: []uint16{'L', 'e', 'v', 'e', 'l', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "Message", NameW: []uint16{'M', 'e', 's', 's', 'a', 'g', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -5374,7 +5854,9 @@ var mofDebugPrint_Event = &MofClassDef{
 // mofDiskIo_V2 class definition
 var mofDiskIo_V2 = &MofClassDef{
 	Name: "DiskIo_V2",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 2,
 }
@@ -5392,19 +5874,21 @@ var mofDiskIo_V2 = &MofClassDef{
 // mofDiskIo_V2_TypeGroup1 class definition
 var mofDiskIo_V2_TypeGroup1 = &MofClassDef{
 	Name: "DiskIo_V2_TypeGroup1",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "DiskIo_V2",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 10,  11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "IrpFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "TransferSize", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ByteOffset", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "HighResResponseTime", InType: TDH_INTYPE_UINT64},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "IrpFlags", NameW: []uint16{'I', 'r', 'p', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "TransferSize", NameW: []uint16{'T', 'r', 'a', 'n', 's', 'f', 'e', 'r', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ByteOffset", NameW: []uint16{'B', 'y', 't', 'e', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "HighResResponseTime", NameW: []uint16{'H', 'i', 'g', 'h', 'R', 'e', 's', 'R', 'e', 's', 'p', 'o', 'n', 's', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
 	},
 }
 
@@ -5416,13 +5900,15 @@ var mofDiskIo_V2_TypeGroup1 = &MofClassDef{
 // mofDriverMajorFunctionReturn class definition
 var mofDriverMajorFunctionReturn = &MofClassDef{
 	Name: "DriverMajorFunctionReturn",
+	NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'r', 'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 'R', 'e', 't', 'u', 'r', 'n', 0},
 	Base: "DiskIo_V2",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5434,14 +5920,16 @@ var mofDriverMajorFunctionReturn = &MofClassDef{
 // mofDriverCompletionRoutine class definition
 var mofDriverCompletionRoutine = &MofClassDef{
 	Name: "DriverCompletionRoutine",
+	NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'r', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'i', 'o', 'n', 'R', 'o', 'u', 't', 'i', 'n', 'e', 0},
 	Base: "DiskIo_V2",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 37 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Routine", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Routine", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5456,17 +5944,19 @@ var mofDriverCompletionRoutine = &MofClassDef{
 // mofDriverMajorFunctionCall class definition
 var mofDriverMajorFunctionCall = &MofClassDef{
 	Name: "DriverMajorFunctionCall",
+	NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'r', 'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 'C', 'a', 'l', 'l', 0},
 	Base: "DiskIo_V2",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MajorFunction", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "MinorFunction", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "RoutineAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "MajorFunction", NameW: []uint16{'M', 'a', 'j', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "MinorFunction", NameW: []uint16{'M', 'i', 'n', 'o', 'r', 'F', 'u', 'n', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "RoutineAddr", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5478,13 +5968,15 @@ var mofDriverMajorFunctionCall = &MofClassDef{
 // mofDriverCompleteRequestReturn class definition
 var mofDriverCompleteRequestReturn = &MofClassDef{
 	Name: "DriverCompleteRequestReturn",
+	NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'r', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'e', 'R', 'e', 'q', 'u', 'e', 's', 't', 'R', 'e', 't', 'u', 'r', 'n', 0},
 	Base: "DiskIo_V2",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 53 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5497,15 +5989,17 @@ var mofDriverCompleteRequestReturn = &MofClassDef{
 // mofDiskIo_V2_TypeGroup3 class definition
 var mofDiskIo_V2_TypeGroup3 = &MofClassDef{
 	Name: "DiskIo_V2_TypeGroup3",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '3', 0},
 	Base: "DiskIo_V2",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 14 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "IrpFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "HighResResponseTime", InType: TDH_INTYPE_UINT64},
-		{ID: 4, Name: "Irp", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "IrpFlags", NameW: []uint16{'I', 'r', 'p', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "HighResResponseTime", NameW: []uint16{'H', 'i', 'g', 'h', 'R', 'e', 's', 'R', 'e', 's', 'p', 'o', 'n', 's', 'e', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 4, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -5516,12 +6010,14 @@ var mofDiskIo_V2_TypeGroup3 = &MofClassDef{
 // mofDiskIo_V2_TypeGroup2 class definition
 var mofDiskIo_V2_TypeGroup2 = &MofClassDef{
 	Name: "DiskIo_V2_TypeGroup2",
+	NameW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '2', 0},
 	Base: "DiskIo_V2",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 12,  13,  15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Irp", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -5533,14 +6029,16 @@ var mofDiskIo_V2_TypeGroup2 = &MofClassDef{
 // mofDriverCompleteRequest class definition
 var mofDriverCompleteRequest = &MofClassDef{
 	Name: "DriverCompleteRequest",
+	NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'r', 'C', 'o', 'm', 'p', 'l', 'e', 't', 'e', 'R', 'e', 'q', 'u', 'e', 's', 't', 0},
 	Base: "DiskIo_V2",
+	BaseW: []uint16{'D', 'i', 's', 'k', 'I', 'o', '_', 'V', '2', 0},
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 52 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "RoutineAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "Irp", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "UniqMatchId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "RoutineAddr", NameW: []uint16{'R', 'o', 'u', 't', 'i', 'n', 'e', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "Irp", NameW: []uint16{'I', 'r', 'p', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "UniqMatchId", NameW: []uint16{'U', 'n', 'i', 'q', 'M', 'a', 't', 'c', 'h', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5549,7 +6047,9 @@ var mofDriverCompleteRequest = &MofClassDef{
 // mofSystemConfig_V0 class definition
 var mofSystemConfig_V0 = &MofClassDef{
 	Name: "SystemConfig_V0",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 0,
 }
@@ -5567,15 +6067,17 @@ var mofSystemConfig_V0 = &MofClassDef{
 // mofSystemConfig_V0_IRQ class definition
 var mofSystemConfig_V0_IRQ = &MofClassDef{
 	Name: "SystemConfig_V0_IRQ",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'I', 'R', 'Q', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 21 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IRQAffinity", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 2, Name: "IRQNum", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "DeviceDescriptionLen", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IRQAffinity", NameW: []uint16{'I', 'R', 'Q', 'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 2, Name: "IRQNum", NameW: []uint16{'I', 'R', 'Q', 'N', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "DeviceDescriptionLen", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'L', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -5593,19 +6095,21 @@ var mofSystemConfig_V0_IRQ = &MofClassDef{
 // mofSystemConfig_V0_CPU class definition
 var mofSystemConfig_V0_CPU = &MofClassDef{
 	Name: "SystemConfig_V0_CPU",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'C', 'P', 'U', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 10 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MHz", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "NumberOfProcessors", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "MemSize", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "PageSize", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "AllocationGranularity", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ComputerName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 7, Name: "DomainName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 132},
-		{ID: 8, Name: "HyperThreadingFlag", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "MHz", NameW: []uint16{'M', 'H', 'z', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "NumberOfProcessors", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "MemSize", NameW: []uint16{'M', 'e', 'm', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "PageSize", NameW: []uint16{'P', 'a', 'g', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "AllocationGranularity", NameW: []uint16{'A', 'l', 'l', 'o', 'c', 'a', 't', 'i', 'o', 'n', 'G', 'r', 'a', 'n', 'u', 'l', 'a', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ComputerName", NameW: []uint16{'C', 'o', 'm', 'p', 'u', 't', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 7, Name: "DomainName", NameW: []uint16{'D', 'o', 'm', 'a', 'i', 'n', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 132},
+		{ID: 8, Name: "HyperThreadingFlag", NameW: []uint16{'H', 'y', 'p', 'e', 'r', 'T', 'h', 'r', 'e', 'a', 'd', 'i', 'n', 'g', 'F', 'l', 'a', 'g', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -5619,15 +6123,17 @@ var mofSystemConfig_V0_CPU = &MofClassDef{
 // mofSystemConfig_V0_Services class definition
 var mofSystemConfig_V0_Services = &MofClassDef{
 	Name: "SystemConfig_V0_Services",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'S', 'e', 'r', 'v', 'i', 'c', 'e', 's', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ServiceName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 34},
-		{ID: 2, Name: "DisplayName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 3, Name: "ProcessName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 34},
-		{ID: 4, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "ServiceName", NameW: []uint16{'S', 'e', 'r', 'v', 'i', 'c', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 34},
+		{ID: 2, Name: "DisplayName", NameW: []uint16{'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 3, Name: "ProcessName", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 34},
+		{ID: 4, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5652,26 +6158,28 @@ var mofSystemConfig_V0_Services = &MofClassDef{
 // mofSystemConfig_V0_LogDisk class definition
 var mofSystemConfig_V0_LogDisk = &MofClassDef{
 	Name: "SystemConfig_V0_LogDisk",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'L', 'o', 'g', 'D', 'i', 's', 'k', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 12 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "StartOffset", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "PartitionSize", InType: TDH_INTYPE_UINT64},
-		{ID: 3, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Size", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "DriveType", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "DriveLetterString", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 4},
-		{ID: 7, Name: "Pad1", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "PartitionNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "SectorsPerCluster", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "BytesPerSector", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "Pad2", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "NumberOfFreeClusters", InType: TDH_INTYPE_INT64},
-		{ID: 13, Name: "TotalNumberOfClusters", InType: TDH_INTYPE_INT64},
-		{ID: 14, Name: "FileSystem", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 16},
-		{ID: 15, Name: "VolumeExt", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "StartOffset", NameW: []uint16{'S', 't', 'a', 'r', 't', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "PartitionSize", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 3, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Size", NameW: []uint16{'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "DriveType", NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "DriveLetterString", NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'L', 'e', 't', 't', 'e', 'r', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 4},
+		{ID: 7, Name: "Pad1", NameW: []uint16{'P', 'a', 'd', '1', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "PartitionNumber", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "SectorsPerCluster", NameW: []uint16{'S', 'e', 'c', 't', 'o', 'r', 's', 'P', 'e', 'r', 'C', 'l', 'u', 's', 't', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "BytesPerSector", NameW: []uint16{'B', 'y', 't', 'e', 's', 'P', 'e', 'r', 'S', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "Pad2", NameW: []uint16{'P', 'a', 'd', '2', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "NumberOfFreeClusters", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'F', 'r', 'e', 'e', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 13, Name: "TotalNumberOfClusters", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 14, Name: "FileSystem", NameW: []uint16{'F', 'i', 'l', 'e', 'S', 'y', 's', 't', 'e', 'm', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 16},
+		{ID: 15, Name: "VolumeExt", NameW: []uint16{'V', 'o', 'l', 'u', 'm', 'e', 'E', 'x', 't', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5692,22 +6200,24 @@ var mofSystemConfig_V0_LogDisk = &MofClassDef{
 // mofSystemConfig_V0_Video class definition
 var mofSystemConfig_V0_Video = &MofClassDef{
 	Name: "SystemConfig_V0_Video",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'V', 'i', 'd', 'e', 'o', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 14 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MemorySize", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "XResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "YResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "BitsPerPixel", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "VRefresh", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ChipType", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 7, Name: "DACType", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 8, Name: "AdapterString", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 9, Name: "BiosString", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 10, Name: "DeviceId", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 11, Name: "StateFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "MemorySize", NameW: []uint16{'M', 'e', 'm', 'o', 'r', 'y', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "XResolution", NameW: []uint16{'X', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "YResolution", NameW: []uint16{'Y', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "BitsPerPixel", NameW: []uint16{'B', 'i', 't', 's', 'P', 'e', 'r', 'P', 'i', 'x', 'e', 'l', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "VRefresh", NameW: []uint16{'V', 'R', 'e', 'f', 'r', 'e', 's', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ChipType", NameW: []uint16{'C', 'h', 'i', 'p', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 7, Name: "DACType", NameW: []uint16{'D', 'A', 'C', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 8, Name: "AdapterString", NameW: []uint16{'A', 'd', 'a', 'p', 't', 'e', 'r', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 9, Name: "BiosString", NameW: []uint16{'B', 'i', 'o', 's', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 10, Name: "DeviceId", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'd', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 11, Name: "StateFlags", NameW: []uint16{'S', 't', 'a', 't', 'e', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -5732,26 +6242,28 @@ var mofSystemConfig_V0_Video = &MofClassDef{
 // mofSystemConfig_V0_PhyDisk class definition
 var mofSystemConfig_V0_PhyDisk = &MofClassDef{
 	Name: "SystemConfig_V0_PhyDisk",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'P', 'h', 'y', 'D', 'i', 's', 'k', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "BytesPerSector", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "SectorsPerTrack", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "TracksPerCylinder", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "Cylinders", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "SCSIPort", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "SCSIPath", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "SCSITarget", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "SCSILun", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "Manufacturer", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 11, Name: "PartitionCount", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "WriteCacheEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 13, Name: "Pad", InType: TDH_INTYPE_UINT8},
-		{ID: 14, Name: "BootDriveLetter", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 3},
-		{ID: 15, Name: "Spare", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 2},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "BytesPerSector", NameW: []uint16{'B', 'y', 't', 'e', 's', 'P', 'e', 'r', 'S', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "SectorsPerTrack", NameW: []uint16{'S', 'e', 'c', 't', 'o', 'r', 's', 'P', 'e', 'r', 'T', 'r', 'a', 'c', 'k', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "TracksPerCylinder", NameW: []uint16{'T', 'r', 'a', 'c', 'k', 's', 'P', 'e', 'r', 'C', 'y', 'l', 'i', 'n', 'd', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "Cylinders", NameW: []uint16{'C', 'y', 'l', 'i', 'n', 'd', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "SCSIPort", NameW: []uint16{'S', 'C', 'S', 'I', 'P', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "SCSIPath", NameW: []uint16{'S', 'C', 'S', 'I', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "SCSITarget", NameW: []uint16{'S', 'C', 'S', 'I', 'T', 'a', 'r', 'g', 'e', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "SCSILun", NameW: []uint16{'S', 'C', 'S', 'I', 'L', 'u', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "Manufacturer", NameW: []uint16{'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 11, Name: "PartitionCount", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "WriteCacheEnabled", NameW: []uint16{'W', 'r', 'i', 't', 'e', 'C', 'a', 'c', 'h', 'e', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 13, Name: "Pad", NameW: []uint16{'P', 'a', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 14, Name: "BootDriveLetter", NameW: []uint16{'B', 'o', 'o', 't', 'D', 'r', 'i', 'v', 'e', 'L', 'e', 't', 't', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 3},
+		{ID: 15, Name: "Spare", NameW: []uint16{'S', 'p', 'a', 'r', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 2},
 	},
 }
 
@@ -5769,19 +6281,21 @@ var mofSystemConfig_V0_PhyDisk = &MofClassDef{
 // mofSystemConfig_V0_Power class definition
 var mofSystemConfig_V0_Power = &MofClassDef{
 	Name: "SystemConfig_V0_Power",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'P', 'o', 'w', 'e', 'r', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 16 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "S1", InType: TDH_INTYPE_UINT8},
-		{ID: 2, Name: "S2", InType: TDH_INTYPE_UINT8},
-		{ID: 3, Name: "S3", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "S4", InType: TDH_INTYPE_UINT8},
-		{ID: 5, Name: "S5", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "Pad1", InType: TDH_INTYPE_UINT8},
-		{ID: 7, Name: "Pad2", InType: TDH_INTYPE_UINT8},
-		{ID: 8, Name: "Pad3", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "S1", NameW: []uint16{'S', '1', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 2, Name: "S2", NameW: []uint16{'S', '2', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 3, Name: "S3", NameW: []uint16{'S', '3', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "S4", NameW: []uint16{'S', '4', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 5, Name: "S5", NameW: []uint16{'S', '5', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "Pad1", NameW: []uint16{'P', 'a', 'd', '1', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 7, Name: "Pad2", NameW: []uint16{'P', 'a', 'd', '2', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 8, Name: "Pad3", NameW: []uint16{'P', 'a', 'd', '3', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -5806,17 +6320,19 @@ var mofSystemConfig_V0_Power = &MofClassDef{
 // mofSystemConfig_V0_PnP class definition
 var mofSystemConfig_V0_PnP = &MofClassDef{
 	Name: "SystemConfig_V0_PnP",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'P', 'n', 'P', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 22 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IDLength", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "DescriptionLength", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "FriendlyNameLength", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DeviceID", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "FriendlyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IDLength", NameW: []uint16{'I', 'D', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "DescriptionLength", NameW: []uint16{'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "FriendlyNameLength", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DeviceID", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "FriendlyName", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -5842,27 +6358,29 @@ var mofSystemConfig_V0_PnP = &MofClassDef{
 // mofSystemConfig_V0_NIC class definition
 var mofSystemConfig_V0_NIC = &MofClassDef{
 	Name: "SystemConfig_V0_NIC",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', '_', 'N', 'I', 'C', 0},
 	Base: "SystemConfig_V0",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '0', 0},
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 13 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "NICName", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
-		{ID: 2, Name: "Index", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "PhysicalAddrLen", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "PhysicalAddr", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 8},
-		{ID: 5, Name: "Size", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "IpAddress", InType: TDH_INTYPE_INT32},
-		{ID: 7, Name: "SubnetMask", InType: TDH_INTYPE_INT32},
-		{ID: 8, Name: "DhcpServer", InType: TDH_INTYPE_INT32},
-		{ID: 9, Name: "Gateway", InType: TDH_INTYPE_INT32},
-		{ID: 10, Name: "PrimaryWinsServer", InType: TDH_INTYPE_INT32},
-		{ID: 11, Name: "SecondaryWinsServer", InType: TDH_INTYPE_INT32},
-		{ID: 12, Name: "DnsServer1", InType: TDH_INTYPE_INT32},
-		{ID: 13, Name: "DnsServer2", InType: TDH_INTYPE_INT32},
-		{ID: 14, Name: "DnsServer3", InType: TDH_INTYPE_INT32},
-		{ID: 15, Name: "DnsServer4", InType: TDH_INTYPE_INT32},
-		{ID: 16, Name: "Data", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "NICName", NameW: []uint16{'N', 'I', 'C', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 256},
+		{ID: 2, Name: "Index", NameW: []uint16{'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "PhysicalAddrLen", NameW: []uint16{'P', 'h', 'y', 's', 'i', 'c', 'a', 'l', 'A', 'd', 'd', 'r', 'L', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "PhysicalAddr", NameW: []uint16{'P', 'h', 'y', 's', 'i', 'c', 'a', 'l', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 8},
+		{ID: 5, Name: "Size", NameW: []uint16{'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "IpAddress", NameW: []uint16{'I', 'p', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 7, Name: "SubnetMask", NameW: []uint16{'S', 'u', 'b', 'n', 'e', 't', 'M', 'a', 's', 'k', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 8, Name: "DhcpServer", NameW: []uint16{'D', 'h', 'c', 'p', 'S', 'e', 'r', 'v', 'e', 'r', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 9, Name: "Gateway", NameW: []uint16{'G', 'a', 't', 'e', 'w', 'a', 'y', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 10, Name: "PrimaryWinsServer", NameW: []uint16{'P', 'r', 'i', 'm', 'a', 'r', 'y', 'W', 'i', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 11, Name: "SecondaryWinsServer", NameW: []uint16{'S', 'e', 'c', 'o', 'n', 'd', 'a', 'r', 'y', 'W', 'i', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 12, Name: "DnsServer1", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', '1', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 13, Name: "DnsServer2", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', '2', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 14, Name: "DnsServer3", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', '3', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 15, Name: "DnsServer4", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', '4', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 16, Name: "Data", NameW: []uint16{'D', 'a', 't', 'a', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5871,7 +6389,9 @@ var mofSystemConfig_V0_NIC = &MofClassDef{
 // mofSystemConfig_V2 class definition
 var mofSystemConfig_V2 = &MofClassDef{
 	Name: "SystemConfig_V2",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 2,
 }
@@ -5884,13 +6404,15 @@ var mofSystemConfig_V2 = &MofClassDef{
 // mofSystemConfig_V2_NumaNode class definition
 var mofSystemConfig_V2_NumaNode = &MofClassDef{
 	Name: "SystemConfig_V2_NumaNode",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'N', 'u', 'm', 'a', 'N', 'o', 'd', 'e', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 24 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "NodeCount", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "NodeMap", InType: TDH_INTYPE_UINT64, SizeFromID: 1},
+		{ID: 1, Name: "NodeCount", NameW: []uint16{'N', 'o', 'd', 'e', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "NodeMap", NameW: []uint16{'N', 'o', 'd', 'e', 'M', 'a', 'p', 0}, InType: TDH_INTYPE_UINT64, SizeFromID: 1},
 	},
 }
 
@@ -5915,17 +6437,19 @@ var mofSystemConfig_V2_NumaNode = &MofClassDef{
 // mofSystemConfig_V2_PnP class definition
 var mofSystemConfig_V2_PnP = &MofClassDef{
 	Name: "SystemConfig_V2_PnP",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'P', 'n', 'P', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 22 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IDLength", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "DescriptionLength", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "FriendlyNameLength", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DeviceID", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "FriendlyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IDLength", NameW: []uint16{'I', 'D', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "DescriptionLength", NameW: []uint16{'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "FriendlyNameLength", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 'L', 'e', 'n', 'g', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DeviceID", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "FriendlyName", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -5936,12 +6460,14 @@ var mofSystemConfig_V2_PnP = &MofClassDef{
 // mofSystemConfig_V2_CodeIntegrity class definition
 var mofSystemConfig_V2_CodeIntegrity = &MofClassDef{
 	Name: "SystemConfig_V2_CodeIntegrity",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'C', 'o', 'd', 'e', 'I', 'n', 't', 'e', 'g', 'r', 'i', 't', 'y', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 29 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "CodeIntegrityInfo", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "CodeIntegrityInfo", NameW: []uint16{'C', 'o', 'd', 'e', 'I', 'n', 't', 'e', 'g', 'r', 'i', 't', 'y', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -5967,27 +6493,29 @@ var mofSystemConfig_V2_CodeIntegrity = &MofClassDef{
 // mofSystemConfig_V2_LogDisk class definition
 var mofSystemConfig_V2_LogDisk = &MofClassDef{
 	Name: "SystemConfig_V2_LogDisk",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'L', 'o', 'g', 'D', 'i', 's', 'k', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 12 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "StartOffset", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "PartitionSize", InType: TDH_INTYPE_UINT64},
-		{ID: 3, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Size", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "DriveType", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "DriveLetterString", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 4},
-		{ID: 7, Name: "Pad1", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "PartitionNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "SectorsPerCluster", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "BytesPerSector", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "Pad2", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "NumberOfFreeClusters", InType: TDH_INTYPE_INT64},
-		{ID: 13, Name: "TotalNumberOfClusters", InType: TDH_INTYPE_INT64},
-		{ID: 14, Name: "FileSystem", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 16},
-		{ID: 15, Name: "VolumeExt", InType: TDH_INTYPE_UINT32},
-		{ID: 16, Name: "Pad3", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "StartOffset", NameW: []uint16{'S', 't', 'a', 'r', 't', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "PartitionSize", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 3, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Size", NameW: []uint16{'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "DriveType", NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "DriveLetterString", NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'L', 'e', 't', 't', 'e', 'r', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 4},
+		{ID: 7, Name: "Pad1", NameW: []uint16{'P', 'a', 'd', '1', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "PartitionNumber", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "SectorsPerCluster", NameW: []uint16{'S', 'e', 'c', 't', 'o', 'r', 's', 'P', 'e', 'r', 'C', 'l', 'u', 's', 't', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "BytesPerSector", NameW: []uint16{'B', 'y', 't', 'e', 's', 'P', 'e', 'r', 'S', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "Pad2", NameW: []uint16{'P', 'a', 'd', '2', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "NumberOfFreeClusters", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'F', 'r', 'e', 'e', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 13, Name: "TotalNumberOfClusters", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_INT64},
+		{ID: 14, Name: "FileSystem", NameW: []uint16{'F', 'i', 'l', 'e', 'S', 'y', 's', 't', 'e', 'm', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 16},
+		{ID: 15, Name: "VolumeExt", NameW: []uint16{'V', 'o', 'l', 'u', 'm', 'e', 'E', 'x', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 16, Name: "Pad3", NameW: []uint16{'P', 'a', 'd', '3', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -6001,15 +6529,17 @@ var mofSystemConfig_V2_LogDisk = &MofClassDef{
 // mofSystemConfig_Virtualization class definition
 var mofSystemConfig_Virtualization = &MofClassDef{
 	Name: "SystemConfig_Virtualization",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', 'i', 'r', 't', 'u', 'a', 'l', 'i', 'z', 'a', 't', 'i', 'o', 'n', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "VbsEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 2, Name: "HvciEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 3, Name: "HyperVisorEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "VbsEnabled", NameW: []uint16{'V', 'b', 's', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 2, Name: "HvciEnabled", NameW: []uint16{'H', 'v', 'c', 'i', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 3, Name: "HyperVisorEnabled", NameW: []uint16{'H', 'y', 'p', 'e', 'r', 'V', 'i', 's', 'o', 'r', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -6027,16 +6557,18 @@ var mofSystemConfig_Virtualization = &MofClassDef{
 // mofSystemConfig_V2_IDEChannel class definition
 var mofSystemConfig_V2_IDEChannel = &MofClassDef{
 	Name: "SystemConfig_V2_IDEChannel",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'I', 'D', 'E', 'C', 'h', 'a', 'n', 'n', 'e', 'l', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 23 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "TargetId", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "DeviceType", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "DeviceTimingMode", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "LocationInformationLen", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "LocationInformation", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "TargetId", NameW: []uint16{'T', 'a', 'r', 'g', 'e', 't', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "DeviceType", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "DeviceTimingMode", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'T', 'i', 'm', 'i', 'n', 'g', 'M', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "LocationInformationLen", NameW: []uint16{'L', 'o', 'c', 'a', 't', 'i', 'o', 'n', 'I', 'n', 'f', 'o', 'r', 'm', 'a', 't', 'i', 'o', 'n', 'L', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "LocationInformation", NameW: []uint16{'L', 'o', 'c', 'a', 't', 'i', 'o', 'n', 'I', 'n', 'f', 'o', 'r', 'm', 'a', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6051,17 +6583,19 @@ var mofSystemConfig_V2_IDEChannel = &MofClassDef{
 // mofSystemConfig_Boot class definition
 var mofSystemConfig_Boot = &MofClassDef{
 	Name: "SystemConfig_Boot",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'B', 'o', 'o', 't', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 37 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BootFlags", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "FirmwareType", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "SecureBootEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "SecureBootCapable", InType: TDH_INTYPE_UINT8},
-		{ID: 5, Name: "Reserved1", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "Reserved2", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "BootFlags", NameW: []uint16{'B', 'o', 'o', 't', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "FirmwareType", NameW: []uint16{'F', 'i', 'r', 'm', 'w', 'a', 'r', 'e', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "SecureBootEnabled", NameW: []uint16{'S', 'e', 'c', 'u', 'r', 'e', 'B', 'o', 'o', 't', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "SecureBootCapable", NameW: []uint16{'S', 'e', 'c', 'u', 'r', 'e', 'B', 'o', 'o', 't', 'C', 'a', 'p', 'a', 'b', 'l', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 5, Name: "Reserved1", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '1', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "Reserved2", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '2', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -6073,13 +6607,15 @@ var mofSystemConfig_Boot = &MofClassDef{
 // mofSystemConfig_V2_DPI class definition
 var mofSystemConfig_V2_DPI = &MofClassDef{
 	Name: "SystemConfig_V2_DPI",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'D', 'P', 'I', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 28 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MachineDPI", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "UserDPI", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "MachineDPI", NameW: []uint16{'M', 'a', 'c', 'h', 'i', 'n', 'e', 'D', 'P', 'I', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "UserDPI", NameW: []uint16{'U', 's', 'e', 'r', 'D', 'P', 'I', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -6105,18 +6641,20 @@ var mofSystemConfig_V2_DPI = &MofClassDef{
 // mofSystemConfig_V2_NIC class definition
 var mofSystemConfig_V2_NIC = &MofClassDef{
 	Name: "SystemConfig_V2_NIC",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'N', 'I', 'C', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 13 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "PhysicalAddr", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 2, Name: "PhysicalAddrLen", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "Ipv4Index", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Ipv6Index", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "NICDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "IpAddresses", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "DnsServerAddresses", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "PhysicalAddr", NameW: []uint16{'P', 'h', 'y', 's', 'i', 'c', 'a', 'l', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 2, Name: "PhysicalAddrLen", NameW: []uint16{'P', 'h', 'y', 's', 'i', 'c', 'a', 'l', 'A', 'd', 'd', 'r', 'L', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "Ipv4Index", NameW: []uint16{'I', 'p', 'v', '4', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Ipv6Index", NameW: []uint16{'I', 'p', 'v', '6', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "NICDescription", NameW: []uint16{'N', 'I', 'C', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "IpAddresses", NameW: []uint16{'I', 'p', 'A', 'd', 'd', 'r', 'e', 's', 's', 'e', 's', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 7, Name: "DnsServerAddresses", NameW: []uint16{'D', 'n', 's', 'S', 'e', 'r', 'v', 'e', 'r', 'A', 'd', 'd', 'r', 'e', 's', 's', 'e', 's', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6134,19 +6672,21 @@ var mofSystemConfig_V2_NIC = &MofClassDef{
 // mofSystemConfig_V2_CPU class definition
 var mofSystemConfig_V2_CPU = &MofClassDef{
 	Name: "SystemConfig_V2_CPU",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'C', 'P', 'U', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 10 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MHz", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "NumberOfProcessors", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "MemSize", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "PageSize", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "AllocationGranularity", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ComputerName", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
-		{ID: 7, Name: "DomainName", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 134},
-		{ID: 8, Name: "HyperThreadingFlag", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "MHz", NameW: []uint16{'M', 'H', 'z', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "NumberOfProcessors", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "MemSize", NameW: []uint16{'M', 'e', 'm', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "PageSize", NameW: []uint16{'P', 'a', 'g', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "AllocationGranularity", NameW: []uint16{'A', 'l', 'l', 'o', 'c', 'a', 't', 'i', 'o', 'n', 'G', 'r', 'a', 'n', 'u', 'l', 'a', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ComputerName", NameW: []uint16{'C', 'o', 'm', 'p', 'u', 't', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
+		{ID: 7, Name: "DomainName", NameW: []uint16{'D', 'o', 'm', 'a', 'i', 'n', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 134},
+		{ID: 8, Name: "HyperThreadingFlag", NameW: []uint16{'H', 'y', 'p', 'e', 'r', 'T', 'h', 'r', 'e', 'a', 'd', 'i', 'n', 'g', 'F', 'l', 'a', 'g', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -6159,14 +6699,16 @@ var mofSystemConfig_V2_CPU = &MofClassDef{
 // mofSystemConfig_V2_DeviceFamily class definition
 var mofSystemConfig_V2_DeviceFamily = &MofClassDef{
 	Name: "SystemConfig_V2_DeviceFamily",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'D', 'e', 'v', 'i', 'c', 'e', 'F', 'a', 'm', 'i', 'l', 'y', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 33 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "UAPInfo", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "DeviceFamily", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "DeviceForm", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "UAPInfo", NameW: []uint16{'U', 'A', 'P', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "DeviceFamily", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'F', 'a', 'm', 'i', 'l', 'y', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "DeviceForm", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'F', 'o', 'r', 'm', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -6206,29 +6748,31 @@ var mofSystemConfig_V2_DeviceFamily = &MofClassDef{
 // mofSystemConfig_V2_OpticalMedia class definition
 var mofSystemConfig_V2_OpticalMedia = &MofClassDef{
 	Name: "SystemConfig_V2_OpticalMedia",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'O', 'p', 't', 'i', 'c', 'a', 'l', 'M', 'e', 'd', 'i', 'a', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 18 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT16},
-		{ID: 2, Name: "BusType", InType: TDH_INTYPE_UINT16},
-		{ID: 3, Name: "DeviceType", InType: TDH_INTYPE_UINT16},
-		{ID: 4, Name: "MediaType", InType: TDH_INTYPE_UINT16},
-		{ID: 5, Name: "StartingOffset", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "Size", InType: TDH_INTYPE_UINT64},
-		{ID: 7, Name: "NumberOfFreeBlocks", InType: TDH_INTYPE_UINT64},
-		{ID: 8, Name: "TotalNumberOfBlocks", InType: TDH_INTYPE_UINT64},
-		{ID: 9, Name: "NextWritableAddress", InType: TDH_INTYPE_UINT64},
-		{ID: 10, Name: "NumberOfSessions", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "NumberOfTracks", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "BytesPerSector", InType: TDH_INTYPE_UINT32},
-		{ID: 13, Name: "DiscStatus", InType: TDH_INTYPE_UINT16},
-		{ID: 14, Name: "LastSessionStatus", InType: TDH_INTYPE_UINT16},
-		{ID: 15, Name: "DriveLetter", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 16, Name: "FileSystemName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 17, Name: "DeviceName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 18, Name: "ManufacturerName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 2, Name: "BusType", NameW: []uint16{'B', 'u', 's', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 3, Name: "DeviceType", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 4, Name: "MediaType", NameW: []uint16{'M', 'e', 'd', 'i', 'a', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 5, Name: "StartingOffset", NameW: []uint16{'S', 't', 'a', 'r', 't', 'i', 'n', 'g', 'O', 'f', 'f', 's', 'e', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "Size", NameW: []uint16{'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 7, Name: "NumberOfFreeBlocks", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'F', 'r', 'e', 'e', 'B', 'l', 'o', 'c', 'k', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 8, Name: "TotalNumberOfBlocks", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'B', 'l', 'o', 'c', 'k', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 9, Name: "NextWritableAddress", NameW: []uint16{'N', 'e', 'x', 't', 'W', 'r', 'i', 't', 'a', 'b', 'l', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 10, Name: "NumberOfSessions", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'S', 'e', 's', 's', 'i', 'o', 'n', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "NumberOfTracks", NameW: []uint16{'N', 'u', 'm', 'b', 'e', 'r', 'O', 'f', 'T', 'r', 'a', 'c', 'k', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "BytesPerSector", NameW: []uint16{'B', 'y', 't', 'e', 's', 'P', 'e', 'r', 'S', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 13, Name: "DiscStatus", NameW: []uint16{'D', 'i', 's', 'c', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 14, Name: "LastSessionStatus", NameW: []uint16{'L', 'a', 's', 't', 'S', 'e', 's', 's', 'i', 'o', 'n', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 15, Name: "DriveLetter", NameW: []uint16{'D', 'r', 'i', 'v', 'e', 'L', 'e', 't', 't', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 16, Name: "FileSystemName", NameW: []uint16{'F', 'i', 'l', 'e', 'S', 'y', 's', 't', 'e', 'm', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 17, Name: "DeviceName", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 18, Name: "ManufacturerName", NameW: []uint16{'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6241,13 +6785,15 @@ var mofSystemConfig_V2_OpticalMedia = &MofClassDef{
 // mofSystemConfig_V2_ProcNumber class definition
 var mofSystemConfig_V2_ProcNumber = &MofClassDef{
 	Name: "SystemConfig_V2_ProcNumber",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'P', 'r', 'o', 'c', 'N', 'u', 'm', 'b', 'e', 'r', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 27 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessorCount", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "ProcessorNumber", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32, SizeFromID: 1},
+		{ID: 1, Name: "ProcessorCount", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "ProcessorNumber", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32, SizeFromID: 1},
 	},
 }
 
@@ -6268,22 +6814,24 @@ var mofSystemConfig_V2_ProcNumber = &MofClassDef{
 // mofSystemConfig_V2_Video class definition
 var mofSystemConfig_V2_Video = &MofClassDef{
 	Name: "SystemConfig_V2_Video",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'V', 'i', 'd', 'e', 'o', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 14 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MemorySize", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "XResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "YResolution", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "BitsPerPixel", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "VRefresh", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "ChipType", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
-		{ID: 7, Name: "DACType", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
-		{ID: 8, Name: "AdapterString", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
-		{ID: 9, Name: "BiosString", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
-		{ID: 10, Name: "DeviceId", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
-		{ID: 11, Name: "StateFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "MemorySize", NameW: []uint16{'M', 'e', 'm', 'o', 'r', 'y', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "XResolution", NameW: []uint16{'X', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "YResolution", NameW: []uint16{'Y', 'R', 'e', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "BitsPerPixel", NameW: []uint16{'B', 'i', 't', 's', 'P', 'e', 'r', 'P', 'i', 'x', 'e', 'l', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "VRefresh", NameW: []uint16{'V', 'R', 'e', 'f', 'r', 'e', 's', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "ChipType", NameW: []uint16{'C', 'h', 'i', 'p', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
+		{ID: 7, Name: "DACType", NameW: []uint16{'D', 'A', 'C', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
+		{ID: 8, Name: "AdapterString", NameW: []uint16{'A', 'd', 'a', 'p', 't', 'e', 'r', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
+		{ID: 9, Name: "BiosString", NameW: []uint16{'B', 'i', 'o', 's', 'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
+		{ID: 10, Name: "DeviceId", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'I', 'd', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
+		{ID: 11, Name: "StateFlags", NameW: []uint16{'S', 't', 'a', 't', 'e', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -6297,15 +6845,17 @@ var mofSystemConfig_V2_Video = &MofClassDef{
 // mofSystemConfig_V2_Network class definition
 var mofSystemConfig_V2_Network = &MofClassDef{
 	Name: "SystemConfig_V2_Network",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'N', 'e', 't', 'w', 'o', 'r', 'k', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 17 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "TcbTablePartitions", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "MaxHashTableSize", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "MaxUserPort", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "TcpTimedWaitDelay", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "TcbTablePartitions", NameW: []uint16{'T', 'c', 'b', 'T', 'a', 'b', 'l', 'e', 'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "MaxHashTableSize", NameW: []uint16{'M', 'a', 'x', 'H', 'a', 's', 'h', 'T', 'a', 'b', 'l', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "MaxUserPort", NameW: []uint16{'M', 'a', 'x', 'U', 's', 'e', 'r', 'P', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "TcpTimedWaitDelay", NameW: []uint16{'T', 'c', 'p', 'T', 'i', 'm', 'e', 'd', 'W', 'a', 'i', 't', 'D', 'e', 'l', 'a', 'y', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -6357,50 +6907,52 @@ var mofSystemConfig_V2_Network = &MofClassDef{
 // mofSystemConfig_V2_Defrag class definition
 var mofSystemConfig_V2_Defrag = &MofClassDef{
 	Name: "SystemConfig_V2_Defrag",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'D', 'e', 'f', 'r', 'a', 'g', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 31 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "AlignmentClusters", InType: TDH_INTYPE_UINT64},
-		{ID: 2, Name: "AvgFreeSpaceSize", InType: TDH_INTYPE_UINT64},
-		{ID: 3, Name: "ClustersPerSlab", InType: TDH_INTYPE_UINT64},
-		{ID: 4, Name: "FragmentedDirectoryExtents", InType: TDH_INTYPE_UINT64},
-		{ID: 5, Name: "FragmentedExtents", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "FreeSpaceCount", InType: TDH_INTYPE_UINT64},
-		{ID: 7, Name: "LargestFreeSpaceSize", InType: TDH_INTYPE_UINT64},
-		{ID: 8, Name: "LastRunActualPurgeClusters", InType: TDH_INTYPE_UINT64},
-		{ID: 9, Name: "LastRunClustersTrimmed", InType: TDH_INTYPE_UINT64},
-		{ID: 10, Name: "LastRunFullDefragTime", InType: TDH_INTYPE_UINT64},
-		{ID: 11, Name: "LastRunTime", InType: TDH_INTYPE_UINT64},
-		{ID: 12, Name: "MFTSize", InType: TDH_INTYPE_UINT64},
-		{ID: 13, Name: "TotalClusters", InType: TDH_INTYPE_UINT64},
-		{ID: 14, Name: "TotalUsedClusters", InType: TDH_INTYPE_UINT64},
-		{ID: 15, Name: "AvgFragmentsPerFile", InType: TDH_INTYPE_UINT32},
-		{ID: 16, Name: "BytesPerCluster", InType: TDH_INTYPE_UINT32},
-		{ID: 17, Name: "DirectoryCount", InType: TDH_INTYPE_UINT32},
-		{ID: 18, Name: "FragmentedDirectories", InType: TDH_INTYPE_UINT32},
-		{ID: 19, Name: "FragmentedFiles", InType: TDH_INTYPE_UINT32},
-		{ID: 20, Name: "FragmentedSpace", InType: TDH_INTYPE_UINT32},
-		{ID: 21, Name: "HardwareIssue", InType: TDH_INTYPE_UINT32},
-		{ID: 22, Name: "InUseMFTRecords", InType: TDH_INTYPE_UINT32},
-		{ID: 23, Name: "InUseSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 24, Name: "LastRunActualPurgeSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 25, Name: "LastRunInitialBackedSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 26, Name: "LastRunPercentFragmentation", InType: TDH_INTYPE_UINT32},
-		{ID: 27, Name: "LastRunPinnedSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 28, Name: "LastRunPotentialPurgeSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 29, Name: "LastRunSpaceInefficientSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 30, Name: "LastRunTrimmedSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 31, Name: "LastRunUnknownEvictFailSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 32, Name: "LastRunVolsnapPinnedSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 33, Name: "MFTFragmentCount", InType: TDH_INTYPE_UINT32},
-		{ID: 34, Name: "MovableFiles", InType: TDH_INTYPE_UINT32},
-		{ID: 35, Name: "TotalMFTRecords", InType: TDH_INTYPE_UINT32},
-		{ID: 36, Name: "TotalSlabs", InType: TDH_INTYPE_UINT32},
-		{ID: 37, Name: "UnmovableFiles", InType: TDH_INTYPE_UINT32},
-		{ID: 38, Name: "VolumeId", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID},
-		{ID: 39, Name: "VolumePathNames", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "AlignmentClusters", NameW: []uint16{'A', 'l', 'i', 'g', 'n', 'm', 'e', 'n', 't', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 2, Name: "AvgFreeSpaceSize", NameW: []uint16{'A', 'v', 'g', 'F', 'r', 'e', 'e', 'S', 'p', 'a', 'c', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 3, Name: "ClustersPerSlab", NameW: []uint16{'C', 'l', 'u', 's', 't', 'e', 'r', 's', 'P', 'e', 'r', 'S', 'l', 'a', 'b', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 4, Name: "FragmentedDirectoryExtents", NameW: []uint16{'F', 'r', 'a', 'g', 'm', 'e', 'n', 't', 'e', 'd', 'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'E', 'x', 't', 'e', 'n', 't', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 5, Name: "FragmentedExtents", NameW: []uint16{'F', 'r', 'a', 'g', 'm', 'e', 'n', 't', 'e', 'd', 'E', 'x', 't', 'e', 'n', 't', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "FreeSpaceCount", NameW: []uint16{'F', 'r', 'e', 'e', 'S', 'p', 'a', 'c', 'e', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 7, Name: "LargestFreeSpaceSize", NameW: []uint16{'L', 'a', 'r', 'g', 'e', 's', 't', 'F', 'r', 'e', 'e', 'S', 'p', 'a', 'c', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 8, Name: "LastRunActualPurgeClusters", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'A', 'c', 't', 'u', 'a', 'l', 'P', 'u', 'r', 'g', 'e', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 9, Name: "LastRunClustersTrimmed", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 'T', 'r', 'i', 'm', 'm', 'e', 'd', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 10, Name: "LastRunFullDefragTime", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'F', 'u', 'l', 'l', 'D', 'e', 'f', 'r', 'a', 'g', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 11, Name: "LastRunTime", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 12, Name: "MFTSize", NameW: []uint16{'M', 'F', 'T', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 13, Name: "TotalClusters", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 14, Name: "TotalUsedClusters", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'U', 's', 'e', 'd', 'C', 'l', 'u', 's', 't', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 15, Name: "AvgFragmentsPerFile", NameW: []uint16{'A', 'v', 'g', 'F', 'r', 'a', 'g', 'm', 'e', 'n', 't', 's', 'P', 'e', 'r', 'F', 'i', 'l', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 16, Name: "BytesPerCluster", NameW: []uint16{'B', 'y', 't', 'e', 's', 'P', 'e', 'r', 'C', 'l', 'u', 's', 't', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 17, Name: "DirectoryCount", NameW: []uint16{'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 18, Name: "FragmentedDirectories", NameW: []uint16{'F', 'r', 'a', 'g', 'm', 'e', 'n', 't', 'e', 'd', 'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'i', 'e', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 19, Name: "FragmentedFiles", NameW: []uint16{'F', 'r', 'a', 'g', 'm', 'e', 'n', 't', 'e', 'd', 'F', 'i', 'l', 'e', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 20, Name: "FragmentedSpace", NameW: []uint16{'F', 'r', 'a', 'g', 'm', 'e', 'n', 't', 'e', 'd', 'S', 'p', 'a', 'c', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 21, Name: "HardwareIssue", NameW: []uint16{'H', 'a', 'r', 'd', 'w', 'a', 'r', 'e', 'I', 's', 's', 'u', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 22, Name: "InUseMFTRecords", NameW: []uint16{'I', 'n', 'U', 's', 'e', 'M', 'F', 'T', 'R', 'e', 'c', 'o', 'r', 'd', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 23, Name: "InUseSlabs", NameW: []uint16{'I', 'n', 'U', 's', 'e', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 24, Name: "LastRunActualPurgeSlabs", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'A', 'c', 't', 'u', 'a', 'l', 'P', 'u', 'r', 'g', 'e', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 25, Name: "LastRunInitialBackedSlabs", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'I', 'n', 'i', 't', 'i', 'a', 'l', 'B', 'a', 'c', 'k', 'e', 'd', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 26, Name: "LastRunPercentFragmentation", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'P', 'e', 'r', 'c', 'e', 'n', 't', 'F', 'r', 'a', 'g', 'm', 'e', 'n', 't', 'a', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 27, Name: "LastRunPinnedSlabs", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'P', 'i', 'n', 'n', 'e', 'd', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 28, Name: "LastRunPotentialPurgeSlabs", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'P', 'o', 't', 'e', 'n', 't', 'i', 'a', 'l', 'P', 'u', 'r', 'g', 'e', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 29, Name: "LastRunSpaceInefficientSlabs", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'S', 'p', 'a', 'c', 'e', 'I', 'n', 'e', 'f', 'f', 'i', 'c', 'i', 'e', 'n', 't', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 30, Name: "LastRunTrimmedSlabs", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'T', 'r', 'i', 'm', 'm', 'e', 'd', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 31, Name: "LastRunUnknownEvictFailSlabs", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'U', 'n', 'k', 'n', 'o', 'w', 'n', 'E', 'v', 'i', 'c', 't', 'F', 'a', 'i', 'l', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 32, Name: "LastRunVolsnapPinnedSlabs", NameW: []uint16{'L', 'a', 's', 't', 'R', 'u', 'n', 'V', 'o', 'l', 's', 'n', 'a', 'p', 'P', 'i', 'n', 'n', 'e', 'd', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 33, Name: "MFTFragmentCount", NameW: []uint16{'M', 'F', 'T', 'F', 'r', 'a', 'g', 'm', 'e', 'n', 't', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 34, Name: "MovableFiles", NameW: []uint16{'M', 'o', 'v', 'a', 'b', 'l', 'e', 'F', 'i', 'l', 'e', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 35, Name: "TotalMFTRecords", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'M', 'F', 'T', 'R', 'e', 'c', 'o', 'r', 'd', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 36, Name: "TotalSlabs", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'S', 'l', 'a', 'b', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 37, Name: "UnmovableFiles", NameW: []uint16{'U', 'n', 'm', 'o', 'v', 'a', 'b', 'l', 'e', 'F', 'i', 'l', 'e', 's', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 38, Name: "VolumeId", NameW: []uint16{'V', 'o', 'l', 'u', 'm', 'e', 'I', 'd', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID"},
+		{ID: 39, Name: "VolumePathNames", NameW: []uint16{'V', 'o', 'l', 'u', 'm', 'e', 'P', 'a', 't', 'h', 'N', 'a', 'm', 'e', 's', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6416,17 +6968,19 @@ var mofSystemConfig_V2_Defrag = &MofClassDef{
 // mofSystemConfig_V2_Processors class definition
 var mofSystemConfig_V2_Processors = &MofClassDef{
 	Name: "SystemConfig_V2_Processors",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 's', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessorIndex", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "FeatureSet", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "ProcessorSpeed", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "ProcessorName", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 64},
-		{ID: 5, Name: "VendorIdentifier", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 16},
-		{ID: 6, Name: "ProcessorIdentifier", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 128},
+		{ID: 1, Name: "ProcessorIndex", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "FeatureSet", NameW: []uint16{'F', 'e', 'a', 't', 'u', 'r', 'e', 'S', 'e', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "ProcessorSpeed", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'S', 'p', 'e', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "ProcessorName", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 64},
+		{ID: 5, Name: "VendorIdentifier", NameW: []uint16{'V', 'e', 'n', 'd', 'o', 'r', 'I', 'd', 'e', 'n', 't', 'i', 'f', 'i', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 16},
+		{ID: 6, Name: "ProcessorIdentifier", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'I', 'd', 'e', 'n', 't', 'i', 'f', 'i', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 128},
 	},
 }
 
@@ -6452,15 +7006,17 @@ var mofSystemConfig_V2_Processors = &MofClassDef{
 // mofSystemConfig_V2_Platform class definition
 var mofSystemConfig_V2_Platform = &MofClassDef{
 	Name: "SystemConfig_V2_Platform",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'P', 'l', 'a', 't', 'f', 'o', 'r', 'm', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 25 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "SystemManufacturer", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 2, Name: "SystemProductName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 3, Name: "BiosDate", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 4, Name: "BiosVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "SystemManufacturer", NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 2, Name: "SystemProductName", NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'P', 'r', 'o', 'd', 'u', 'c', 't', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 3, Name: "BiosDate", NameW: []uint16{'B', 'i', 'o', 's', 'D', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 4, Name: "BiosVersion", NameW: []uint16{'B', 'i', 'o', 's', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6473,13 +7029,15 @@ var mofSystemConfig_V2_Platform = &MofClassDef{
 // mofSystemConfig_V2_ProcGroup class definition
 var mofSystemConfig_V2_ProcGroup = &MofClassDef{
 	Name: "SystemConfig_V2_ProcGroup",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'P', 'r', 'o', 'c', 'G', 'r', 'o', 'u', 'p', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 26 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "GroupCount", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "Affinity", InType: TDH_INTYPE_POINTER, SizeFromID: 1},
+		{ID: 1, Name: "GroupCount", NameW: []uint16{'G', 'r', 'o', 'u', 'p', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "Affinity", NameW: []uint16{'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0}, InType: TDH_INTYPE_POINTER, SizeFromID: 1},
 	},
 }
 
@@ -6504,17 +7062,19 @@ var mofSystemConfig_V2_ProcGroup = &MofClassDef{
 // mofSystemConfig_V2_Services class definition
 var mofSystemConfig_V2_Services = &MofClassDef{
 	Name: "SystemConfig_V2_Services",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'S', 'e', 'r', 'v', 'i', 'c', 'e', 's', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "ServiceState", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "SubProcessTag", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "ServiceName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "DisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "ProcessName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "ServiceState", NameW: []uint16{'S', 'e', 'r', 'v', 'i', 'c', 'e', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "SubProcessTag", NameW: []uint16{'S', 'u', 'b', 'P', 'r', 'o', 'c', 'e', 's', 's', 'T', 'a', 'g', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "ServiceName", NameW: []uint16{'S', 'e', 'r', 'v', 'i', 'c', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "DisplayName", NameW: []uint16{'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "ProcessName", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6539,26 +7099,28 @@ var mofSystemConfig_V2_Services = &MofClassDef{
 // mofSystemConfig_V2_PhyDisk class definition
 var mofSystemConfig_V2_PhyDisk = &MofClassDef{
 	Name: "SystemConfig_V2_PhyDisk",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'P', 'h', 'y', 'D', 'i', 's', 'k', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DiskNumber", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "BytesPerSector", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "SectorsPerTrack", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "TracksPerCylinder", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "Cylinders", InType: TDH_INTYPE_UINT64},
-		{ID: 6, Name: "SCSIPort", InType: TDH_INTYPE_UINT32},
-		{ID: 7, Name: "SCSIPath", InType: TDH_INTYPE_UINT32},
-		{ID: 8, Name: "SCSITarget", InType: TDH_INTYPE_UINT32},
-		{ID: 9, Name: "SCSILun", InType: TDH_INTYPE_UINT32},
-		{ID: 10, Name: "Manufacturer", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
-		{ID: 11, Name: "PartitionCount", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "WriteCacheEnabled", InType: TDH_INTYPE_UINT8},
-		{ID: 13, Name: "Pad", InType: TDH_INTYPE_UINT8},
-		{ID: 14, Name: "BootDriveLetter", InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 3},
-		{ID: 15, Name: "Spare", InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 2},
+		{ID: 1, Name: "DiskNumber", NameW: []uint16{'D', 'i', 's', 'k', 'N', 'u', 'm', 'b', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "BytesPerSector", NameW: []uint16{'B', 'y', 't', 'e', 's', 'P', 'e', 'r', 'S', 'e', 'c', 't', 'o', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "SectorsPerTrack", NameW: []uint16{'S', 'e', 'c', 't', 'o', 'r', 's', 'P', 'e', 'r', 'T', 'r', 'a', 'c', 'k', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "TracksPerCylinder", NameW: []uint16{'T', 'r', 'a', 'c', 'k', 's', 'P', 'e', 'r', 'C', 'y', 'l', 'i', 'n', 'd', 'e', 'r', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "Cylinders", NameW: []uint16{'C', 'y', 'l', 'i', 'n', 'd', 'e', 'r', 's', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 6, Name: "SCSIPort", NameW: []uint16{'S', 'C', 'S', 'I', 'P', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 7, Name: "SCSIPath", NameW: []uint16{'S', 'C', 'S', 'I', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 8, Name: "SCSITarget", NameW: []uint16{'S', 'C', 'S', 'I', 'T', 'a', 'r', 'g', 'e', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 9, Name: "SCSILun", NameW: []uint16{'S', 'C', 'S', 'I', 'L', 'u', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 10, Name: "Manufacturer", NameW: []uint16{'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 256},
+		{ID: 11, Name: "PartitionCount", NameW: []uint16{'P', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "WriteCacheEnabled", NameW: []uint16{'W', 'r', 'i', 't', 'e', 'C', 'a', 'c', 'h', 'e', 'E', 'n', 'a', 'b', 'l', 'e', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 13, Name: "Pad", NameW: []uint16{'P', 'a', 'd', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 14, Name: "BootDriveLetter", NameW: []uint16{'B', 'o', 'o', 't', 'D', 'r', 'i', 'v', 'e', 'L', 'e', 't', 't', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODECHAR, OutType: TDH_OUTTYPE_STRING, IsArray: true, ArraySize: 3},
+		{ID: 15, Name: "Spare", NameW: []uint16{'S', 'p', 'a', 'r', 'e', 0}, InType: TDH_INTYPE_UNICODECHAR, IsArray: true, ArraySize: 2},
 	},
 }
 
@@ -6576,19 +7138,21 @@ var mofSystemConfig_V2_PhyDisk = &MofClassDef{
 // mofSystemConfig_V2_Power class definition
 var mofSystemConfig_V2_Power = &MofClassDef{
 	Name: "SystemConfig_V2_Power",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'P', 'o', 'w', 'e', 'r', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 16 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "S1", InType: TDH_INTYPE_UINT8},
-		{ID: 2, Name: "S2", InType: TDH_INTYPE_UINT8},
-		{ID: 3, Name: "S3", InType: TDH_INTYPE_UINT8},
-		{ID: 4, Name: "S4", InType: TDH_INTYPE_UINT8},
-		{ID: 5, Name: "S5", InType: TDH_INTYPE_UINT8},
-		{ID: 6, Name: "Pad1", InType: TDH_INTYPE_UINT8},
-		{ID: 7, Name: "Pad2", InType: TDH_INTYPE_UINT8},
-		{ID: 8, Name: "Pad3", InType: TDH_INTYPE_UINT8},
+		{ID: 1, Name: "S1", NameW: []uint16{'S', '1', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 2, Name: "S2", NameW: []uint16{'S', '2', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 3, Name: "S3", NameW: []uint16{'S', '3', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 4, Name: "S4", NameW: []uint16{'S', '4', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 5, Name: "S5", NameW: []uint16{'S', '5', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 6, Name: "Pad1", NameW: []uint16{'P', 'a', 'd', '1', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 7, Name: "Pad2", NameW: []uint16{'P', 'a', 'd', '2', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 8, Name: "Pad3", NameW: []uint16{'P', 'a', 'd', '3', 0}, InType: TDH_INTYPE_UINT8},
 	},
 }
 
@@ -6606,13 +7170,15 @@ var mofSystemConfig_V2_Power = &MofClassDef{
 // mofSystemConfig_V2_FlightIds class definition
 var mofSystemConfig_V2_FlightIds = &MofClassDef{
 	Name: "SystemConfig_V2_FlightIds",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'F', 'l', 'i', 'g', 'h', 't', 'I', 'd', 's', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "UpdateId", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 2, Name: "FlightIdList", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "UpdateId", NameW: []uint16{'U', 'p', 'd', 'a', 't', 'e', 'I', 'd', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 2, Name: "FlightIdList", NameW: []uint16{'F', 'l', 'i', 'g', 'h', 't', 'I', 'd', 'L', 'i', 's', 't', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6682,26 +7248,28 @@ var mofSystemConfig_V2_FlightIds = &MofClassDef{
 // mofSystemConfig_V2_MobilePlatform class definition
 var mofSystemConfig_V2_MobilePlatform = &MofClassDef{
 	Name: "SystemConfig_V2_MobilePlatform",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'M', 'o', 'b', 'i', 'l', 'e', 'P', 'l', 'a', 't', 'f', 'o', 'r', 'm', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 32 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BootLoaderVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 2, Name: "FirmwareRevision", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 3, Name: "FriendlyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 4, Name: "HardwareRevision", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "Manufacturer", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 6, Name: "ManufacturerDisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "ManufacturerModelName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 8, Name: "MobileOperatorDisplayName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 9, Name: "MobileOperatorName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 10, Name: "ModelName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 11, Name: "RadioHardwareRevision", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 12, Name: "RadioSoftwareRevision", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 13, Name: "ROMVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 14, Name: "SOCVersion", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 15, Name: "HardwareVariant", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BootLoaderVersion", NameW: []uint16{'B', 'o', 'o', 't', 'L', 'o', 'a', 'd', 'e', 'r', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 2, Name: "FirmwareRevision", NameW: []uint16{'F', 'i', 'r', 'm', 'w', 'a', 'r', 'e', 'R', 'e', 'v', 'i', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 3, Name: "FriendlyName", NameW: []uint16{'F', 'r', 'i', 'e', 'n', 'd', 'l', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 4, Name: "HardwareRevision", NameW: []uint16{'H', 'a', 'r', 'd', 'w', 'a', 'r', 'e', 'R', 'e', 'v', 'i', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "Manufacturer", NameW: []uint16{'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 6, Name: "ManufacturerDisplayName", NameW: []uint16{'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 7, Name: "ManufacturerModelName", NameW: []uint16{'M', 'a', 'n', 'u', 'f', 'a', 'c', 't', 'u', 'r', 'e', 'r', 'M', 'o', 'd', 'e', 'l', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 8, Name: "MobileOperatorDisplayName", NameW: []uint16{'M', 'o', 'b', 'i', 'l', 'e', 'O', 'p', 'e', 'r', 'a', 't', 'o', 'r', 'D', 'i', 's', 'p', 'l', 'a', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 9, Name: "MobileOperatorName", NameW: []uint16{'M', 'o', 'b', 'i', 'l', 'e', 'O', 'p', 'e', 'r', 'a', 't', 'o', 'r', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 10, Name: "ModelName", NameW: []uint16{'M', 'o', 'd', 'e', 'l', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 11, Name: "RadioHardwareRevision", NameW: []uint16{'R', 'a', 'd', 'i', 'o', 'H', 'a', 'r', 'd', 'w', 'a', 'r', 'e', 'R', 'e', 'v', 'i', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 12, Name: "RadioSoftwareRevision", NameW: []uint16{'R', 'a', 'd', 'i', 'o', 'S', 'o', 'f', 't', 'w', 'a', 'r', 'e', 'R', 'e', 'v', 'i', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 13, Name: "ROMVersion", NameW: []uint16{'R', 'O', 'M', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 14, Name: "SOCVersion", NameW: []uint16{'S', 'O', 'C', 'V', 'e', 'r', 's', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 15, Name: "HardwareVariant", NameW: []uint16{'H', 'a', 'r', 'd', 'w', 'a', 'r', 'e', 'V', 'a', 'r', 'i', 'a', 'n', 't', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6712,12 +7280,14 @@ var mofSystemConfig_V2_MobilePlatform = &MofClassDef{
 // mofSystemConfig_V2_TelemetryInfo class definition
 var mofSystemConfig_V2_TelemetryInfo = &MofClassDef{
 	Name: "SystemConfig_V2_TelemetryInfo",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'T', 'e', 'l', 'e', 'm', 'e', 't', 'r', 'y', 'I', 'n', 'f', 'o', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 30 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MachineId", InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID},
+		{ID: 1, Name: "MachineId", NameW: []uint16{'M', 'a', 'c', 'h', 'i', 'n', 'e', 'I', 'd', 0}, InType: TDH_INTYPE_GUID, OutType: TDH_OUTTYPE_GUID, Extension: "GUID"},
 	},
 }
 
@@ -6734,15 +7304,17 @@ var mofSystemConfig_V2_TelemetryInfo = &MofClassDef{
 // mofSystemConfig_V2_IRQ class definition
 var mofSystemConfig_V2_IRQ = &MofClassDef{
 	Name: "SystemConfig_V2_IRQ",
+	NameW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', '_', 'I', 'R', 'Q', 0},
 	Base: "SystemConfig_V2",
+	BaseW: []uint16{'S', 'y', 's', 't', 'e', 'm', 'C', 'o', 'n', 'f', 'i', 'g', '_', 'V', '2', 0},
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 21 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IRQAffinity", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 2, Name: "IRQNum", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "DeviceDescriptionLen", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "DeviceDescription", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IRQAffinity", NameW: []uint16{'I', 'R', 'Q', 'A', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 2, Name: "IRQNum", NameW: []uint16{'I', 'R', 'Q', 'N', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "DeviceDescriptionLen", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'L', 'e', 'n', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "DeviceDescription", NameW: []uint16{'D', 'e', 'v', 'i', 'c', 'e', 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -6751,7 +7323,9 @@ var mofSystemConfig_V2_IRQ = &MofClassDef{
 // mofThread_V1 class definition
 var mofThread_V1 = &MofClassDef{
 	Name: "Thread_V1",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '1', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 1,
 }
@@ -6763,13 +7337,15 @@ var mofThread_V1 = &MofClassDef{
 // mofThread_V1_TypeGroup2 class definition
 var mofThread_V1_TypeGroup2 = &MofClassDef{
 	Name: "Thread_V1_TypeGroup2",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '2', 0},
 	Base: "Thread_V1",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '1', 0},
 	GUID: mofThread_V1.GUID,
 	Version: mofThread_V1.Version,
 	EventTypes: []uint8{ 2 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -6788,20 +7364,22 @@ var mofThread_V1_TypeGroup2 = &MofClassDef{
 // mofThread_V1_TypeGroup1 class definition
 var mofThread_V1_TypeGroup1 = &MofClassDef{
 	Name: "Thread_V1_TypeGroup1",
+	NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '1', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Thread_V1",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '1', 0},
 	GUID: mofThread_V1.GUID,
 	Version: mofThread_V1.Version,
 	EventTypes: []uint8{ 1,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "StackBase", InType: TDH_INTYPE_POINTER},
-		{ID: 4, Name: "StackLimit", InType: TDH_INTYPE_POINTER},
-		{ID: 5, Name: "UserStackBase", InType: TDH_INTYPE_POINTER},
-		{ID: 6, Name: "UserStackLimit", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "StartAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "Win32StartAddr", InType: TDH_INTYPE_POINTER},
-		{ID: 9, Name: "WaitMode", InType: TDH_INTYPE_INT8},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "StackBase", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 4, Name: "StackLimit", NameW: []uint16{'S', 't', 'a', 'c', 'k', 'L', 'i', 'm', 'i', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 5, Name: "UserStackBase", NameW: []uint16{'U', 's', 'e', 'r', 'S', 't', 'a', 'c', 'k', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 6, Name: "UserStackLimit", NameW: []uint16{'U', 's', 'e', 'r', 'S', 't', 'a', 'c', 'k', 'L', 'i', 'm', 'i', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "StartAddr", NameW: []uint16{'S', 't', 'a', 'r', 't', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 8, Name: "Win32StartAddr", NameW: []uint16{'W', 'i', 'n', '3', '2', 'S', 't', 'a', 'r', 't', 'A', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 9, Name: "WaitMode", NameW: []uint16{'W', 'a', 'i', 't', 'M', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_INT8},
 	},
 }
 
@@ -6820,21 +7398,23 @@ var mofThread_V1_TypeGroup1 = &MofClassDef{
 // mofCSwitch_V1 class definition
 var mofCSwitch_V1 = &MofClassDef{
 	Name: "CSwitch_V1",
+	NameW: []uint16{'C', 'S', 'w', 'i', 't', 'c', 'h', '_', 'V', '1', 0},
 	Base: "Thread_V1",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '1', 0},
 	GUID: mofThread_V1.GUID,
 	Version: mofThread_V1.Version,
 	EventTypes: []uint8{ 36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "NewThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "OldThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "NewThreadPriority", InType: TDH_INTYPE_INT8},
-		{ID: 4, Name: "OldThreadPriority", InType: TDH_INTYPE_INT8},
-		{ID: 5, Name: "NewThreadQuantum", InType: TDH_INTYPE_INT8},
-		{ID: 6, Name: "OldThreadQuantum", InType: TDH_INTYPE_INT8},
-		{ID: 7, Name: "OldThreadWaitReason", InType: TDH_INTYPE_INT8},
-		{ID: 8, Name: "OldThreadWaitMode", InType: TDH_INTYPE_INT8},
-		{ID: 9, Name: "OldThreadState", InType: TDH_INTYPE_INT8},
-		{ID: 10, Name: "OldThreadWaitIdealProcessor", InType: TDH_INTYPE_INT8},
+		{ID: 1, Name: "NewThreadId", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "OldThreadId", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "NewThreadPriority", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 4, Name: "OldThreadPriority", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'P', 'r', 'i', 'o', 'r', 'i', 't', 'y', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 5, Name: "NewThreadQuantum", NameW: []uint16{'N', 'e', 'w', 'T', 'h', 'r', 'e', 'a', 'd', 'Q', 'u', 'a', 'n', 't', 'u', 'm', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 6, Name: "OldThreadQuantum", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'Q', 'u', 'a', 'n', 't', 'u', 'm', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 7, Name: "OldThreadWaitReason", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 8, Name: "OldThreadWaitMode", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'M', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 9, Name: "OldThreadState", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 10, Name: "OldThreadWaitIdealProcessor", NameW: []uint16{'O', 'l', 'd', 'T', 'h', 'r', 'e', 'a', 'd', 'W', 'a', 'i', 't', 'I', 'd', 'e', 'a', 'l', 'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 0}, InType: TDH_INTYPE_INT8},
 	},
 }
 
@@ -6846,14 +7426,16 @@ var mofCSwitch_V1 = &MofClassDef{
 // mofWorkerThread_V1 class definition
 var mofWorkerThread_V1 = &MofClassDef{
 	Name: "WorkerThread_V1",
+	NameW: []uint16{'W', 'o', 'r', 'k', 'e', 'r', 'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '1', 0},
 	Base: "Thread_V1",
+	BaseW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', '_', 'V', '1', 0},
 	GUID: mofThread_V1.GUID,
 	Version: mofThread_V1.Version,
 	EventTypes: []uint8{ 57 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "TThreadId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "StartTime", InType: TDH_INTYPE_UINT64},
-		{ID: 3, Name: "ThreadRoutine", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "TThreadId", NameW: []uint16{'T', 'T', 'h', 'r', 'e', 'a', 'd', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "StartTime", NameW: []uint16{'S', 't', 'a', 'r', 't', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_UINT64},
+		{ID: 3, Name: "ThreadRoutine", NameW: []uint16{'T', 'h', 'r', 'e', 'a', 'd', 'R', 'o', 'u', 't', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -6862,7 +7444,9 @@ var mofWorkerThread_V1 = &MofClassDef{
 // mofTcpIp_V0 class definition
 var mofTcpIp_V0 = &MofClassDef{
 	Name: "TcpIp_V0",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '0', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}"),
 	Version: 0,
 }
@@ -6879,18 +7463,20 @@ var mofTcpIp_V0 = &MofClassDef{
 // mofTcpIp_V0_TypeGroup1 class definition
 var mofTcpIp_V0_TypeGroup1 = &MofClassDef{
 	Name: "TcpIp_V0_TypeGroup1",
+	NameW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '0', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "TcpIp_V0",
+	BaseW: []uint16{'T', 'c', 'p', 'I', 'p', '_', 'V', '0', 0},
 	GUID: mofTcpIp_V0.GUID,
 	Version: mofTcpIp_V0.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14, 
                                15 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "daddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 2, Name: "saddr", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4},
-		{ID: 3, Name: "dport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 4, Name: "sport", InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT},
-		{ID: 5, Name: "size", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "PID", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "daddr", NameW: []uint16{'d', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 2, Name: "saddr", NameW: []uint16{'s', 'a', 'd', 'd', 'r', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_IPV4, Extension: "IPAddr"},
+		{ID: 3, Name: "dport", NameW: []uint16{'d', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 4, Name: "sport", NameW: []uint16{'s', 'p', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT16, OutType: TDH_OUTTYPE_PORT, Extension: "Port"},
+		{ID: 5, Name: "size", NameW: []uint16{'s', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "PID", NameW: []uint16{'P', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -6899,7 +7485,9 @@ var mofTcpIp_V0_TypeGroup1 = &MofClassDef{
 // mofProcess_V2 class definition
 var mofProcess_V2 = &MofClassDef{
 	Name: "Process_V2",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 2,
 }
@@ -6911,12 +7499,14 @@ var mofProcess_V2 = &MofClassDef{
 // mofProcess_V2_TypeGroup5 class definition
 var mofProcess_V2_TypeGroup5 = &MofClassDef{
 	Name: "Process_V2_TypeGroup5",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '5', 0},
 	Base: "Process_V2",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', 0},
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 96,  97,  98,  99 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Object", InType: TDH_INTYPE_POINTER},
+		{ID: 1, Name: "Object", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
 	},
 }
 
@@ -6931,16 +7521,18 @@ var mofProcess_V2_TypeGroup5 = &MofClassDef{
 // mofProcess_V2_TypeGroup4 class definition
 var mofProcess_V2_TypeGroup4 = &MofClassDef{
 	Name: "Process_V2_TypeGroup4",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '4', 0},
 	Base: "Process_V2",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', 0},
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 48,  49,  50,  51,  52,  64,  65,  66,  67,  68,  80,  81, 
                                82,  83,  84 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Object", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "Tag", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "Count", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Object", NameW: []uint16{'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "Tag", NameW: []uint16{'T', 'a', 'g', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "Count", NameW: []uint16{'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -6965,26 +7557,28 @@ var mofProcess_V2_TypeGroup4 = &MofClassDef{
 // mofProcess_V2_TypeGroup2 class definition
 var mofProcess_V2_TypeGroup2 = &MofClassDef{
 	Name: "Process_V2_TypeGroup2",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '2', 0},
 	Base: "Process_V2",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', 0},
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 32,  33 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "PageFaultCount", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "HandleCount", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "Reserved", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "PeakVirtualSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 6, Name: "PeakWorkingSetSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 7, Name: "PeakPagefileUsage", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 8, Name: "QuotaPeakPagedPoolUsage", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 9, Name: "QuotaPeakNonPagedPoolUsage", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 10, Name: "VirtualSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 11, Name: "WorkingSetSize", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 12, Name: "PagefileUsage", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 13, Name: "QuotaPagedPoolUsage", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 14, Name: "QuotaNonPagedPoolUsage", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
-		{ID: 15, Name: "PrivatePageCount", InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "PageFaultCount", NameW: []uint16{'P', 'a', 'g', 'e', 'F', 'a', 'u', 'l', 't', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "HandleCount", NameW: []uint16{'H', 'a', 'n', 'd', 'l', 'e', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "PeakVirtualSize", NameW: []uint16{'P', 'e', 'a', 'k', 'V', 'i', 'r', 't', 'u', 'a', 'l', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 6, Name: "PeakWorkingSetSize", NameW: []uint16{'P', 'e', 'a', 'k', 'W', 'o', 'r', 'k', 'i', 'n', 'g', 'S', 'e', 't', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 7, Name: "PeakPagefileUsage", NameW: []uint16{'P', 'e', 'a', 'k', 'P', 'a', 'g', 'e', 'f', 'i', 'l', 'e', 'U', 's', 'a', 'g', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 8, Name: "QuotaPeakPagedPoolUsage", NameW: []uint16{'Q', 'u', 'o', 't', 'a', 'P', 'e', 'a', 'k', 'P', 'a', 'g', 'e', 'd', 'P', 'o', 'o', 'l', 'U', 's', 'a', 'g', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 9, Name: "QuotaPeakNonPagedPoolUsage", NameW: []uint16{'Q', 'u', 'o', 't', 'a', 'P', 'e', 'a', 'k', 'N', 'o', 'n', 'P', 'a', 'g', 'e', 'd', 'P', 'o', 'o', 'l', 'U', 's', 'a', 'g', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 10, Name: "VirtualSize", NameW: []uint16{'V', 'i', 'r', 't', 'u', 'a', 'l', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 11, Name: "WorkingSetSize", NameW: []uint16{'W', 'o', 'r', 'k', 'i', 'n', 'g', 'S', 'e', 't', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 12, Name: "PagefileUsage", NameW: []uint16{'P', 'a', 'g', 'e', 'f', 'i', 'l', 'e', 'U', 's', 'a', 'g', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 13, Name: "QuotaPagedPoolUsage", NameW: []uint16{'Q', 'u', 'o', 't', 'a', 'P', 'a', 'g', 'e', 'd', 'P', 'o', 'o', 'l', 'U', 's', 'a', 'g', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 14, Name: "QuotaNonPagedPoolUsage", NameW: []uint16{'Q', 'u', 'o', 't', 'a', 'N', 'o', 'n', 'P', 'a', 'g', 'e', 'd', 'P', 'o', 'o', 'l', 'U', 's', 'a', 'g', 'e', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
+		{ID: 15, Name: "PrivatePageCount", NameW: []uint16{'P', 'r', 'i', 'v', 'a', 't', 'e', 'P', 'a', 'g', 'e', 'C', 'o', 'u', 'n', 't', 0}, InType: TDH_INTYPE_POINTER, OutType: TDH_OUTTYPE_NULL, Extension: "SizeT"},
 	},
 }
 
@@ -7006,19 +7600,21 @@ var mofProcess_V2_TypeGroup2 = &MofClassDef{
 // mofProcess_V2_TypeGroup1 class definition
 var mofProcess_V2_TypeGroup1 = &MofClassDef{
 	Name: "Process_V2_TypeGroup1",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Process_V2",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', 0},
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4,  39 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "UniqueProcessKey", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "ParentId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "SessionId", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
-		{ID: 6, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING},
-		{ID: 7, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 8, Name: "CommandLine", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "UniqueProcessKey", NameW: []uint16{'U', 'n', 'i', 'q', 'u', 'e', 'P', 'r', 'o', 'c', 'e', 's', 's', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "ParentId", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "SessionId", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ExitStatus", NameW: []uint16{'E', 'x', 'i', 't', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 6, Name: "UserSID", NameW: []uint16{'U', 's', 'e', 'r', 'S', 'I', 'D', 0}, InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 7, Name: "ImageFileName", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 8, Name: "CommandLine", NameW: []uint16{'C', 'o', 'm', 'm', 'a', 'n', 'd', 'L', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7029,12 +7625,14 @@ var mofProcess_V2_TypeGroup1 = &MofClassDef{
 // mofProcess_Terminate_TypeGroup1 class definition
 var mofProcess_Terminate_TypeGroup1 = &MofClassDef{
 	Name: "Process_Terminate_TypeGroup1",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'T', 'e', 'r', 'm', 'i', 'n', 'a', 't', 'e', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Process_V2",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', 0},
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 11 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -7045,13 +7643,15 @@ var mofProcess_Terminate_TypeGroup1 = &MofClassDef{
 // mofProcess_V2_TypeGroup3 class definition
 var mofProcess_V2_TypeGroup3 = &MofClassDef{
 	Name: "Process_V2_TypeGroup3",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '3', 0},
 	Base: "Process_V2",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '2', 0},
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "DirectoryTableBase", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 1, Name: "DirectoryTableBase", NameW: []uint16{'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'T', 'a', 'b', 'l', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 	},
 }
 
@@ -7060,7 +7660,9 @@ var mofProcess_V2_TypeGroup3 = &MofClassDef{
 // mofProcess_V4 class definition
 var mofProcess_V4 = &MofClassDef{
 	Name: "Process_V4",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '4', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 4,
 }
@@ -7073,6 +7675,7 @@ var mofProcess_V4 = &MofClassDef{
 //   [ WmiDataId(4), read ] uint32 SessionId;
 //   [ WmiDataId(5), read ] sint32 ExitStatus;
 //   [ WmiDataId(6), pointer, read ] uint32 DirectoryTableBase;
+//   [ WmiDataId(7), format("x"), read ] uint32 Flags;
 //   [ WmiDataId(8), extension("Sid"), read ] object UserSID;
 //   [ WmiDataId(9), StringTermination("NullTerminated"),
 //     read ] string ImageFileName;
@@ -7092,22 +7695,25 @@ var mofProcess_V4 = &MofClassDef{
 // mofProcess_V4_TypeGroup1 class definition
 var mofProcess_V4_TypeGroup1 = &MofClassDef{
 	Name: "Process_V4_TypeGroup1",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '4', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Process_V4",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '4', 0},
 	GUID: mofProcess_V4.GUID,
 	Version: mofProcess_V4.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4,  39 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "UniqueProcessKey", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "ParentId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "SessionId", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
-		{ID: 6, Name: "DirectoryTableBase", InType: TDH_INTYPE_POINTER},
-		{ID: 8, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING},
-		{ID: 9, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 10, Name: "CommandLine", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 11, Name: "PackageFullName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 12, Name: "ApplicationId", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "UniqueProcessKey", NameW: []uint16{'U', 'n', 'i', 'q', 'u', 'e', 'P', 'r', 'o', 'c', 'e', 's', 's', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "ParentId", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "SessionId", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ExitStatus", NameW: []uint16{'E', 'x', 'i', 't', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 6, Name: "DirectoryTableBase", NameW: []uint16{'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'T', 'a', 'b', 'l', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "Flags", NameW: []uint16{'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 8, Name: "UserSID", NameW: []uint16{'U', 's', 'e', 'r', 'S', 'I', 'D', 0}, InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 9, Name: "ImageFileName", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 10, Name: "CommandLine", NameW: []uint16{'C', 'o', 'm', 'm', 'a', 'n', 'd', 'L', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 11, Name: "PackageFullName", NameW: []uint16{'P', 'a', 'c', 'k', 'a', 'g', 'e', 'F', 'u', 'l', 'l', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 12, Name: "ApplicationId", NameW: []uint16{'A', 'p', 'p', 'l', 'i', 'c', 'a', 't', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7116,7 +7722,9 @@ var mofProcess_V4_TypeGroup1 = &MofClassDef{
 // mofPowerEvents class definition
 var mofPowerEvents = &MofClassDef{
 	Name: "PowerEvents",
+	NameW: []uint16{'P', 'o', 'w', 'e', 'r', 'E', 'v', 'e', 'n', 't', 's', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{e43445e0-0903-48c3-b878-ff0fccebdd04}"),
 	Version: 2,
 }
@@ -7130,15 +7738,17 @@ var mofPowerEvents = &MofClassDef{
 // mofIdleExitLatency class definition
 var mofIdleExitLatency = &MofClassDef{
 	Name: "IdleExitLatency",
+	NameW: []uint16{'I', 'd', 'l', 'e', 'E', 'x', 'i', 't', 'L', 'a', 't', 'e', 'n', 'c', 'y', 0},
 	Base: "PowerEvents",
+	BaseW: []uint16{'P', 'o', 'w', 'e', 'r', 'E', 'v', 'e', 'n', 't', 's', 0},
 	GUID: mofPowerEvents.GUID,
 	Version: mofPowerEvents.Version,
 	EventTypes: []uint8{ 60 },
 	Properties: []MofPropertyDef{
-		{ID: 2, Name: "PlatformState", InType: TDH_INTYPE_UINT32},
-		{ID: 3, Name: "ProcessorState", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "ReturnLatency", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "TotalLatency", InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "PlatformState", NameW: []uint16{'P', 'l', 'a', 't', 'f', 'o', 'r', 'm', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 3, Name: "ProcessorState", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'o', 'r', 'S', 't', 'a', 't', 'e', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "ReturnLatency", NameW: []uint16{'R', 'e', 't', 'u', 'r', 'n', 'L', 'a', 't', 'e', 'n', 'c', 'y', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "TotalLatency", NameW: []uint16{'T', 'o', 't', 'a', 'l', 'L', 'a', 't', 'e', 'n', 'c', 'y', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -7147,7 +7757,9 @@ var mofIdleExitLatency = &MofClassDef{
 // mofProcess_V3 class definition
 var mofProcess_V3 = &MofClassDef{
 	Name: "Process_V3",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '3', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 3,
 }
@@ -7171,20 +7783,22 @@ var mofProcess_V3 = &MofClassDef{
 // mofProcess_V3_TypeGroup1 class definition
 var mofProcess_V3_TypeGroup1 = &MofClassDef{
 	Name: "Process_V3_TypeGroup1",
+	NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '3', '_', 'T', 'y', 'p', 'e', 'G', 'r', 'o', 'u', 'p', '1', 0},
 	Base: "Process_V3",
+	BaseW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', '_', 'V', '3', 0},
 	GUID: mofProcess_V3.GUID,
 	Version: mofProcess_V3.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4,  39 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "UniqueProcessKey", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ProcessId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "ParentId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "SessionId", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
-		{ID: 6, Name: "DirectoryTableBase", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING},
-		{ID: 8, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 9, Name: "CommandLine", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "UniqueProcessKey", NameW: []uint16{'U', 'n', 'i', 'q', 'u', 'e', 'P', 'r', 'o', 'c', 'e', 's', 's', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "ParentId", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "SessionId", NameW: []uint16{'S', 'e', 's', 's', 'i', 'o', 'n', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "ExitStatus", NameW: []uint16{'E', 'x', 'i', 't', 'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_INT32},
+		{ID: 6, Name: "DirectoryTableBase", NameW: []uint16{'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'T', 'a', 'b', 'l', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 7, Name: "UserSID", NameW: []uint16{'U', 's', 'e', 'r', 'S', 'I', 'D', 0}, InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 8, Name: "ImageFileName", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 9, Name: "CommandLine", NameW: []uint16{'C', 'o', 'm', 'm', 'a', 'n', 'd', 'L', 'i', 'n', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7193,7 +7807,9 @@ var mofProcess_V3_TypeGroup1 = &MofClassDef{
 // mofALPC class definition
 var mofALPC = &MofClassDef{
 	Name: "ALPC",
+	NameW: []uint16{'A', 'L', 'P', 'C', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{45d8cccd-539f-4b72-a8b7-5c683142609a}"),
 	Version: 2,
 }
@@ -7204,12 +7820,14 @@ var mofALPC = &MofClassDef{
 // mofALPC_Receive_Message class definition
 var mofALPC_Receive_Message = &MofClassDef{
 	Name: "ALPC_Receive_Message",
+	NameW: []uint16{'A', 'L', 'P', 'C', '_', 'R', 'e', 'c', 'e', 'i', 'v', 'e', '_', 'M', 'e', 's', 's', 'a', 'g', 'e', 0},
 	Base: "ALPC",
+	BaseW: []uint16{'A', 'L', 'P', 'C', 0},
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 34 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MessageID", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "MessageID", NameW: []uint16{'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -7219,12 +7837,14 @@ var mofALPC_Receive_Message = &MofClassDef{
 // mofALPC_Wait_For_Reply class definition
 var mofALPC_Wait_For_Reply = &MofClassDef{
 	Name: "ALPC_Wait_For_Reply",
+	NameW: []uint16{'A', 'L', 'P', 'C', '_', 'W', 'a', 'i', 't', '_', 'F', 'o', 'r', '_', 'R', 'e', 'p', 'l', 'y', 0},
 	Base: "ALPC",
+	BaseW: []uint16{'A', 'L', 'P', 'C', 0},
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 35 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MessageID", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "MessageID", NameW: []uint16{'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -7234,12 +7854,14 @@ var mofALPC_Wait_For_Reply = &MofClassDef{
 // mofALPC_Send_Message class definition
 var mofALPC_Send_Message = &MofClassDef{
 	Name: "ALPC_Send_Message",
+	NameW: []uint16{'A', 'L', 'P', 'C', '_', 'S', 'e', 'n', 'd', '_', 'M', 'e', 's', 's', 'a', 'g', 'e', 0},
 	Base: "ALPC",
+	BaseW: []uint16{'A', 'L', 'P', 'C', 0},
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 33 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "MessageID", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "MessageID", NameW: []uint16{'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -7249,12 +7871,14 @@ var mofALPC_Send_Message = &MofClassDef{
 // mofALPC_Unwait class definition
 var mofALPC_Unwait = &MofClassDef{
 	Name: "ALPC_Unwait",
+	NameW: []uint16{'A', 'L', 'P', 'C', '_', 'U', 'n', 'w', 'a', 'i', 't', 0},
 	Base: "ALPC",
+	BaseW: []uint16{'A', 'L', 'P', 'C', 0},
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 37 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "Status", InType: TDH_INTYPE_UINT32},
+		{ID: 1, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32},
 	},
 }
 
@@ -7268,13 +7892,15 @@ var mofALPC_Unwait = &MofClassDef{
 // mofALPC_Wait_For_New_Message class definition
 var mofALPC_Wait_For_New_Message = &MofClassDef{
 	Name: "ALPC_Wait_For_New_Message",
+	NameW: []uint16{'A', 'L', 'P', 'C', '_', 'W', 'a', 'i', 't', '_', 'F', 'o', 'r', '_', 'N', 'e', 'w', '_', 'M', 'e', 's', 's', 'a', 'g', 'e', 0},
 	Base: "ALPC",
+	BaseW: []uint16{'A', 'L', 'P', 'C', 0},
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 36 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "IsServerPort", InType: TDH_INTYPE_UINT32},
-		{ID: 2, Name: "PortName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "IsServerPort", NameW: []uint16{'I', 's', 'S', 'e', 'r', 'v', 'e', 'r', 'P', 'o', 'r', 't', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 2, Name: "PortName", NameW: []uint16{'P', 'o', 'r', 't', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7283,7 +7909,9 @@ var mofALPC_Wait_For_New_Message = &MofClassDef{
 // mofImage class definition
 var mofImage = &MofClassDef{
 	Name: "Image",
+	NameW: []uint16{'I', 'm', 'a', 'g', 'e', 0},
 	Base: "MSNT_SystemTrace",
+	BaseW: []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0},
 	GUID: *MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}"),
 	Version: 3,
 }
@@ -7310,25 +7938,27 @@ var mofImage = &MofClassDef{
 // mofImage_Load class definition
 var mofImage_Load = &MofClassDef{
 	Name: "Image_Load",
+	NameW: []uint16{'I', 'm', 'a', 'g', 'e', '_', 'L', 'o', 'a', 'd', 0},
 	Base: "Image",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', 0},
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 10,  2,  3,  4 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "ImageBase", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ImageSize", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
-		{ID: 4, Name: "ImageChecksum", InType: TDH_INTYPE_UINT32},
-		{ID: 5, Name: "TimeDateStamp", InType: TDH_INTYPE_UINT32},
-		{ID: 6, Name: "SignatureLevel", InType: TDH_INTYPE_UINT8},
-		{ID: 7, Name: "SignatureType", InType: TDH_INTYPE_UINT8},
-		{ID: 8, Name: "Reserved0", InType: TDH_INTYPE_UINT16},
-		{ID: 9, Name: "DefaultBase", InType: TDH_INTYPE_POINTER},
-		{ID: 10, Name: "Reserved1", InType: TDH_INTYPE_UINT32},
-		{ID: 11, Name: "Reserved2", InType: TDH_INTYPE_UINT32},
-		{ID: 12, Name: "Reserved3", InType: TDH_INTYPE_UINT32},
-		{ID: 13, Name: "Reserved4", InType: TDH_INTYPE_UINT32},
-		{ID: 14, Name: "FileName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "ImageBase", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ImageSize", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'S', 'i', 'z', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 4, Name: "ImageChecksum", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'C', 'h', 'e', 'c', 'k', 's', 'u', 'm', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 5, Name: "TimeDateStamp", NameW: []uint16{'T', 'i', 'm', 'e', 'D', 'a', 't', 'e', 'S', 't', 'a', 'm', 'p', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 6, Name: "SignatureLevel", NameW: []uint16{'S', 'i', 'g', 'n', 'a', 't', 'u', 'r', 'e', 'L', 'e', 'v', 'e', 'l', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 7, Name: "SignatureType", NameW: []uint16{'S', 'i', 'g', 'n', 'a', 't', 'u', 'r', 'e', 'T', 'y', 'p', 'e', 0}, InType: TDH_INTYPE_UINT8},
+		{ID: 8, Name: "Reserved0", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '0', 0}, InType: TDH_INTYPE_UINT16},
+		{ID: 9, Name: "DefaultBase", NameW: []uint16{'D', 'e', 'f', 'a', 'u', 'l', 't', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 10, Name: "Reserved1", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '1', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 11, Name: "Reserved2", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '2', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 12, Name: "Reserved3", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '3', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 13, Name: "Reserved4", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', '4', 0}, InType: TDH_INTYPE_UINT32},
+		{ID: 14, Name: "FileName", NameW: []uint16{'F', 'i', 'l', 'e', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7345,16 +7975,18 @@ var mofImage_Load = &MofClassDef{
 // mofLoaderDllSearchResults class definition
 var mofLoaderDllSearchResults = &MofClassDef{
 	Name: "LoaderDllSearchResults",
+	NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'r', 'D', 'l', 'l', 'S', 'e', 'a', 'r', 'c', 'h', 'R', 'e', 's', 'u', 'l', 't', 's', 0},
 	Base: "Image",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', 0},
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 212 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "LdrLoadFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "LdrSearchFlags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "SearchInfo", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "LoadReason", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 5, Name: "FullDllName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "LdrLoadFlags", NameW: []uint16{'L', 'd', 'r', 'L', 'o', 'a', 'd', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "LdrSearchFlags", NameW: []uint16{'L', 'd', 'r', 'S', 'e', 'a', 'r', 'c', 'h', 'F', 'l', 'a', 'g', 's', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "SearchInfo", NameW: []uint16{'S', 'e', 'a', 'r', 'c', 'h', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "LoadReason", NameW: []uint16{'L', 'o', 'a', 'd', 'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 5, Name: "FullDllName", NameW: []uint16{'F', 'u', 'l', 'l', 'D', 'l', 'l', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7370,15 +8002,17 @@ var mofLoaderDllSearchResults = &MofClassDef{
 // mofLoaderNewDllEvent class definition
 var mofLoaderNewDllEvent = &MofClassDef{
 	Name: "LoaderNewDllEvent",
+	NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'r', 'N', 'e', 'w', 'D', 'l', 'l', 'E', 'v', 'e', 'n', 't', 0},
 	Base: "Image",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', 0},
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 176,  177 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "NewDllBaseAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 2, Name: "ParentDllBaseAddress", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "LoadReason", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 4, Name: "FilePath", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "NewDllBaseAddress", NameW: []uint16{'N', 'e', 'w', 'D', 'l', 'l', 'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 2, Name: "ParentDllBaseAddress", NameW: []uint16{'P', 'a', 'r', 'e', 'n', 't', 'D', 'l', 'l', 'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_POINTER},
+		{ID: 3, Name: "LoadReason", NameW: []uint16{'L', 'o', 'a', 'd', 'R', 'e', 'a', 's', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 4, Name: "FilePath", NameW: []uint16{'F', 'i', 'l', 'e', 'P', 'a', 't', 'h', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7398,16 +8032,18 @@ var mofLoaderNewDllEvent = &MofClassDef{
 // mofLoaderCodedEventPath class definition
 var mofLoaderCodedEventPath = &MofClassDef{
 	Name: "LoaderCodedEventPath",
+	NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'r', 'C', 'o', 'd', 'e', 'd', 'E', 'v', 'e', 'n', 't', 'P', 'a', 't', 'h', 0},
 	Base: "Image",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', 0},
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 192,  193 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 2, Name: "ErrorOpcode", InType: TDH_INTYPE_UINT8, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "Code", InType: TDH_INTYPE_INT8},
-		{ID: 4, Name: "String1", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "String2", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 2, Name: "ErrorOpcode", NameW: []uint16{'E', 'r', 'r', 'o', 'r', 'O', 'p', 'c', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT8, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "Code", NameW: []uint16{'C', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 4, Name: "String1", NameW: []uint16{'S', 't', 'r', 'i', 'n', 'g', '1', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "String2", NameW: []uint16{'S', 't', 'r', 'i', 'n', 'g', '2', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7425,16 +8061,18 @@ var mofLoaderCodedEventPath = &MofClassDef{
 // mofLoaderCodedEventStatus class definition
 var mofLoaderCodedEventStatus = &MofClassDef{
 	Name: "LoaderCodedEventStatus",
+	NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'r', 'C', 'o', 'd', 'e', 'd', 'E', 'v', 'e', 'n', 't', 'S', 't', 'a', 't', 'u', 's', 0},
 	Base: "Image",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', 0},
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 165,  166,  167,  168,  169,  170,  171,  172,  173,  174, 
                                208,  209,  210,  211 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "BaseAddress", InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
-		{ID: 2, Name: "ErrorOpcode", InType: TDH_INTYPE_UINT8, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 3, Name: "Code", InType: TDH_INTYPE_INT8},
-		{ID: 4, Name: "String", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "BaseAddress", NameW: []uint16{'B', 'a', 's', 'e', 'A', 'd', 'd', 'r', 'e', 's', 's', 0}, InType: TDH_INTYPE_UINT64, OutType: TDH_OUTTYPE_HEXINT64},
+		{ID: 2, Name: "ErrorOpcode", NameW: []uint16{'E', 'r', 'r', 'o', 'r', 'O', 'p', 'c', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_UINT8, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 3, Name: "Code", NameW: []uint16{'C', 'o', 'd', 'e', 0}, InType: TDH_INTYPE_INT8},
+		{ID: 4, Name: "String", NameW: []uint16{'S', 't', 'r', 'i', 'n', 'g', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
@@ -7460,16 +8098,18 @@ var mofLoaderCodedEventStatus = &MofClassDef{
 // mofLoaderPathSearchResults class definition
 var mofLoaderPathSearchResults = &MofClassDef{
 	Name: "LoaderPathSearchResults",
+	NameW: []uint16{'L', 'o', 'a', 'd', 'e', 'r', 'P', 'a', 't', 'h', 'S', 'e', 'a', 'r', 'c', 'h', 'R', 'e', 's', 'u', 'l', 't', 's', 0},
 	Base: "Image",
+	BaseW: []uint16{'I', 'm', 'a', 'g', 'e', 0},
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 213 },
 	Properties: []MofPropertyDef{
-		{ID: 1, Name: "SearchInfo", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 2, Name: "Cwd", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 3, Name: "AppDir", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 4, Name: "DllDir", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
-		{ID: 5, Name: "DllLoadDir", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 1, Name: "SearchInfo", NameW: []uint16{'S', 'e', 'a', 'r', 'c', 'h', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
+		{ID: 2, Name: "Cwd", NameW: []uint16{'C', 'w', 'd', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 3, Name: "AppDir", NameW: []uint16{'A', 'p', 'p', 'D', 'i', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 4, Name: "DllDir", NameW: []uint16{'D', 'l', 'l', 'D', 'i', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+		{ID: 5, Name: "DllLoadDir", NameW: []uint16{'D', 'l', 'l', 'L', 'o', 'a', 'd', 'D', 'i', 'r', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
 
