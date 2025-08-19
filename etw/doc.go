@@ -19,3 +19,5 @@
 //	    log.Fatal(err)
 //	}
 package etw
+
+// go 1.25 seems to have reduced performance of map clear significantly, the events/s dropped by 7%
