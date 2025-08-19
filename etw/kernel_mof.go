@@ -2,6 +2,12 @@
 
 package etw
 
+import (
+	"fmt"
+	"strings"
+	"unsafe"
+)
+
 type MofKernelNames struct {
 	// Class name
 	Name string
@@ -42,6 +48,10 @@ var (
 		guidToUint("44608a51-1851-4456-98b2-b300e931ee41"): {Name: "WmiEventLogger", BaseId: /*6120*/ calcBaseId(24)},
 		guidToUint("68fdd900-4a3e-11d1-84f4-0000f80464e3"): {Name: "EventTraceEvent", BaseId: /*6375*/ calcBaseId(25)},
 	}
+
+	// Pre-converted UTF-16 string for "MSNT_SystemTrace" to avoid runtime allocations.
+	// TODO: put this in generator?
+	utf16MSNT_SystemTrace = []uint16{'M', 'S', 'N', 'T', '_', 'S', 'y', 's', 't', 'e', 'm', 'T', 'r', 'a', 'c', 'e', 0}
 )
 
 func calcBaseId(index int) uint16 {
@@ -65,6 +75,7 @@ var (
 type MofPropertyDef struct {
 	ID         uint16 // WmiDataId
 	Name       string
+	NameW      []uint16   // UTF-16 null-terminated name
 	InType     TdhInType  // How to read the raw data
 	OutType    TdhOutType // How to represent in Go
 	IsArray    bool
@@ -75,7 +86,9 @@ type MofPropertyDef struct {
 // MofClassDef represents a complete MOF class definition
 type MofClassDef struct {
 	Name       string           // Class name (e.g. "Process_V2_TypeGroup1")
+	NameW      []uint16         // UTF-16 null-terminated name
 	Base       string           // Base class name (e.g. "Process_V2")
+	BaseW      []uint16         // UTF-16 null-terminated base name
 	GUID       GUID             // From parent class
 	Version    uint8            // From parent class
 	EventTypes []uint8          // List of event types this class handles
@@ -147,6 +160,369 @@ func MofUnpackKey(key uint64) (providerId uint32, data2 uint16, opcode uint8, ve
 	return
 }
 
+func getTdhInTypeFixedSize(inType TdhInType, er *EventRecord) uint16 {
+	switch inType {
+	case TDH_INTYPE_INT8, TDH_INTYPE_UINT8, TDH_INTYPE_ANSICHAR:
+		return 1
+	case TDH_INTYPE_INT16, TDH_INTYPE_UINT16, TDH_INTYPE_UNICODECHAR:
+		return 2
+	case TDH_INTYPE_INT32, TDH_INTYPE_UINT32, TDH_INTYPE_HEXINT32, TDH_INTYPE_FLOAT, TDH_INTYPE_BOOLEAN:
+		return 4
+	case TDH_INTYPE_INT64, TDH_INTYPE_UINT64, TDH_INTYPE_HEXINT64, TDH_INTYPE_DOUBLE, TDH_INTYPE_FILETIME:
+		return 8
+	case TDH_INTYPE_GUID:
+		return 16
+	case TDH_INTYPE_SYSTEMTIME:
+		return 16
+	case TDH_INTYPE_POINTER, TDH_INTYPE_SIZET:
+		if er != nil {
+			return uint16(er.PointerSize())
+		}
+		// Fallback if er is nil, though it shouldn't be.
+		if unsafe.Sizeof(uintptr(0)) == 8 {
+			return 8
+		}
+		return 4
+	default:
+		return 0 // Variable size
+	}
+}
+
+const (
+	// MismatchNone indicates no differences were found.
+	MismatchNone = 0
+	// MismatchClassName indicates a difference in TaskName or OpcodeName.
+	MismatchClassName = 1
+	// MismatchOutTypeStringNull indicates a specific, often benign, difference where one OutType is STRING and the other is NULL.
+	MismatchOutTypeStringNull = 2
+	// MismatchOther indicates any other difference in headers or properties.
+	MismatchOther = 4
+)
+
+// compareTraceEventInfo is a debug helper to compare a generated TEI with the original from the API.
+// It returns a bitmask of mismatch types.
+func compareTraceEventInfo(generated, original *TraceEventInfo) int {
+	mismatchMask := MismatchNone
+
+	// Compare header fields
+	if generated.ProviderGUID != original.ProviderGUID {
+		fmt.Printf("Mismatch ProviderGUID: Gen: %s, Org: %s\n", generated.ProviderGUID, original.ProviderGUID)
+		mismatchMask |= MismatchOther
+	}
+	if generated.EventGUID != original.EventGUID {
+		fmt.Printf("Mismatch EventGUID: Gen: %s, Org: %s\n", generated.EventGUID, original.EventGUID)
+		mismatchMask |= MismatchOther
+	}
+	if generated.EventDescriptor != original.EventDescriptor {
+		fmt.Printf("Mismatch EventDescriptor: Gen: %+v, Org: %+v\n", generated.EventDescriptor, original.EventDescriptor)
+		mismatchMask |= MismatchOther
+	}
+	if generated.DecodingSource != original.DecodingSource {
+		fmt.Printf("Mismatch DecodingSource: Gen: %d, Org: %d\n", generated.DecodingSource, original.DecodingSource)
+		mismatchMask |= MismatchOther
+	}
+	if generated.PropertyCount != original.PropertyCount {
+		fmt.Printf("Mismatch PropertyCount: Gen: %d, Org: %d\n", generated.PropertyCount, original.PropertyCount)
+		mismatchMask |= MismatchOther
+		return mismatchMask // Stop property comparison if counts differ, as it would panic.
+	}
+	if generated.TopLevelPropertyCount != original.TopLevelPropertyCount {
+		fmt.Printf("Mismatch TopLevelPropertyCount: Gen: %d, Org: %d\n", generated.TopLevelPropertyCount, original.TopLevelPropertyCount)
+		mismatchMask |= MismatchOther
+	}
+	if generated.Flags != original.Flags {
+		fmt.Printf("Mismatch Flags: Gen: %d, Org: %d\n", generated.Flags, original.Flags)
+		mismatchMask |= MismatchOther
+	}
+
+	// Note: Offsets will naturally differ. We compare the strings they point to instead.
+	if generated.ProviderName() != original.ProviderName() {
+		fmt.Printf("Mismatch ProviderName: Gen: '%s', Org: '%s'\n", generated.ProviderName(), original.ProviderName())
+		mismatchMask |= MismatchOther
+	}
+	if generated.TaskName() != original.TaskName() {
+		//fmt.Printf("Mismatch TaskName: Gen: '%s', Org: '%s'\n", generated.TaskName(), original.TaskName())
+		mismatchMask |= MismatchClassName
+	}
+	if generated.OpcodeName() != original.OpcodeName() {
+		//fmt.Printf("Mismatch OpcodeName: Gen: '%s', Org: '%s'\n", generated.OpcodeName(), original.OpcodeName())
+		mismatchMask |= MismatchClassName
+	}
+
+	// Compare properties by iterating through them
+	for i := uint32(0); i < generated.PropertyCount; i++ {
+		genEpi := generated.GetEventPropertyInfoAt(i)
+		orgEpi := original.GetEventPropertyInfoAt(i)
+		genName := generated.stringAt(uintptr(genEpi.NameOffset))
+		orgName := original.stringAt(uintptr(orgEpi.NameOffset))
+
+		mismatched := false
+		var mismatchDetails strings.Builder
+		//mismatchDetails.WriteString(fmt.Sprintf("Property [%d] '%s':\n", i, orgName))
+
+		if genName != orgName {
+			mismatched = true
+			mismatchMask |= MismatchOther
+			mismatchDetails.WriteString(fmt.Sprintf("  - Name mismatch: Gen: '%s', Org: '%s'\n", genName, orgName))
+		}
+		if genEpi.Flags != orgEpi.Flags {
+			mismatched = true
+			mismatchMask |= MismatchOther
+			mismatchDetails.WriteString(fmt.Sprintf("  - Flags mismatch: Gen: %x, Org: %x\n", genEpi.Flags, orgEpi.Flags))
+		}
+
+		// Compare unions based on flags
+		if (orgEpi.Flags & PropertyStruct) != 0 {
+			if genEpi.StructStartIndex() != orgEpi.StructStartIndex() {
+				mismatched = true
+				mismatchMask |= MismatchOther
+				mismatchDetails.WriteString(fmt.Sprintf("  - StructStartIndex mismatch: Gen: %d, Org: %d\n", genEpi.StructStartIndex(), orgEpi.StructStartIndex()))
+			}
+			if genEpi.NumOfStructMembers() != orgEpi.NumOfStructMembers() {
+				mismatched = true
+				mismatchMask |= MismatchOther
+				mismatchDetails.WriteString(fmt.Sprintf("  - NumOfStructMembers mismatch: Gen: %d, Org: %d\n", genEpi.NumOfStructMembers(), orgEpi.NumOfStructMembers()))
+			}
+		} else {
+			if genEpi.InType() != orgEpi.InType() {
+				// Ignore the specific, non-critical mismatch between POINTER and SIZET.
+				isPointerSizeMismatch := (genEpi.InType() == TDH_INTYPE_POINTER && orgEpi.InType() == TDH_INTYPE_SIZET) ||
+					(genEpi.InType() == TDH_INTYPE_SIZET && orgEpi.InType() == TDH_INTYPE_POINTER)
+
+				if !isPointerSizeMismatch {
+					mismatched = true
+					mismatchMask |= MismatchOther
+					mismatchDetails.WriteString(fmt.Sprintf("  - InType mismatch: Gen: %d, Org: %d\n", genEpi.InType(), orgEpi.InType()))
+				}
+			}
+			if genEpi.OutType() != orgEpi.OutType() {
+				isStringNullMismatch := (genEpi.OutType() == TDH_OUTTYPE_STRING && orgEpi.OutType() == TDH_OUTTYPE_NULL) ||
+					(genEpi.OutType() == TDH_OUTTYPE_NULL && orgEpi.OutType() == TDH_OUTTYPE_STRING)
+				if isStringNullMismatch {
+					mismatchMask |= MismatchOutTypeStringNull
+				} else {
+					// Commented out to reduce noise from non-critical mismatches.
+					// We can re-enable this later if needed.
+					// mismatchMask |= MismatchOther
+					// mismatchDetails.WriteString(fmt.Sprintf("  - OutType mismatch: Gen: %d, Org: %d\n", genEpi.OutType(), orgEpi.OutType()))
+					// mismatched = true
+				}
+			}
+			if genEpi.MapNameOffset() != orgEpi.MapNameOffset() {
+				mismatched = true
+				mismatchMask |= MismatchOther
+				mismatchDetails.WriteString(fmt.Sprintf("  - MapNameOffset mismatch: Gen: %d, Org: %d\n", genEpi.MapNameOffset(), orgEpi.MapNameOffset()))
+			}
+		}
+
+		if (orgEpi.Flags & PropertyParamCount) != 0 {
+			if genEpi.CountPropertyIndex() != orgEpi.CountPropertyIndex() {
+				mismatched = true
+				mismatchMask |= MismatchOther
+				mismatchDetails.WriteString(fmt.Sprintf("  - CountPropertyIndex mismatch: Gen: %d, Org: %d\n", genEpi.CountPropertyIndex(), orgEpi.CountPropertyIndex()))
+			}
+		} else {
+			if genEpi.Count() != orgEpi.Count() {
+				mismatched = true
+				mismatchMask |= MismatchOther
+				mismatchDetails.WriteString(fmt.Sprintf("  - Count mismatch: Gen: %d, Org: %d\n", genEpi.Count(), orgEpi.Count()))
+			}
+		}
+
+		if (orgEpi.Flags & PropertyParamLength) != 0 {
+			if genEpi.LengthPropertyIndex() != orgEpi.LengthPropertyIndex() {
+				mismatched = true
+				mismatchMask |= MismatchOther
+				mismatchDetails.WriteString(fmt.Sprintf("  - LengthPropertyIndex mismatch: Gen: %d, Org: %d\n", genEpi.LengthPropertyIndex(), orgEpi.LengthPropertyIndex()))
+			}
+		} else {
+			if genEpi.Length() != orgEpi.Length() {
+				mismatched = true
+				mismatchMask |= MismatchOther
+				mismatchDetails.WriteString(fmt.Sprintf("  - Length mismatch: Gen: %d, Org: %d\n", genEpi.Length(), orgEpi.Length()))
+			}
+		}
+
+		if mismatched {
+			fmt.Print(mismatchDetails.String())
+		} else {
+			//fmt.Printf("Property [%d] '%s': OK\n", i, orgName)
+		}
+	}
+	return mismatchMask
+}
+
+// buildTraceInfoFromMof constructs a TRACE_EVENT_INFO structure from a registered MOF class definition.
+// This serves as a fallback when TdhGetEventInformation fails for classic kernel events.
+// If originalTei is not nil, it will be used to compare and debug the generated structure.
+func buildTraceInfoFromMof(er *EventRecord) (tei *TraceEventInfo, teiBuffer []byte, err error) {
+	mofClass := MofErLookup(er)
+	if mofClass == nil {
+		return nil, nil, fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d", er.EventHeader.ProviderId.String(), er.EventHeader.EventDescriptor.Opcode, er.EventHeader.EventDescriptor.Version)
+	}
+
+	// The layout of our buffer will be:
+	// 1. TRACE_EVENT_INFO struct
+	// 2. Array of EVENT_PROPERTY_INFO structs
+	// 3. Provider Name, Task Name, Opcode Name strings (all null-terminated UTF-16)
+	// 4. All property name strings (all null-terminated UTF-16)
+
+	propCount := len(mofClass.Properties)
+	propInfosSize := propCount * int(unsafe.Sizeof(EventPropertyInfo{}))
+
+	// Use pre-converted UTF-16 slices to calculate total size needed for names.
+	providerNameSize := len(utf16MSNT_SystemTrace) * 2
+	taskNameSize := len(mofClass.BaseW) * 2
+	opcodeNameSize := len(mofClass.NameW) * 2
+
+	propNamesSize := 0
+	for _, prop := range mofClass.Properties {
+		propNamesSize += len(prop.NameW) * 2
+	}
+
+	traceEventInfoBaseSize := int(unsafe.Offsetof(TraceEventInfo{}.EventPropertyInfoArray))
+	bufferSize := traceEventInfoBaseSize + propInfosSize + providerNameSize + taskNameSize + opcodeNameSize + propNamesSize
+	teiBuffer = make([]byte, bufferSize)
+
+	// 1. Populate the TRACE_EVENT_INFO header.
+	tei = (*TraceEventInfo)(unsafe.Pointer(&teiBuffer[0]))
+	tei.ProviderGUID = *systemTraceControlGuid
+	tei.EventGUID = mofClass.GUID
+	tei.EventDescriptor = er.EventHeader.EventDescriptor
+	tei.DecodingSource = DecodingSourceWbem
+	tei.PropertyCount = uint32(propCount)
+	tei.TopLevelPropertyCount = uint32(propCount) // MOF properties are flat.
+
+	// 2. Define the starting points for properties and names.
+	propInfoArrayStartOffset := traceEventInfoBaseSize
+	currentNameOffset := propInfoArrayStartOffset + propInfosSize
+
+	// 3. Write metadata strings into the buffer and set their offsets in the header.
+	tei.ProviderNameOffset = uint32(currentNameOffset)
+	copy(teiBuffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&utf16MSNT_SystemTrace[0])), providerNameSize))
+	currentNameOffset += providerNameSize
+
+	tei.TaskNameOffset = uint32(currentNameOffset)
+	copy(teiBuffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.BaseW[0])), taskNameSize))
+	currentNameOffset += taskNameSize
+
+	tei.OpcodeNameOffset = uint32(currentNameOffset)
+	copy(teiBuffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.NameW[0])), opcodeNameSize))
+	currentNameOffset += opcodeNameSize
+
+	// 4. Create a slice header that points directly into our teiBuffer, avoiding a separate allocation.
+	propInfoArrayStartPtr := unsafe.Pointer(&teiBuffer[propInfoArrayStartOffset])
+	eventProperties := unsafe.Slice((*EventPropertyInfo)(propInfoArrayStartPtr), propCount)
+
+	// IMPORTANT: Explicitly zero the memory for the property slice, as it's pointing to uninitialized buffer space.
+	for i := range eventProperties {
+		eventProperties[i] = EventPropertyInfo{}
+	}
+
+	wmiIDtoIndex := make(map[uint16]uint16, propCount)
+
+	for i, propDef := range mofClass.Properties {
+		wmiIDtoIndex[propDef.ID] = uint16(i)
+		epi := &eventProperties[i] // Get a pointer to the element in our slice (which is in teiBuffer)
+
+		// Set name and offset. The offset is relative to the start of the buffer.
+		epi.NameOffset = uint32(currentNameOffset)
+		nameBytes := unsafe.Slice((*byte)(unsafe.Pointer(&propDef.NameW[0])), len(propDef.NameW)*2)
+		copy(teiBuffer[currentNameOffset:], nameBytes)
+		currentNameOffset += len(nameBytes)
+
+		// --- Transform types to mimic TdhGetEventInformation for classic MOF events ---
+		finalInType := propDef.InType
+		finalOutType := propDef.OutType
+
+		// The API tends to use older, deprecated WBEM types for classic events.
+		// We transform our modern MOF definitions to match this legacy behavior,
+		// guided by the deprecation comments in tdh.h and observed API behavior.
+		switch finalInType {
+		case TDH_INTYPE_SID:
+			// "TDH_INTYPE_WBEMSID: Deprecated. Prefer TDH_INTYPE_SID."
+			// The API provides the deprecated type for classic events.
+			finalInType = TDH_INTYPE_WBEMSID
+		case TDH_INTYPE_BINARY:
+			// "TDH_INTYPE_HEXDUMP: Deprecated. Prefer TDH_INTYPE_BINARY."
+			// This transformation is generally correct for HEXBINARY output.
+			if finalOutType == TDH_OUTTYPE_HEXBINARY {
+				finalInType = TDH_INTYPE_HEXDUMP
+			}
+		case TDH_INTYPE_POINTER:
+			// If the property name contains "Size", use the deprecated SIZET type
+			// to better match the API's output for classic events.
+			if strings.Contains(strings.ToLower(propDef.Name), "size") {
+				finalInType = TDH_INTYPE_SIZET
+			}
+		case TDH_INTYPE_UINT16:
+			// "TDH_INTYPE_UNICODECHAR: Deprecated. Prefer TDH_INTYPE_UINT16 with TDH_OUTTYPE_STRING."
+			if finalOutType == TDH_OUTTYPE_STRING {
+				finalInType = TDH_INTYPE_UNICODECHAR
+			}
+		case TDH_INTYPE_UINT8:
+			// "TDH_INTYPE_ANSICHAR: Deprecated. Prefer TDH_INTYPE_UINT8 with TDH_OUTTYPE_STRING."
+			if finalOutType == TDH_OUTTYPE_STRING {
+				finalInType = TDH_INTYPE_ANSICHAR
+			}
+		}
+
+		// The API often uses a NULL OutType for strings and GUIDs, relying on the InType.
+		if propDef.InType == TDH_INTYPE_UNICODESTRING ||
+			propDef.InType == TDH_INTYPE_ANSISTRING ||
+			propDef.InType == TDH_INTYPE_GUID {
+			finalOutType = TDH_OUTTYPE_NULL
+		}
+		// --- End of transformation ---
+
+		// Set types
+		epi.SetInType(finalInType)
+		epi.SetOutType(finalOutType)
+
+		// Set fixed length for scalar types
+		if !propDef.IsArray && propDef.SizeFromID == 0 {
+			if fixedSize := getTdhInTypeFixedSize(propDef.InType, er); fixedSize > 0 {
+				epi.SetLength(fixedSize)
+				// epi.Flags |= PropertyParamFixedLength // This flag should not be set for implicitly sized MOF types.
+			} else if propDef.InType == TDH_INTYPE_BINARY && propDef.OutType == TDH_OUTTYPE_IPV6 {
+				// Special case for IPV6 addresses, which have a fixed length of 16
+				// but are of InType BINARY (which is normally variable length).
+				epi.SetLength(16)
+				epi.Flags |= PropertyParamFixedLength
+			}
+		}
+
+		// Set length/count for arrays
+		if propDef.IsArray {
+			epi.SetCount(uint16(propDef.ArraySize))
+			// For legacy MOF events, the API doesn't seem to set PropertyParamFixedCount.
+			// The presence of a Count > 1 is enough to indicate an array.
+			// epi.Flags |= PropertyParamFixedCount
+
+			// The API also sets the Length to the size of a single array element.
+			if elementSize := getTdhInTypeFixedSize(propDef.InType, er); elementSize > 0 {
+				epi.SetLength(elementSize)
+			}
+		} else {
+			epi.SetCount(1) // For non-array properties, count is 1.
+		}
+	}
+
+	// Second pass to resolve dynamic array counts (WmiSizeIs)
+	for i, propDef := range mofClass.Properties {
+		if propDef.SizeFromID != 0 {
+			if countPropIndex, ok := wmiIDtoIndex[uint16(propDef.SizeFromID)]; ok {
+				eventProperties[i].Flags |= PropertyParamCount
+				eventProperties[i].SetCountPropertyIndex(countPropIndex)
+			}
+		}
+	}
+
+	// 5. No copy is needed since we modified the teiBuffer directly via the slice.
+
+	return tei, teiBuffer, nil
+}
+
 // Loads custom kernel MOF classes into the global registry (only for parsing purposes)
 func init() {
 
@@ -162,19 +538,69 @@ func init() {
 	IrpPtr           FileObject  	  FileKey          ?                TTID?    InfoClass?
 	*/
 	// TODO(tekert): Find the correct definition for this event
-	var FileIo_V3_Type84 = &MofClassDef{
-		Name:       "FileIo_Type84",
+	var FileIo_V3_Type8X = &MofClassDef{
+		Name:       "FileIo_V3_TypeX",
+		NameW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'T', 'y', 'p', 'e', '8', '4', 0},
 		Base:       "FileIo",
-		GUID:       mofFileIo.GUID,
+		BaseW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
+		GUID:       *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"), // FileIo GUID
 		Version:    3,
-		EventTypes: []uint8{84},
+		EventTypes: []uint8{83, 84},
 		Properties: []MofPropertyDef{
-			{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
-			{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
-			{ID: 3, Name: "FileKey", InType: TDH_INTYPE_POINTER},
-			{ID: 4, Name: "ExtraInfo", InType: TDH_INTYPE_POINTER},
-			{ID: 5, Name: "TTID", InType: TDH_INTYPE_UINT32},
-			{ID: 6, Name: "InfoClass", InType: TDH_INTYPE_UINT32},
+			{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 3, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 4, Name: "ExtraInfo", NameW: []uint16{'E', 'x', 't', 'r', 'a', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 5, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
+			{ID: 6, Name: "InfoClass", NameW: []uint16{'I', 'n', 'f', 'o', 'C', 'l', 'a', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
+		},
+	}
+
+	// FileIo, Version 3, Opcodes 37 (MapFile) and 38 (UnmapFile) are not in the system manifest.
+	// The structure is similar to FileIo_V2_MapFile but with an extra 4-byte field at the end.
+	// UserData is 44 bytes.
+	/*
+	   Example UserData (Opcode 37):
+	   0000d9aff77f0000 7011969a85e6ffff 0000000000004700 0010050000000000 0040040000000000 00000000
+	   FileObject (ptr) ImageBase (ptr)  ViewBase (ptr)   PageProtection   ProcessId        FileKey (ptr)    Reserved
+	*/
+	var FileIo_V3_MapFile = &MofClassDef{
+		Name:       "FileIo_V3_MapFile",
+		NameW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '3', '_', 'M', 'a', 'p', 'F', 'i', 'l', 'e', 0},
+		Base:       "FileIo",
+		BaseW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
+		GUID:       *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"), // FileIo GUID
+		Version:    3,
+		EventTypes: []uint8{37, 38, 39},
+		Properties: []MofPropertyDef{
+			{ID: 1, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 2, Name: "ImageBase", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 3, Name: "ViewBase", NameW: []uint16{'V', 'i', 'e', 'w', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 4, Name: "PageProtection", NameW: []uint16{'P', 'a', 'g', 'e', 'P', 'r', 'o', 't', 'e', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
+			{ID: 5, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
+			{ID: 6, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 7, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+		},
+	}
+
+	// ALPC, Version 2, Opcodes 38 and 41 are not in the system manifest.
+	// UserData is 4 bytes.
+	/*
+		Example UserData (Opcode 38): 88200100
+		Example UserData (Opcode 41): 1c230100
+		Example UserData (Opcode 39): b8250100
+		Likely a single UINT32 field.
+	*/
+	var ALPC_V2_Type3X = &MofClassDef{
+		Name:       "ALPC_V2_Type38",
+		NameW:      []uint16{'A', 'L', 'P', 'C', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', '3', '8', 0},
+		Base:       "ALPC",
+		BaseW:      []uint16{'A', 'L', 'P', 'C', 0},
+		GUID:       *MustParseGUID("{45d8cccd-539f-4b72-a8b7-5c683142609a}"), // ALPC GUID
+		Version:    2,
+		EventTypes: []uint8{38, 39, 41},
+		Properties: []MofPropertyDef{
+			{ID: 1, Name: "Data", NameW: []uint16{'D', 'a', 't', 'a', 0}, InType: TDH_INTYPE_UINT32},
 		},
 	}
 
@@ -184,20 +610,23 @@ func init() {
 	// TODO(tekert): Find the correct definition for this event
 	var Registry_V2_Type33 = &MofClassDef{
 		Name:       "Registry_Type33",
+		NameW:      []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'T', 'y', 'p', 'e', '3', '3', 0},
 		Base:       "Registry",
+		BaseW:      []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 		GUID:       *MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}"), // Registry
 		Version:    2,
 		EventTypes: []uint8{33},
 		Properties: []MofPropertyDef{
-			{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_INT64},
-			{ID: 2, Name: "Status", InType: TDH_INTYPE_UINT32},
-			{ID: 3, Name: "Index", InType: TDH_INTYPE_UINT32},
-			{ID: 4, Name: "KeyHandle", InType: TDH_INTYPE_POINTER},
-			{ID: 5, Name: "KeyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+			{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_INT64},
+			{ID: 2, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32},
+			{ID: 3, Name: "Index", NameW: []uint16{'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
+			{ID: 4, Name: "KeyHandle", NameW: []uint16{'K', 'e', 'y', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
+			{ID: 5, Name: "KeyName", NameW: []uint16{'K', 'e', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 		},
 	}
 
-	MofRegister(FileIo_V3_Type84)
+	MofRegister(FileIo_V3_Type8X)
+	MofRegister(FileIo_V3_MapFile)
 	MofRegister(Registry_V2_Type33)
-
+	MofRegister(ALPC_V2_Type3X)
 }
