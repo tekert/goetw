@@ -78,6 +78,7 @@ type MofPropertyDef struct {
 	NameW      []uint16   // UTF-16 null-terminated name
 	InType     TdhInType  // How to read the raw data
 	OutType    TdhOutType // How to represent in Go
+	Extension  string     // From extension("...") qualifier
 	IsArray    bool
 	ArraySize  uint32 // MAX(n)
 	SizeFromID uint32 // WmiSizeIs("PropName") - ID of property that holds array size
@@ -93,12 +94,25 @@ type MofClassDef struct {
 	Version    uint8            // From parent class
 	EventTypes []uint8          // List of event types this class handles
 	Properties []MofPropertyDef // Property definitions
+
+	// Pre-calculated data to speed up buildTraceInfoFromMof
+	wmiIDToIndex   map[uint16]uint16
+	totalNamesSize int
 }
 
 // MofRegister adds a MOF class definition to the global MofClassQueryMap
 // and mofClassLookupMap maps.
 // Used to load kernel MOF classes when the package is initialized
 func MofRegister(class *MofClassDef) {
+	// Pre-calculate WMI ID to index mapping and total names size.
+	// This avoids repeated work in the hot path of buildTraceInfoFromMof.
+	class.wmiIDToIndex = make(map[uint16]uint16, len(class.Properties))
+	class.totalNamesSize = 0
+	for i, prop := range class.Properties {
+		class.wmiIDToIndex[prop.ID] = uint16(i)
+		class.totalNamesSize += len(prop.NameW) * 2
+	}
+
 	for _, eventType := range class.EventTypes {
 		key := MofPackKey(class.GUID.Data1, class.GUID.Data2, eventType, class.Version)
 		mofClassLookupMap[key] = class
@@ -108,7 +122,7 @@ func MofRegister(class *MofClassDef) {
 	MofClassQueryMap[class.Name] = class
 }
 
-// MofLookup finds a MOF class definition by its event record
+// MofErLookup finds a MOF class definition by its event record
 // A MOF event record is uniquely identified by its provider GUID, event type, and version
 func MofErLookup(er *EventRecord) *MofClassDef {
 	key := MofPackKey(er.EventHeader.ProviderId.Data1, // guid first 32 bits
@@ -206,11 +220,11 @@ func compareTraceEventInfo(generated, original *TraceEventInfo) int {
 
 	// Compare header fields
 	if generated.ProviderGUID != original.ProviderGUID {
-		fmt.Printf("Mismatch ProviderGUID: Gen: %s, Org: %s\n", generated.ProviderGUID, original.ProviderGUID)
+		fmt.Printf("Mismatch ProviderGUID: Gen: %s, Org: %s\n", generated.ProviderGUID.StringU(), original.ProviderGUID.StringU())
 		mismatchMask |= MismatchOther
 	}
 	if generated.EventGUID != original.EventGUID {
-		fmt.Printf("Mismatch EventGUID: Gen: %s, Org: %s\n", generated.EventGUID, original.EventGUID)
+		fmt.Printf("Mismatch EventGUID: Gen: %s, Org: %s\n", generated.EventGUID.StringU(), original.EventGUID.StringU())
 		mismatchMask |= MismatchOther
 	}
 	if generated.EventDescriptor != original.EventDescriptor {
@@ -354,11 +368,11 @@ func compareTraceEventInfo(generated, original *TraceEventInfo) int {
 
 // buildTraceInfoFromMof constructs a TRACE_EVENT_INFO structure from a registered MOF class definition.
 // This serves as a fallback when TdhGetEventInformation fails for classic kernel events.
-// If originalTei is not nil, it will be used to compare and debug the generated structure.
-func buildTraceInfoFromMof(er *EventRecord) (tei *TraceEventInfo, teiBuffer []byte, err error) {
+// It reuses the provided teiBuffer to avoid allocations.
+func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventInfo, err error) {
 	mofClass := MofErLookup(er)
 	if mofClass == nil {
-		return nil, nil, fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d", er.EventHeader.ProviderId.String(), er.EventHeader.EventDescriptor.Opcode, er.EventHeader.EventDescriptor.Version)
+		return nil, fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d", er.EventHeader.ProviderId.String(), er.EventHeader.EventDescriptor.Opcode, er.EventHeader.EventDescriptor.Version)
 	}
 
 	// The layout of our buffer will be:
@@ -370,22 +384,23 @@ func buildTraceInfoFromMof(er *EventRecord) (tei *TraceEventInfo, teiBuffer []by
 	propCount := len(mofClass.Properties)
 	propInfosSize := propCount * int(unsafe.Sizeof(EventPropertyInfo{}))
 
-	// Use pre-converted UTF-16 slices to calculate total size needed for names.
+	// Use pre-converted UTF-16 slices and pre-calculated sizes.
 	providerNameSize := len(utf16MSNT_SystemTrace) * 2
 	taskNameSize := len(mofClass.BaseW) * 2
 	opcodeNameSize := len(mofClass.NameW) * 2
 
-	propNamesSize := 0
-	for _, prop := range mofClass.Properties {
-		propNamesSize += len(prop.NameW) * 2
-	}
-
 	traceEventInfoBaseSize := int(unsafe.Offsetof(TraceEventInfo{}.EventPropertyInfoArray))
-	bufferSize := traceEventInfoBaseSize + propInfosSize + providerNameSize + taskNameSize + opcodeNameSize + propNamesSize
-	teiBuffer = make([]byte, bufferSize)
+	requiredSize := traceEventInfoBaseSize + propInfosSize + providerNameSize + taskNameSize + opcodeNameSize + mofClass.totalNamesSize
+
+	// Resize the provided buffer if it's too small.
+	if cap(*teiBuffer) < requiredSize {
+		*teiBuffer = make([]byte, requiredSize)
+	}
+	*teiBuffer = (*teiBuffer)[:requiredSize]
+	buffer := *teiBuffer // Use a local variable for convenience.
 
 	// 1. Populate the TRACE_EVENT_INFO header.
-	tei = (*TraceEventInfo)(unsafe.Pointer(&teiBuffer[0]))
+	tei = (*TraceEventInfo)(unsafe.Pointer(&buffer[0]))
 	tei.ProviderGUID = *systemTraceControlGuid
 	tei.EventGUID = mofClass.GUID
 	tei.EventDescriptor = er.EventHeader.EventDescriptor
@@ -399,36 +414,31 @@ func buildTraceInfoFromMof(er *EventRecord) (tei *TraceEventInfo, teiBuffer []by
 
 	// 3. Write metadata strings into the buffer and set their offsets in the header.
 	tei.ProviderNameOffset = uint32(currentNameOffset)
-	copy(teiBuffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&utf16MSNT_SystemTrace[0])), providerNameSize))
+	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&utf16MSNT_SystemTrace[0])), providerNameSize))
 	currentNameOffset += providerNameSize
 
 	tei.TaskNameOffset = uint32(currentNameOffset)
-	copy(teiBuffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.BaseW[0])), taskNameSize))
+	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.BaseW[0])), taskNameSize))
 	currentNameOffset += taskNameSize
 
 	tei.OpcodeNameOffset = uint32(currentNameOffset)
-	copy(teiBuffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.NameW[0])), opcodeNameSize))
+	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.NameW[0])), opcodeNameSize))
 	currentNameOffset += opcodeNameSize
 
 	// 4. Create a slice header that points directly into our teiBuffer, avoiding a separate allocation.
-	propInfoArrayStartPtr := unsafe.Pointer(&teiBuffer[propInfoArrayStartOffset])
+	propInfoArrayStartPtr := unsafe.Pointer(&buffer[propInfoArrayStartOffset])
 	eventProperties := unsafe.Slice((*EventPropertyInfo)(propInfoArrayStartPtr), propCount)
 
 	// IMPORTANT: Explicitly zero the memory for the property slice, as it's pointing to uninitialized buffer space.
-	for i := range eventProperties {
-		eventProperties[i] = EventPropertyInfo{}
-	}
-
-	wmiIDtoIndex := make(map[uint16]uint16, propCount)
+	clear(eventProperties)
 
 	for i, propDef := range mofClass.Properties {
-		wmiIDtoIndex[propDef.ID] = uint16(i)
 		epi := &eventProperties[i] // Get a pointer to the element in our slice (which is in teiBuffer)
 
 		// Set name and offset. The offset is relative to the start of the buffer.
 		epi.NameOffset = uint32(currentNameOffset)
 		nameBytes := unsafe.Slice((*byte)(unsafe.Pointer(&propDef.NameW[0])), len(propDef.NameW)*2)
-		copy(teiBuffer[currentNameOffset:], nameBytes)
+		copy(buffer[currentNameOffset:], nameBytes)
 		currentNameOffset += len(nameBytes)
 
 		// --- Transform types to mimic TdhGetEventInformation for classic MOF events ---
@@ -450,9 +460,9 @@ func buildTraceInfoFromMof(er *EventRecord) (tei *TraceEventInfo, teiBuffer []by
 				finalInType = TDH_INTYPE_HEXDUMP
 			}
 		case TDH_INTYPE_POINTER:
-			// If the property name contains "Size", use the deprecated SIZET type
-			// to better match the API's output for classic events.
-			if strings.Contains(strings.ToLower(propDef.Name), "size") {
+			// Use the explicit Extension field set by the generator, which is more reliable
+			// than checking the property name.
+			if propDef.Extension == "SizeT" {
 				finalInType = TDH_INTYPE_SIZET
 			}
 		case TDH_INTYPE_UINT16:
@@ -511,7 +521,8 @@ func buildTraceInfoFromMof(er *EventRecord) (tei *TraceEventInfo, teiBuffer []by
 	// Second pass to resolve dynamic array counts (WmiSizeIs)
 	for i, propDef := range mofClass.Properties {
 		if propDef.SizeFromID != 0 {
-			if countPropIndex, ok := wmiIDtoIndex[uint16(propDef.SizeFromID)]; ok {
+			// Use the pre-calculated map from the MofClassDef.
+			if countPropIndex, ok := mofClass.wmiIDToIndex[uint16(propDef.SizeFromID)]; ok {
 				eventProperties[i].Flags |= PropertyParamCount
 				eventProperties[i].SetCountPropertyIndex(countPropIndex)
 			}
@@ -520,7 +531,7 @@ func buildTraceInfoFromMof(er *EventRecord) (tei *TraceEventInfo, teiBuffer []by
 
 	// 5. No copy is needed since we modified the teiBuffer directly via the slice.
 
-	return tei, teiBuffer, nil
+	return tei, nil
 }
 
 // Loads custom kernel MOF classes into the global registry (only for parsing purposes)
@@ -564,6 +575,7 @@ func init() {
 	   0000d9aff77f0000 7011969a85e6ffff 0000000000004700 0010050000000000 0040040000000000 00000000
 	   FileObject (ptr) ImageBase (ptr)  ViewBase (ptr)   PageProtection   ProcessId        FileKey (ptr)    Reserved
 	*/
+	// TODO(tekert): Find the correct definition for this event
 	var FileIo_V3_MapFile = &MofClassDef{
 		Name:       "FileIo_V3_MapFile",
 		NameW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '3', '_', 'M', 'a', 'p', 'F', 'i', 'l', 'e', 0},
@@ -591,6 +603,7 @@ func init() {
 		Example UserData (Opcode 39): b8250100
 		Likely a single UINT32 field.
 	*/
+	// TODO(tekert): Find the correct definition for this event
 	var ALPC_V2_Type3X = &MofClassDef{
 		Name:       "ALPC_V2_Type38",
 		NameW:      []uint16{'A', 'L', 'P', 'C', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', '3', '8', 0},
