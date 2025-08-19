@@ -118,6 +118,7 @@ var mof{{.Name}} = &MofClassDef{
 		{{- range .Properties}}
 		{ID: {{.ID}}, Name: "{{.Name}}", NameW: {{.NameW}}, InType: {{.InType}}
 			{{- if .OutType}}, OutType: {{.OutType}}{{- end -}}
+			{{- if .Extension}}, Extension: "{{.Extension}}"{{- end -}}
 			{{- if .IsArray}}, IsArray: {{.IsArray}}{{- end -}}
 			{{- if .ArraySize}}, ArraySize: {{.ArraySize}}{{- end -}}
 			{{- if .SizeFromID}}, SizeFromID: {{.SizeFromID}}{{- end -}}

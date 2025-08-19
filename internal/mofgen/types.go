@@ -6,6 +6,7 @@ type mofParsedProperty struct {
 	NameW      string // Go literal for []uint16
 	InType     string // string constant
 	OutType    string // string constant
+	Extension  string // e.g., "SizeT", "IPAddr"
 	IsArray    string // "true" if is array.
 	ArraySize  string // MAX(n)
 	SizeFromID string // WmiSizeIs property ID

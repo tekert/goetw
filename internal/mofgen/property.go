@@ -98,6 +98,7 @@ func (p *mofParsedProperty) parseType(typeName, qualifiers string, idMap map[str
 
 	// Handle extension qualifier
 	if ext := p.parseExtensionQualifier(qualifiers); ext != "" {
+		p.Extension = ext // Store the raw extension name
 		if types, ok := extensionMap[ext]; ok {
 			p.InType = types[0]
 			if types[1] != "" {
