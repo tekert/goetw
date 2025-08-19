@@ -212,25 +212,17 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	erh.EventRec = er
 	erh.mofTeiBuffer = nil // Reset from previous use
 
-	// TESTING
-	var replicatedTei *TraceEventInfo
-	_ = replicatedTei
-
-
 	// Use the teiBuffer from storage for GetEventInformation.
 	// The buffer will be resized by GetEventInformation if needed.
-	//if erh.TraceInfo, err = er.GetEventInformation(&storage.teiBuffer); err != nil {
-	if erh.TraceInfo, erh.mofTeiBuffer, err = buildTraceInfoFromMof(er); err != nil {
+	if erh.TraceInfo, err = er.GetEventInformation(&storage.teiBuffer); err != nil {
 		apiErr := fmt.Errorf("GetEventInformation failed : %s", err)
 
 		// Fallback for MOF events using pre-generated definitions.
 		if er.IsMof() {
-			var mofTeiBuffer []byte
-			// In production fallback, originalTei is nil.
-			erh.TraceInfo, mofTeiBuffer, err = buildTraceInfoFromMof(er)
+			// Try to build TraceEventInfo from MOF definitions.
+			erh.TraceInfo, err = buildTraceInfoFromMof(er, &storage.teiBuffer)
 			if err == nil {
 				// Success! We built a TraceInfo from our MOF definitions.
-				erh.mofTeiBuffer = mofTeiBuffer // Keep buffer alive
 				// Suppress the original API error.
 				err = nil
 			} else {
@@ -246,32 +238,75 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 			conlog.SampledErrorWithErrSig("GetEventInformation", err).Interface("eventRecord", erh.EventRec).Msg("Failed to get trace event info")
 			err = &LoggedError{Err: err}
 		}
-	} else {
-		// // DEBUGGING: If GetEventInformation succeeded, and it's a MOF event,
-		// // run our builder and compare the results.
-		// if er.IsMof() {
-		// 	// We call buildTraceInfoFromMof with the original TraceInfo for comparison.
-		// 	// The return values are ignored; the function will print debug output internally.
-		// 	replicatedTei, _, _ = buildTraceInfoFromMof(er)
-		// }
 	}
-	erh.teiBuffer = &storage.teiBuffer // Keep a reference
 
-	// // 6. DEBUG: Compare with original TraceEventInfo if provided.
-	// if erh.TraceInfo != nil && replicatedTei != nil {
-	// 	if compareTraceEventInfo(replicatedTei, erh.TraceInfo)&MismatchOther != 0 {
-	// 		fmt.Println("--- DEBUG: Comparing generated TraceEventInfo with original ---")
-	// 		log.Error().Interface("Original EventRecord", er).Msg("DEBUG EventRecord")
-	// 		log.Error().Interface("Original EventTraceInfo", erh.TraceInfo).Msg("DEBUG EventRecord")
-	// 		fmt.Println("--- DEBUG: Comparison finished ---")
-	// 		fmt.Println()
-	// 		er.getUserContext().consumer.ctx.Done() // Stop processing events
-	// 		os.Exit(1)
-	// 	}
-	// }
+	erh.teiBuffer = &storage.teiBuffer // Keep a reference
 
 	return
 }
+
+// // newEventRecordHelper_test is a performance testing variant of newEventRecordHelper.
+// // It prioritizes the custom buildTraceInfoFromMof function and falls back to the
+// // GetEventInformation API only if the custom builder fails. This is the reverse
+// // of the production logic and is used to measure the performance of the MOF fallback path.
+// func newEventRecordHelper2(er *EventRecord) (erh *EventRecordHelper, err error) {
+// 	erh = helperPool.Get().(*EventRecordHelper)
+// 	storage := er.getUserContext().storage
+
+// 	// Reset the thread-local storage before processing a new event.
+// 	storage.reset()
+
+// 	erh.storage = storage
+// 	erh.EventRec = er
+// 	erh.mofTeiBuffer = nil // Reset from previous use
+
+// 	// For testing, we prioritize our custom MOF builder.
+// 	if er.IsMof() {
+// 		erh.TraceInfo, err = buildTraceInfoFromMof(er, &storage.teiBuffer)
+// 	} else {
+// 		// If it's not a classic MOF event, we must use the API.
+// 		// We set an error to force the fallback path.
+// 		err = fmt.Errorf("not a MOF event, must use GetEventInformation")
+// 	}
+
+// 	// If our MOF builder failed (or it wasn't a MOF event), fall back to the API.
+// 	if err != nil {
+// 		mofBuilderErr := err // Preserve the builder error for context.
+// 		if erh.TraceInfo, err = er.GetEventInformation(&storage.teiBuffer); err != nil {
+// 			// Both the builder and the API failed. The API error is the one to report.
+// 			apiErr := fmt.Errorf("GetEventInformation failed : %s", err)
+// 			conlog.SampledErrorWithErrSig("GetEventInformation", apiErr).
+// 				AnErr("mofBuilderError", mofBuilderErr).
+// 				Interface("eventRecord", erh.EventRec).
+// 				Msg("Failed to get trace event info (builder and API failed)")
+// 			err = &LoggedError{Err: apiErr}
+// 		} else {
+// 			// API succeeded, so we can proceed. Clear the error.
+// 			err = nil
+// 		}
+// 	} else {
+// 		// // Our MOF builder succeeded.
+// 		// // DEBUGGING: Compare our result with what the API would have returned.
+// 		// if isDebug {
+// 		//     var apiTeiBuffer []byte // Use a separate buffer for the API call to not corrupt our generated one.
+// 		//     apiTei, apiErr := er.GetEventInformation(&apiTeiBuffer)
+// 		//     if apiErr == nil && apiTei != nil {
+// 		//         if compareTraceEventInfo(erh.TraceInfo, apiTei)&MismatchOther != 0 {
+// 		//             fmt.Println("--- DEBUG: Comparing generated TraceEventInfo with original ---")
+// 		//             log.Error().Interface("Original EventRecord", er).Msg("DEBUG EventRecord")
+// 		//             log.Error().Interface("Original EventTraceInfo", apiTei).Msg("DEBUG EventRecord")
+// 		//             fmt.Println("--- DEBUG: Comparison finished ---")
+// 		//             fmt.Println()
+// 		//             er.getUserContext().consumer.ctx.Done() // Stop processing events
+// 		//             os.Exit(1)
+// 		//         }
+// 		//     }
+// 		// }
+// 	}
+
+// 	erh.teiBuffer = &storage.teiBuffer // Keep a reference
+// 	return
+// }
 
 // This memory was already reseted when it was released.
 func (e *EventRecordHelper) initialize() {
