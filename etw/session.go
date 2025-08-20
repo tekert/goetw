@@ -68,17 +68,18 @@ func NewPagedRealTimeSession(name string) (s *RealTimeSession) {
 	return
 }
 
+// TODO: remove "Using the library" and use the new interface in v0.8
 // NewKernelRealTimeSession creates a special ETW session for the "NT Kernel Logger".
 // This is a unique, system-wide session that is the only way to capture events
-// directly from the Windows kernel.
+// directly from the Windows kernel (use this if below win 11).
 //
 // Only one NT Kernel Logger session can be active at a time. If another process
 // is already running a kernel session, starting a new one with this library will
-// stop the existing one first.
+// stop the existing one first when calling Start().
 //
 // # Enabling Kernel Events
 //
-// Unlike regular ETW sessions, kernel event groups are enabled at session creation
+// Unlike regular ETW sessions, nt kernel event groups are enabled at session creation
 // by passing EnableFlags to this function. Each flag corresponds to a category of
 // kernel events, such as process creations, disk I/O, or network activity.
 //
@@ -114,15 +115,14 @@ func NewPagedRealTimeSession(name string) (s *RealTimeSession) {
 // # Event Format
 //
 // NOTE: The events from the NT Kernel Logger are legacy MOF-based events. They do not
-// have a modern XML manifest, which can lead to parsing challenges. Some event
-// properties may also be zero-valued, as they rely on kernel memory structures
-// that are not always available to the tracing session.
+// have a modern XML manifest.
 //
 // For more details on the EnableFlags, see the #microsoft-docs:
 // https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-event_trace_properties
 //
 // Some MOF are not documented on the microsoft site, for example: Process_V4_TypeGroup1 etc..
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa364083(v=vs.85).aspx
+// TODO: use KernelFlag as type for flags in v0.8
 func NewKernelRealTimeSession(flags ...uint32) (p *RealTimeSession) {
 	p = NewRealTimeSession(NtKernelLogger)
 	// guid must be set for Kernel Session
@@ -134,6 +134,7 @@ func NewKernelRealTimeSession(flags ...uint32) (p *RealTimeSession) {
 }
 
 // NewSystemTraceProviderSession creates a session for the modern SystemTraceProvider.
+// This the modern way to capture kernel events, offer more flexibility.
 //
 // IMPORTANT: This feature is only available on Windows 11 and later.
 //
@@ -169,7 +170,7 @@ func NewKernelRealTimeSession(flags ...uint32) (p *RealTimeSession) {
 //		// handle error
 //	}
 //
-// You can discover the names of the available system providers using `logman`:
+// You can discover the names of the available system providers using 'logman':
 //
 //	logman query providers | findstr -i system
 func NewSystemTraceProviderSession(name string) (s *RealTimeSession) {
@@ -343,7 +344,10 @@ func (s *RealTimeSession) DisableProvider(prov Provider) (err error) {
 }
 
 // GetRundownEvents forces rundown events now on this session.
-// a null provider will force rundown for all providers in the session
+// a null provider will force rundown for all manifest providers in the session
+//
+// NOTE: nt kernel sessions do not support SystemConfig rundown events. Access Denied.
+// Just start a nt kernel session and stop it to get SystemConfig rundown events.
 func (s *RealTimeSession) GetRundownEvents(guid *GUID) (err error) {
 	if !s.IsStarted() {
 		return fmt.Errorf("session not started")
@@ -356,11 +360,6 @@ func (s *RealTimeSession) GetRundownEvents(guid *GUID) (err error) {
 			0, 0, 0, 0, nil)
 	} else {
 		for _, p := range s.enabledProviders {
-			// If the provider is not enabled, we cannot get rundown events
-			if p.EnableLevel == 0 {
-				continue
-			}
-
 			if err = EnableTraceEx2(
 				s.sessionHandle,
 				&p.GUID,
