@@ -16,14 +16,6 @@ const (
 	StructurePropertyName = "Structures"
 )
 
-var (
-	hostname, _ = os.Hostname()
-	isDebug     = os.Getenv("DEBUG") == "1"
-
-	ErrPropertyParsing = fmt.Errorf("error parsing property")
-	ErrUnknownProperty = fmt.Errorf("unknown property")
-)
-
 // Global Memory Pools
 var (
 	// We use a global pool for EventRecordHelper.
@@ -215,7 +207,7 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	// Use the teiBuffer from storage for GetEventInformation.
 	// The buffer will be resized by GetEventInformation if needed.
 	if erh.TraceInfo, err = er.GetEventInformation(&storage.teiBuffer); err != nil {
-		apiErr := fmt.Errorf("GetEventInformation failed : %s", err)
+		apiErr := fmt.Errorf("%w: %v", ErrGetEventInformation, err)
 
 		// Fallback for MOF events using pre-generated definitions.
 		if er.IsMof() {
@@ -225,6 +217,7 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 				// Success! We built a TraceInfo from our MOF definitions.
 				// Suppress the original API error.
 				err = nil
+				// TODO: count how many times we used the MOF fallback succesfuly
 			} else {
 				// MOF fallback also failed, return original API error.
 				err = apiErr
@@ -235,8 +228,8 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 		}
 
 		if err != nil {
-			conlog.SampledErrorWithErrSig("GetEventInformation", err).Interface("eventRecord", erh.EventRec).Msg("Failed to get trace event info")
-			err = &LoggedError{Err: err}
+			// conlog.SampledErrorWithErrSig("GetEventInformation", err).Interface("eventRecord", erh.EventRec).Msg("Failed to get trace event info")
+			// err = &LoggedError{Err: err}
 		}
 	}
 
@@ -394,7 +387,7 @@ func (e *EventRecordHelper) setEventMetadataNoTrace(event *Event) {
 }
 
 func (e *EventRecordHelper) setEventMetadata(event *Event) {
-	event.System.Computer = hostname
+	event.System.Computer, _ = os.Hostname()
 
 	// Some Providers don't have a ProcessID or ThreadID (there are set 0xFFFFFFFF)
 	// because some events are logged by separate threads
@@ -797,7 +790,7 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 
 	// Special case for MOF string arrays, which are common in classic kernel events.
 	// if this is a MOF event, we don't need to parse the properties of the array
-	// this will be a array of wchars, Kernel events EVENT_HEADER_FLAG_CLASSIC_HEADER
+	// this will be a array of wchars, Kernel events EVENT_HEADER_FLAG_CLASSIC_HEADER (nt Kernel events)
 	if e.TraceInfo.IsMof() &&
 		e.EventRec.EventHeader.Flags&EVENT_HEADER_FLAG_CLASSIC_HEADER != 0 &&
 		epi.InType() == TDH_INTYPE_UNICODECHAR {
@@ -841,10 +834,10 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	return nil
 }
 
-// getEventPropNames retrieves the property names for the event schema.
+// getCachedPropNames retrieves the property names for the event schema.
 // It uses a cache for each provider event type to avoid repeated UTF-16 to string conversions.
 // This increased events/s performance by ~20% in benchmarks.
-func (e *EventRecordHelper) getEventPropNames() []string {
+func (e *EventRecordHelper) getCachedPropNames() []string {
 	// Get property names from cache or generate them.
 	key := eventSchemaID{
 		ProviderGUID: e.TraceInfo.ProviderGUID,
@@ -905,7 +898,7 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 
 	// Get or generate property names for this event schema.
 	// This is a performance optimization to avoid repeated UTF-16 to string conversions.
-	names := e.getEventPropNames()
+	names := e.getCachedPropNames()
 
 	// Process all top-level properties defined in the event schema.
 	for i := uint32(0); i < e.TraceInfo.TopLevelPropertyCount; i++ {
@@ -1052,7 +1045,7 @@ func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err er
 
 	if p, ok := e.Properties[name]; ok {
 		if eventData[p.name], err = p.FormatToString(); err != nil {
-			return fmt.Errorf("%w %s: %s", ErrPropertyParsing, name, err)
+			return fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
 		}
 	}
 
@@ -1064,7 +1057,7 @@ func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err er
 		for _, p := range *propSlicePtr {
 			var v string
 			if v, err = p.FormatToString(); err != nil {
-				return fmt.Errorf("%w array %s: %s", ErrPropertyParsing, name, err)
+				return fmt.Errorf("%w array %s: %s", ErrPropertyParsingTdh, name, err)
 			}
 
 			values = append(values, v)
@@ -1119,7 +1112,7 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 			continue
 		}
 		if _, err := p.FormatToString(); err != nil {
-			last = fmt.Errorf("%w %s: %s", ErrPropertyParsing, p.name, err)
+			last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, p.name, err)
 		} else {
 			eventData[p.name] = p.value
 		}
@@ -1138,7 +1131,7 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 		for _, p := range props {
 			var v string
 			if v, err = p.FormatToString(); err != nil {
-				last = fmt.Errorf("%w array %s: %s", ErrPropertyParsing, pname, err)
+				last = fmt.Errorf("%w array %s: %s", ErrPropertyParsingTdh, pname, err)
 			}
 
 			values = append(values, v)
@@ -1180,7 +1173,7 @@ func (e *EventRecordHelper) formatStructs(structs []map[string]*Property, name s
 		s := make(map[string]string)
 		for field, prop := range propStruct {
 			if s[field], err = prop.FormatToString(); err != nil {
-				return nil, fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsing, name, field, err)
+				return nil, fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsingTdh, name, field, err)
 			}
 		}
 		result = append(result, s)
@@ -1276,7 +1269,7 @@ func (e *EventRecordHelper) ParseProperties(names ...string) (err error) {
 func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 	if p, ok := e.Properties[name]; ok {
 		if _, err = p.FormatToString(); err != nil {
-			return fmt.Errorf("%w %s: %s", ErrPropertyParsing, name, err)
+			return fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
 		}
 	}
 
@@ -1285,7 +1278,7 @@ func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 		// iterate over the properties
 		for _, p := range *propSlicePtr {
 			if _, err = p.FormatToString(); err != nil {
-				return fmt.Errorf("%w array %s: %s", ErrPropertyParsing, name, err)
+				return fmt.Errorf("%w array %s: %s", ErrPropertyParsingTdh, name, err)
 			}
 		}
 	}
@@ -1295,7 +1288,7 @@ func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 		for _, propStruct := range structs {
 			for field, prop := range propStruct {
 				if _, err = prop.FormatToString(); err != nil {
-					return fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsing, name, field, err)
+					return fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsingTdh, name, field, err)
 				}
 			}
 		}
@@ -1306,7 +1299,7 @@ func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 		for _, propStruct := range *e.StructSingle {
 			for field, prop := range propStruct {
 				if _, err = prop.FormatToString(); err != nil {
-					return fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsing, StructurePropertyName, field, err)
+					return fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsingTdh, StructurePropertyName, field, err)
 				}
 			}
 		}

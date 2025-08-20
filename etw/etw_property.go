@@ -256,22 +256,17 @@ func (p *Property) formatToStringTdh() (value string, udc uint16, err error) {
 			}
 		}
 
-		p.erh.addPropError()
-
-		if !isDebug {
-			conlog.SampledErrorWithErrSig("formatprop-tdh", err).Msg("tdh failed to format property")
-			return "", udc, fmt.Errorf("tdh failed to format property: %w", err)
-		}
-
-		err = fmt.Errorf("failed to format property %w", err)
-		// Printed only when debugging is enabled.
 		conlog.Debug().Interface("property", p).
 			Interface("traceInfo", p.erh.TraceInfo).
 			Bool("isMof", p.erh.TraceInfo.IsMof()).
 			Bool("isXML", p.erh.TraceInfo.IsXML()).
 			Msg("failed to format property using thd")
 
-		return
+		p.erh.addPropError()
+		perr := fmt.Errorf("%w: tdh toString failed: %v", ErrPropertyParsingTdh, err)
+		err = &ParseError{p: p, Err: perr}
+		return "", udc, err
+
 	}
 
 	value = UTF16SliceToString(*buffPtr)

@@ -372,7 +372,12 @@ func compareTraceEventInfo(generated, original *TraceEventInfo) int {
 func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventInfo, err error) {
 	mofClass := MofErLookup(er)
 	if mofClass == nil {
-		return nil, fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d", er.EventHeader.ProviderId.String(), er.EventHeader.EventDescriptor.Opcode, er.EventHeader.EventDescriptor.Version)
+		return nil,
+			fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d : %v",
+				er.EventHeader.ProviderId.String(),
+				er.EventHeader.EventDescriptor.Opcode,
+				er.EventHeader.EventDescriptor.Version,
+				ErrBuildTraceInfoFromMof)
 	}
 
 	// The layout of our buffer will be:

@@ -4,6 +4,7 @@ package etw
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -12,6 +13,8 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
+
+	plog "github.com/phuslu/log"
 )
 
 var (
@@ -205,6 +208,44 @@ func (c *Consumer) GetTrace(tname string) (t *ConsumerTrace, ok bool) {
 	return v.(*ConsumerTrace), true
 }
 
+// reportError is the centralized error handler for the consumer callback.
+func (c *Consumer) reportError(err error, er *EventRecord) {
+	var parseErr *ParseError
+
+	switch {
+	// Log full details for specific errors.
+	case errors.Is(err, ErrGetEventInformation):
+		conlog.SampledErrorWithErrSig("GetEventInformation", err).
+			Interface("eventRecord", er).
+			Msg("Failed to get trace event info")
+
+	case errors.Is(err, ErrPropertyParsingTdh):
+		entry := conlog.SampledErrorWithErrSig("formatprop-tdh", err)
+		if errors.As(err, &parseErr) {
+			entry.Interface("property", parseErr.p).
+				Interface("property", parseErr.p.erh.TraceInfo).
+				Msg("tdh failed to format property (ParseError)")
+		} else {
+			entry.Msg("tdh failed to format property")
+		}
+
+	// Default for any other generic error.
+	default:
+		entry := conlog.SampledErrorWithErrSig("callback-error", err)
+		if conlog.Logger.Level <= plog.DebugLevel {
+			// Debug level: Log the full EventRecord using its detailed MarshalJSON.
+			entry.Interface("eventRecord", er)
+		} else {
+			if conlog.Logger.Level >= plog.ErrorLevel {
+				entry.Str("EventRecord", fmt.Sprintf("%+v", er))
+			}
+		}
+		entry.Msg("Consumer callback error")
+	}
+
+	c.lastError.Store(err)
+}
+
 // https://learn.microsoft.com/en-us/windows/win32/etw/rt-lostevent
 // EventType{32, 33, 34}, EventTypeName{"RTLostEvent", "RTLostBuffer", "RTLostFile"}]
 func (c *Consumer) handleLostEvent(e *EventRecord) {
@@ -265,8 +306,6 @@ func (c *Consumer) bufferCallback(e *EventTraceLogfile) uintptr {
 	return 1
 }
 
-//var cc int64
-
 // https://learn.microsoft.com/en-us/windows/win32/api/evntrace/nc-evntrace-pevent_record_callback
 //
 // Called when ProcessTrace gets an event record.
@@ -279,13 +318,8 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	// Count the number of events with errors, but only once per event.
 	setError := func(err error) {
 		er.getUserContext().trace.ErrorEvents.Add(1)
-		conlog.SampledErrorWithErrSig("callback-error", err).Msg("callback error")
-		c.lastError.Store(err)
-
-		// cc = cc + 1
-		// if cc%1000 == 0 {
-		// 	conlog.Error().Int64("event_count", cc).Msg("callback: processed 1000 events")
-		// }
+		c.reportError(err, er)
+		c.lastError.Store(err) // TODO: no longer useful?
 	}
 
 	// Skips the event if it is the event trace header. Log files contain this event

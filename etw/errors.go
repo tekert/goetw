@@ -2,7 +2,37 @@
 
 package etw
 
-import "syscall"
+import (
+	"fmt"
+	"os"
+	"syscall"
+)
+
+var (
+	isDebug = os.Getenv("DEBUG") == "1"
+)
+
+var (
+	ErrPropertyParsingTdh = fmt.Errorf("error parsing property")
+	ErrUnknownProperty    = fmt.Errorf("unknown property")
+
+	ErrGetEventInformation   = fmt.Errorf("GetEventInformation failed")
+	ErrBuildTraceInfoFromMof = fmt.Errorf("buildTraceInfoFromMof failed")
+)
+
+type ParseError struct {
+	Err error // The original error that occurred.
+	p   *Property
+}
+
+func (e ParseError) Error() string {
+	return fmt.Sprintf("%v", e.Err)
+}
+
+// Unwrap provides compatibility with errors.Is and errors.As.
+func (e ParseError) Unwrap() error {
+	return e.Err
+}
 
 const (
 	ERROR_SUCCESS                                            = syscall.Errno(0)
