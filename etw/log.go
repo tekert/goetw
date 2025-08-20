@@ -58,8 +58,7 @@ type SampledLogger struct {
 // It performs the level check, optional error signature hashing, and sampler query
 // before creating a log entry, ensuring maximum performance on suppressed calls.
 func (l *SampledLogger) sampled(level plog.Level, key string, useErrSig bool, err ...error) *plog.Entry {
-	// 1. High-performance level check. If the log level is too high, we exit
-	// immediately with zero allocations.
+	// 1. If the log level is too high, we exit immediately with zero allocations.
 	if plog.Level(atomic.LoadUint32((*uint32)(&l.Logger.Level))) > level {
 		return nil
 	}
