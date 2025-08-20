@@ -182,7 +182,14 @@ func (c *Consumer) getOrAddTrace(traceName string) *ConsumerTrace {
 	return actual.(*ConsumerTrace)
 }
 
-// Returns the current traces info
+// GetTraces returns a snapshot of all managed ConsumerTrace objects with statistics.
+//
+//	traces := consumer.GetTraces()
+//	for name, trace := range traces {
+//	    lostEvents := trace.RTLostEvents.Load()
+//	    errorEvents := trace.ErrorEvents.Load()
+//	    fmt.Printf("Trace %s: lost=%d, errors=%d\n", name, lostEvents, errorEvents)
+//	}
 func (c *Consumer) GetTraces() map[string]*ConsumerTrace {
 	traces := make(map[string]*ConsumerTrace)
 	// create map from sync.Map

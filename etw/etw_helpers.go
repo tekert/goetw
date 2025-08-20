@@ -1204,13 +1204,26 @@ func (e *EventRecordHelper) Channel() string {
 	return e.TraceInfo.ChannelName()
 }
 
+// EventID returns the event ID of the event record.
+// This is the same as TraceInfo.EventID() but uses the EventRecord.EventID()
+// For MOF events, this ID is calculated from other data to be unique per event type.
+// For non-MOF events, this is the same as EventRecord.EventDescriptor.Id.
 func (e *EventRecordHelper) EventID() uint16 {
 	// EventRec.EventID() Uses different fields but same result.
 	return e.TraceInfo.EventID()
 }
 
-func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error) {
+/*
+ETW Property Access Methods
 
+Provides typed access to event properties after preparation. Properties are parsed
+on-demand using custom decoders (faster) with TDH fallback for complex types.
+Values are cached after first access.
+*/
+
+// GetPropertyString returns the formatted string value of the named property.
+// Returns ErrUnknownProperty if the property doesn't exist.
+func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error) {
 	if p, ok := e.Properties[name]; ok {
 		return p.FormatToString()
 	}
@@ -1218,6 +1231,9 @@ func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error)
 	return "", fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
+// GetPropertyInt returns the property value as int64.
+// Returns overflow error for unsigned values exceeding math.MaxInt64.
+// Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
 	if p, ok := e.Properties[name]; ok {
 		return p.GetInt()
@@ -1225,6 +1241,9 @@ func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
 	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
+// GetPropertyUint returns the property value as uint64.
+// Returns conversion error for negative signed values.
+// Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyUint(name string) (uint64, error) {
 	if p, ok := e.Properties[name]; ok {
 		return p.GetUInt()
@@ -1232,6 +1251,9 @@ func (e *EventRecordHelper) GetPropertyUint(name string) (uint64, error) {
 	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
+// GetPropertyFloat returns the property value as float64.
+// Supports 32-bit and 64-bit IEEE 754 formats.
+// Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyFloat(name string) (float64, error) {
 	if p, ok := e.Properties[name]; ok {
 		return p.GetFloat()
@@ -1256,6 +1278,14 @@ func (e *EventRecordHelper) SetProperty(name, value string) *Property {
 	return p
 }
 
+/*
+ETW Property Parsing Methods
+
+Converts raw binary event data into formatted values on-demand. Uses custom
+decoders for performance with TDH fallback for complex types. Results are cached.
+*/
+
+// ParseProperties parses multiple properties by name, returning the first error encountered.
 func (e *EventRecordHelper) ParseProperties(names ...string) (err error) {
 	for _, name := range names {
 		if err = e.ParseProperty(name); err != nil {
@@ -1266,6 +1296,7 @@ func (e *EventRecordHelper) ParseProperties(names ...string) (err error) {
 	return
 }
 
+// ParseProperty parses a single property by name, converting binary data to formatted string.
 func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 	if p, ok := e.Properties[name]; ok {
 		if _, err = p.FormatToString(); err != nil {

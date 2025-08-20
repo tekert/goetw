@@ -311,7 +311,8 @@ func (s *RealTimeSession) EnableProvider(prov Provider) (err error) {
 	return
 }
 
-// DisableProvider disables the trace session from receiving events from a given provider.
+// DisableProvider removes a provider from the session.
+// Returns nil if session is not started (no-op).
 func (s *RealTimeSession) DisableProvider(prov Provider) (err error) {
 	if !s.IsStarted() {
 		// Can't disable a provider on a session that isn't running.
@@ -373,12 +374,12 @@ func (s *RealTimeSession) GetRundownEvents(guid *GUID) (err error) {
 	return nil
 }
 
-// TraceName implements Session interface
+// TraceName returns the name of the trace that was used to create the session
 func (s *RealTimeSession) TraceName() string {
 	return s.traceName
 }
 
-// Providers implements Session interface
+// Providers returns a slice of all currently enabled providers for this session.
 func (s *RealTimeSession) Providers() []Provider {
 	// Return a copy to prevent modification of the internal slice.
 	providers := make([]Provider, len(s.enabledProviders))

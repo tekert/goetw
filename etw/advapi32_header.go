@@ -1124,24 +1124,22 @@ func (e *EventTraceLogfile) Clone() *EventTraceLogfile {
 /*
 typedef struct _EVENT_RECORD {
 
-    EVENT_HEADER        EventHeader;            // Event header
-    ETW_BUFFER_CONTEXT  BufferContext;          // Buffer context
-    USHORT              ExtendedDataCount;      // Number of extended
-                                                // data items
-    USHORT              UserDataLength;         // User data length
-    PEVENT_HEADER_EXTENDED_DATA_ITEM            // Pointer to an array of
-                        ExtendedData;           // extended data items
-    PVOID               UserData;               // Pointer to user data
-    PVOID               UserContext;            // Context from OpenTrace
+    EVENT_HEADER        				EventHeader;
+    ETW_BUFFER_CONTEXT  				BufferContext;
+    USHORT              				ExtendedDataCount;
+    USHORT              				UserDataLength;
+    PEVENT_HEADER_EXTENDED_DATA_ITEM 	ExtendedData;
+    PVOID               				UserData;
+    PVOID               				UserContext;
 } EVENT_RECORD, *PEVENT_RECORD;
 */
 type EventRecord struct {
-	EventHeader       EventHeader                  // Event header
-	BufferContext     EtwBufferContext             // Buffer context
-	ExtendedDataCount uint16                       // Number of extended data items
-	UserDataLength    uint16                       // User data length
-	ExtendedData      *EventHeaderExtendedDataItem // Pointer to an array of extended data items
-	UserData          uintptr                      // Pointer to user data
+	EventHeader       EventHeader                  // Defines information about the event.
+	BufferContext     EtwBufferContext             // Defines information such as the session that logged the event.
+	ExtendedDataCount uint16                       // Number of extended data items in the ExtendedData member.
+	UserDataLength    uint16                       // The size, in bytes, of the data in the UserData member.
+	ExtendedData      *EventHeaderExtendedDataItem // One or more extended data items that ETW collects.
+	UserData          uintptr                      // Event specific data in binary format.
 	UserContext       uintptr                      // Context from OpenTrace
 }
 
