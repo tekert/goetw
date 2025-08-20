@@ -12,6 +12,7 @@ func hasFlag(flags, flag uint32) bool {
 	return flags&flag == flag
 }
 
+// TODO: redo these tests on v0.8 to use the new interface.
 func TestKernelProviders(t *testing.T) {
 	tt := test.FromT(t)
 
