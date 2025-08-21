@@ -252,7 +252,11 @@ func (p *Property) decodeToString(outType TdhOutType) (string, error) {
 		TDH_OUTTYPE_DATETIME_UTC,
 		TDH_OUTTYPE_CULTURE_INSENSITIVE_DATETIME:
 		switch inType {
-		case TDH_INTYPE_FILETIME, TDH_INTYPE_UINT64: // TDH_INTYPE_UINT64 is WmiTime object = FILETIME
+		//case TDH_INTYPE_UINT64: // (WmiTime)
+			// This is in different formats depending on Session WnodeHeader.ClientContext settings
+			// IF ClientContext is 0: WmiTime object = FILETIME
+			// TODO: if we can read ClientContext from the session, what do we do?
+		case TDH_INTYPE_FILETIME:
 			ft := (*syscall.Filetime)(unsafe.Pointer(p.pValue))
 			t := time.Unix(0, ft.Nanoseconds())
 
