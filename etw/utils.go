@@ -36,10 +36,29 @@ const (
 	TICKS_PER_SECOND = 10000000    // 1 second = 10,000,000 ticks
 )
 
+
+// UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
+// to a Unixtime.Time, This is wrapper for UnixTimeStampU who uses the correct unsigned form.
+// Microsoft documentation uses signed int for FILETIME but it can never be negative...
+//
+//go:inline
+func UnixFiletime(fileTime int64) time.Time {
+	return UnixTimeStampU(uint64(fileTime))
+}
+
+// UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
+// to a Unixtime.Time, This is wrapper for UnixTimeStampU who uses the correct unsigned form.
+// Microsoft documentation uses signed int for FILETIME but it can never be negative...
+//
+//go:inline
+func UnixTimeStamp(fileTime int64) time.Time {
+	return UnixTimeStampU(uint64(fileTime))
+}
+
 // Faster than syscall.Filetime.Nanoseconds() on edge cases.
 // UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
 // to a Unixtime.Time
-func UnixTimeStamp(fileTime int64) time.Time {
+func UnixTimeStampU(fileTime uint64) time.Time {
 	// Convert to Unix epoch
 	unixTime := fileTime - (EPOCH_DIFF * TICKS_PER_SECOND)
 
@@ -50,7 +69,7 @@ func UnixTimeStamp(fileTime int64) time.Time {
 	// Convert remaining ticks to nanoseconds (multiply by 100)
 	nanos := remaining * WINDOWS_TICK
 
-	return time.Unix(seconds, nanos)
+	return time.Unix(int64(seconds), int64(nanos))
 }
 
 // UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
@@ -122,39 +141,39 @@ func UUID() (uuid string, err error) {
 // No cgo/syscalls needed
 // replaces ConvertSidToStringSidW from Windows API
 func ConvertSidToStringSidGO(sid *SID) (string, error) {
-    if sid == nil {
-        return "", nil
-    }
+	if sid == nil {
+		return "", nil
+	}
 
-    // Validate SID structure // SID_MAX_SUB_AUTHORITIES = 15
-    if sid.Revision != 1 || sid.SubAuthorityCount > 15 {
-        return "", fmt.Errorf("the SID is not valid")
-    }
+	// Validate SID structure // SID_MAX_SUB_AUTHORITIES = 15
+	if sid.Revision != 1 || sid.SubAuthorityCount > 15 {
+		return "", fmt.Errorf("the SID is not valid")
+	}
 
-    // A typical SID string is around 40-70 chars. Pre-allocating a buffer of
-    // 64 bytes is a good starting point to avoid reallocations.
-    buf := make([]byte, 0, 64)
+	// A typical SID string is around 40-70 chars. Pre-allocating a buffer of
+	// 64 bytes is a good starting point to avoid reallocations.
+	buf := make([]byte, 0, 64)
 
-    buf = append(buf, 'S', '-')
-    buf = strconv.AppendUint(buf, uint64(sid.Revision), 10)
+	buf = append(buf, 'S', '-')
+	buf = strconv.AppendUint(buf, uint64(sid.Revision), 10)
 
-    // Format IdentifierAuthority. It's a 6-byte big-endian value.
-    var authority uint64
-    // Using range on a fixed-size array is safe and clean.
-    for i := range sid.IdentifierAuthority.Value {
-        authority = (authority << 8) | uint64(sid.IdentifierAuthority.Value[i])
-    }
-    buf = append(buf, '-')
-    buf = strconv.AppendUint(buf, authority, 10)
+	// Format IdentifierAuthority. It's a 6-byte big-endian value.
+	var authority uint64
+	// Using range on a fixed-size array is safe and clean.
+	for i := range sid.IdentifierAuthority.Value {
+		authority = (authority << 8) | uint64(sid.IdentifierAuthority.Value[i])
+	}
+	buf = append(buf, '-')
+	buf = strconv.AppendUint(buf, authority, 10)
 
-    // Format SubAuthorities
-    subAuthorities := sid.SubAuthorities()
-    for _, subAuth := range subAuthorities {
-        buf = append(buf, '-')
-        buf = strconv.AppendUint(buf, uint64(subAuth), 10)
-    }
+	// Format SubAuthorities
+	subAuthorities := sid.SubAuthorities()
+	for _, subAuth := range subAuthorities {
+		buf = append(buf, '-')
+		buf = strconv.AppendUint(buf, uint64(subAuth), 10)
+	}
 
-    return string(buf), nil
+	return string(buf), nil
 }
 
 func isETLFile(path string) bool {
