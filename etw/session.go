@@ -219,7 +219,7 @@ func NewRealTimeEventTraceProperties() *EventTraceProperties2Wrapper {
 
 // IsStarted returns true if the session is already started
 func (s *RealTimeSession) IsStarted() bool {
-	return s.sessionHandle != 0
+	return s != nil && s.sessionHandle != 0
 }
 
 // Start setups our session buffers so that providers can write to it
@@ -360,6 +360,9 @@ func (s *RealTimeSession) GetRundownEvents(guid *GUID) (err error) {
 			EVENT_CONTROL_CODE_CAPTURE_STATE,
 			0, 0, 0, 0, nil)
 	} else {
+		if len(s.enabledProviders) == 0 {
+			return fmt.Errorf("no providers enabled in session %s", s.traceName)
+		}
 		for _, p := range s.enabledProviders {
 			if err = EnableTraceEx2(
 				s.sessionHandle,
