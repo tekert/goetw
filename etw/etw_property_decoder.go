@@ -252,7 +252,7 @@ func (p *Property) decodeToString(outType TdhOutType) (string, error) {
 		TDH_OUTTYPE_DATETIME_UTC,
 		TDH_OUTTYPE_CULTURE_INSENSITIVE_DATETIME:
 		switch inType {
-		case TDH_INTYPE_FILETIME:
+		case TDH_INTYPE_FILETIME, TDH_INTYPE_UINT64: // TDH_INTYPE_UINT64 is WmiTime object = FILETIME
 			ft := (*syscall.Filetime)(unsafe.Pointer(p.pValue))
 			t := time.Unix(0, ft.Nanoseconds())
 
