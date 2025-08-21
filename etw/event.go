@@ -37,7 +37,7 @@ type Event struct {
 		EventID     uint16
 		Version     uint8  `json:",omitempty"`
 		EventType   string `json:",omitempty"`
-		EventGuid   GUID   `json:",omitempty"`
+		EventGuid   GUID
 		Correlation struct {
 			ActivityID        string
 			RelatedActivityID string

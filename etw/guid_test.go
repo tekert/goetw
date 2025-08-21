@@ -1,4 +1,5 @@
 //go:build windows
+
 package etw
 
 import (
@@ -62,7 +63,7 @@ func TestGUIDEquality(t *testing.T) {
 	tt.Assert(!g1.Equals(&g2))
 
 	// testing Data4
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		g2 = p.GUID
 		g2.Data4[i]++
 		tt.Assert(!g1.Equals(&g2))

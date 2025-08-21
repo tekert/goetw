@@ -14,6 +14,7 @@ const rune2Max = 1<<11 - 1
 //
 // Because it uses the `unsafe` package, it provides performance that is
 // significantly better than safe, slice-based alternatives.
+//
 //go:nosplit
 //go:nocheckptr
 func DecodeWtf8(src []uint16) string {
@@ -57,6 +58,7 @@ func DecodeWtf8(src []uint16) string {
 //
 // It is primarily retained for benchmarking, comparison, or for use in contexts
 // where the `unsafe` package is not permitted.
+//
 //go:nosplit
 //go:nocheckptr
 func DecodeWtf8_SliceVer(src []uint16) string {
@@ -242,7 +244,7 @@ func utf16_convert_slice(dst []byte, src []uint16) int {
 		chunks := *(*[2]uint64)(unsafe.Pointer(&src[i]))
 		if isASCII(chunks[0]) && isASCII(chunks[1]) {
 			// Fast copy ASCII block (8 bytes at once)
-			for k := 0; k < 8; k++ {
+			for k := range 8 {
 				dst[j+k] = byte(src[i+k])
 			}
 			i += 8

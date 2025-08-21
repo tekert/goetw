@@ -21,3 +21,6 @@
 package etw
 
 // go 1.25 seems to have reduced performance of map clear significantly, the events/s dropped by 7%
+
+// To modernize:
+// go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -fix -test ./...

@@ -133,7 +133,7 @@ func BenchmarkSIDConversion(b *testing.B) {
 	subAuth[2] = 1087365685 // Domain ID part 2
 
 	b.Run("ConvertSidToStringSidW", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := ConvertSidToStringSidW(sid)
 			if err != nil {
 				b.Fatalf("ConvertSidToStringSidW failed: %v", err)
@@ -142,7 +142,7 @@ func BenchmarkSIDConversion(b *testing.B) {
 	})
 
 	b.Run("ConvertSidToStringSidGO", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := ConvertSidToStringSidGO(sid)
 			if err != nil {
 				b.Fatalf("ConvertSidToStringSidGO failed: %v", err)
@@ -287,7 +287,7 @@ func BenchmarkHash(b *testing.B) {
 			b.ReportAllocs()
 			b.SetBytes(int64(len(dataBytes)))
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				var hash uint64 = 5381
 				for _, c := range data {
 					hash = ((hash << 5) + hash) + uint64(c) // hash * 33 + c
@@ -308,7 +308,7 @@ func TestUTF16PtrToStringConcurrent(t *testing.T) {
 	var wg sync.WaitGroup
 	// Tested a bug with this, min 100/10000 for consistent detection
 	numGoroutines := 100 // use min of 100
-	iterations := 10000 // use at least 10000 to get consisnt results
+	iterations := 10000  // use at least 10000 to get consisnt results
 
 	// Prepare test data
 	testStrings := make([]string, numGoroutines)

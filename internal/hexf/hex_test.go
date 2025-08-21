@@ -215,72 +215,72 @@ func TestEncodePrefix(t *testing.T) {
 }
 
 func TestNumEncodePrefix(t *testing.T) {
-    numTests := []struct {
-        name     string
-        noTrim   string    // Expected output without trim
-        trimmed  string    // Expected output with trim
-        fn       func(bool) string // Function (test with trim or without)
-    }{
-        // 64-bit tests
-        {"Uint64_Zero", "0x0000000000000000", "0x0", func(trim bool) string { return Num64p(uint64(0), trim) }},
-        {"Uint64_Mid", "0x0000000000001234", "0x1234", func(trim bool) string { return Num64p(uint64(0x1234), trim) }},
-        {"Uint64_Max", "0xffffffffffffffff", "0xffffffffffffffff", func(trim bool) string { return Num64p(uint64(0xFFFFFFFFFFFFFFFF), trim) }},
+	numTests := []struct {
+		name    string
+		noTrim  string            // Expected output without trim
+		trimmed string            // Expected output with trim
+		fn      func(bool) string // Function (test with trim or without)
+	}{
+		// 64-bit tests
+		{"Uint64_Zero", "0x0000000000000000", "0x0", func(trim bool) string { return Num64p(uint64(0), trim) }},
+		{"Uint64_Mid", "0x0000000000001234", "0x1234", func(trim bool) string { return Num64p(uint64(0x1234), trim) }},
+		{"Uint64_Max", "0xffffffffffffffff", "0xffffffffffffffff", func(trim bool) string { return Num64p(uint64(0xFFFFFFFFFFFFFFFF), trim) }},
 
-        {"Int64_NegZero", "0x0000000000000000", "0x0", func(trim bool) string { return Num64p(int64(0), trim) }},
-        {"Int64_Min", "0x8000000000000000", "0x8000000000000000", func(trim bool) string { return Num64p(int64(-9223372036854775808), trim) }},
-        {"Int64_MidNeg", "0xfffffffffffff000", "0xfffffffffffff000", func(trim bool) string { return Num64p(int64(-4096), trim) }},
-        {"Int64_MidPos", "0x0000000000001234", "0x1234", func(trim bool) string { return Num64p(int64(0x1234), trim) }},
-        {"Int64_Pos", "0x0000000000000042", "0x42", func(trim bool) string { return Num64p(int64(66), trim) }},
+		{"Int64_NegZero", "0x0000000000000000", "0x0", func(trim bool) string { return Num64p(int64(0), trim) }},
+		{"Int64_Min", "0x8000000000000000", "0x8000000000000000", func(trim bool) string { return Num64p(int64(-9223372036854775808), trim) }},
+		{"Int64_MidNeg", "0xfffffffffffff000", "0xfffffffffffff000", func(trim bool) string { return Num64p(int64(-4096), trim) }},
+		{"Int64_MidPos", "0x0000000000001234", "0x1234", func(trim bool) string { return Num64p(int64(0x1234), trim) }},
+		{"Int64_Pos", "0x0000000000000042", "0x42", func(trim bool) string { return Num64p(int64(66), trim) }},
 
-        // 32-bit tests
-        {"Uint32_Zero", "0x00000000", "0x0", func(trim bool) string { return Num32p(uint32(0), trim) }},
-        {"Uint32_Mid", "0x00001234", "0x1234", func(trim bool) string { return Num32p(uint32(0x1234), trim) }},
-        {"Uint32_Max", "0xffffffff", "0xffffffff", func(trim bool) string { return Num32p(uint32(0xFFFFFFFF), trim) }},
+		// 32-bit tests
+		{"Uint32_Zero", "0x00000000", "0x0", func(trim bool) string { return Num32p(uint32(0), trim) }},
+		{"Uint32_Mid", "0x00001234", "0x1234", func(trim bool) string { return Num32p(uint32(0x1234), trim) }},
+		{"Uint32_Max", "0xffffffff", "0xffffffff", func(trim bool) string { return Num32p(uint32(0xFFFFFFFF), trim) }},
 
-        {"Int32_NegZero", "0x00000000", "0x0", func(trim bool) string { return Num32p(int32(0), trim) }},
-        {"Int32_Min", "0x80000000", "0x80000000", func(trim bool) string { return Num32p(int32(-2147483648), trim) }},
-        {"Int32_MidNeg", "0xfffff000", "0xfffff000", func(trim bool) string { return Num32p(int32(-4096), trim) }},
-        {"Int32_MidPos", "0x00001234", "0x1234", func(trim bool) string { return Num32p(int32(0x1234), trim) }},
-        {"Int32_Pos", "0x00000042", "0x42", func(trim bool) string { return Num32p(int32(66), trim) }},
+		{"Int32_NegZero", "0x00000000", "0x0", func(trim bool) string { return Num32p(int32(0), trim) }},
+		{"Int32_Min", "0x80000000", "0x80000000", func(trim bool) string { return Num32p(int32(-2147483648), trim) }},
+		{"Int32_MidNeg", "0xfffff000", "0xfffff000", func(trim bool) string { return Num32p(int32(-4096), trim) }},
+		{"Int32_MidPos", "0x00001234", "0x1234", func(trim bool) string { return Num32p(int32(0x1234), trim) }},
+		{"Int32_Pos", "0x00000042", "0x42", func(trim bool) string { return Num32p(int32(66), trim) }},
 
-        // 16-bit tests
-        {"Uint16_Zero", "0x0000", "0x0", func(trim bool) string { return Num16p(uint16(0), trim) }},
-        {"Uint16_Mid", "0x0123", "0x123", func(trim bool) string { return Num16p(uint16(0x123), trim) }},
-        {"Uint16_Max", "0xffff", "0xffff", func(trim bool) string { return Num16p(uint16(0xFFFF), trim) }},
+		// 16-bit tests
+		{"Uint16_Zero", "0x0000", "0x0", func(trim bool) string { return Num16p(uint16(0), trim) }},
+		{"Uint16_Mid", "0x0123", "0x123", func(trim bool) string { return Num16p(uint16(0x123), trim) }},
+		{"Uint16_Max", "0xffff", "0xffff", func(trim bool) string { return Num16p(uint16(0xFFFF), trim) }},
 
-        {"Int16_NegZero", "0x0000", "0x0", func(trim bool) string { return Num16p(int16(0), trim) }},
-        {"Int16_Min", "0x8000", "0x8000", func(trim bool) string { return Num16p(int16(-32768), trim) }},
-        {"Int16_MidNeg", "0xf000", "0xf000", func(trim bool) string { return Num16p(int16(-4096), trim) }},
-        {"Int16_MidPos", "0x0123", "0x123", func(trim bool) string { return Num16p(int16(0x123), trim) }},
-        {"Int16_Pos", "0x0042", "0x42", func(trim bool) string { return Num16p(int16(66), trim) }},
+		{"Int16_NegZero", "0x0000", "0x0", func(trim bool) string { return Num16p(int16(0), trim) }},
+		{"Int16_Min", "0x8000", "0x8000", func(trim bool) string { return Num16p(int16(-32768), trim) }},
+		{"Int16_MidNeg", "0xf000", "0xf000", func(trim bool) string { return Num16p(int16(-4096), trim) }},
+		{"Int16_MidPos", "0x0123", "0x123", func(trim bool) string { return Num16p(int16(0x123), trim) }},
+		{"Int16_Pos", "0x0042", "0x42", func(trim bool) string { return Num16p(int16(66), trim) }},
 
-        // 8-bit tests
-        {"Uint8_Zero", "0x00", "0x0", func(trim bool) string { return Num8p(uint8(0), trim) }},
-        {"Uint8_Mid", "0x09", "0x9", func(trim bool) string { return Num8p(uint8(0x09), trim) }},
-        {"Uint8_Max", "0xff", "0xff", func(trim bool) string { return Num8p(uint8(0xFF), trim) }},
+		// 8-bit tests
+		{"Uint8_Zero", "0x00", "0x0", func(trim bool) string { return Num8p(uint8(0), trim) }},
+		{"Uint8_Mid", "0x09", "0x9", func(trim bool) string { return Num8p(uint8(0x09), trim) }},
+		{"Uint8_Max", "0xff", "0xff", func(trim bool) string { return Num8p(uint8(0xFF), trim) }},
 
-        {"Int8_NegZero", "0x00", "0x0", func(trim bool) string { return Num8p(int8(-0), trim) }},
-        {"Int8_Min", "0x80", "0x80", func(trim bool) string { return Num8p(int8(-128), trim) }},
-        {"Int8_MidNeg", "0xf0", "0xf0", func(trim bool) string { return Num8p(int8(-16), trim) }},
-        {"Int8_MidPos", "0x12", "0x12", func(trim bool) string { return Num8p(int8(0x12), trim) }},
-        {"Int8_Pos", "0x42", "0x42", func(trim bool) string { return Num8p(int8(66), trim) }},
-    }
+		{"Int8_NegZero", "0x00", "0x0", func(trim bool) string { return Num8p(int8(-0), trim) }},
+		{"Int8_Min", "0x80", "0x80", func(trim bool) string { return Num8p(int8(-128), trim) }},
+		{"Int8_MidNeg", "0xf0", "0xf0", func(trim bool) string { return Num8p(int8(-16), trim) }},
+		{"Int8_MidPos", "0x12", "0x12", func(trim bool) string { return Num8p(int8(0x12), trim) }},
+		{"Int8_Pos", "0x42", "0x42", func(trim bool) string { return Num8p(int8(66), trim) }},
+	}
 
-    for _, tt := range numTests {
-        t.Run(tt.name, func(t *testing.T) {
-            // Test without trim
-            got := tt.fn(false)
-            if got != tt.noTrim {
-                t.Errorf("%s (no trim) = %s, want %s", tt.name, got, tt.noTrim)
-            }
+	for _, tt := range numTests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test without trim
+			got := tt.fn(false)
+			if got != tt.noTrim {
+				t.Errorf("%s (no trim) = %s, want %s", tt.name, got, tt.noTrim)
+			}
 
-            // Test with trim
-            got = tt.fn(true)
-            if got != tt.trimmed {
-                t.Errorf("%s (trimmed) = %s, want %s", tt.name, got, tt.trimmed)
-            }
-        })
-    }
+			// Test with trim
+			got = tt.fn(true)
+			if got != tt.trimmed {
+				t.Errorf("%s (trimmed) = %s, want %s", tt.name, got, tt.trimmed)
+			}
+		})
+	}
 }
 
 func BenchmarkEncodeCompare(b *testing.B) {
@@ -322,21 +322,21 @@ func BenchmarkEncodeCompare(b *testing.B) {
 
 			b.Run(fmt.Sprintf("hexf_Encode_%s_%d", pat.name, size), func(b *testing.B) {
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					Encode(dst, data)
 				}
 			})
 
 			b.Run(fmt.Sprintf("hex.Encode_%s_%d", pat.name, size), func(b *testing.B) {
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					hex.Encode(dst, data)
 				}
 			})
 
 			b.Run(fmt.Sprintf("hex.EncodeTrim_%s_%d", pat.name, size), func(b *testing.B) {
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					EncodeTrim(dst, data)
 				}
 			})

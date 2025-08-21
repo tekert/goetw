@@ -436,8 +436,7 @@ func TestConsumerCallbacks(t *testing.T) {
 	defer ses.Stop()
 
 	// Consumer part
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	c := NewConsumer(ctx).FromSessions(ses) //.FromTraceNames(EventlogSecurity)
 
 	c.EventRecordHelperCallback = func(erh *EventRecordHelper) (err error) {
@@ -944,7 +943,7 @@ func TestProviderFiltering(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc // Capture range variable.
+		// Capture range variable.
 		t.Run(tc.name, func(t *testing.T) {
 			tt := test.FromT(t)
 			t.Logf("Explanation: %s", tc.explanation)

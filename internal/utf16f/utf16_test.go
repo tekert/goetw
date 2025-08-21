@@ -349,7 +349,7 @@ func BenchmarkDecodeUTF16(b *testing.B) {
 	}{
 		{"ASCII", func(n int) ([]uint16, int) {
 			s := make([]uint16, n)
-			for i := 0; i < n; i++ {
+			for i := range n {
 				s[i] = uint16((i % 127) + 1) // Start from 1 to avoid NUL
 			}
 			return s, n
@@ -357,7 +357,7 @@ func BenchmarkDecodeUTF16(b *testing.B) {
 		// Uses Basic Multilingual Plane characters (Asian characters)
 		{"BMP", func(n int) ([]uint16, int) {
 			s := make([]uint16, n)
-			for i := 0; i < n; i++ {
+			for i := range n {
 				s[i] = 0x4E00 + uint16(i%20940)
 			}
 			return s, n * 3
@@ -417,7 +417,7 @@ func BenchmarkDecodeUTF16(b *testing.B) {
 
 			b.Run(fmt.Sprintf("SIMDv4/%s/%d", tc.name, size), func(b *testing.B) {
 				b.SetBytes(int64(outSize))
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					s := DecodeSIMD(input, utf16ToStringSSE2_v4)
 					if len(s) != outSize {
 						b.Fatalf("ConvertUTF16_SIMDv4(%v) = %v, want %v", input, s, outSize)
@@ -427,7 +427,7 @@ func BenchmarkDecodeUTF16(b *testing.B) {
 
 			b.Run(fmt.Sprintf("SIMDv3/%s/%d", tc.name, size), func(b *testing.B) {
 				b.SetBytes(int64(outSize))
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					s := DecodeSIMD(input, utf16ToStringSSE2_v3)
 					if len(s) != outSize {
 						b.Fatalf("ConvertUTF16_SIMDv3(%v) = %v, want %v", input, s, outSize)
@@ -489,7 +489,7 @@ func BenchmarkDecodeUTF16(b *testing.B) {
 			// uses unsafe pointer instead of slice to omit bound cheking. (why is go so inneficient)
 			b.Run(fmt.Sprintf("DecodeWtf8/%s/%d", tc.name, size), func(b *testing.B) {
 				b.SetBytes(int64(outSize))
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					s := DecodeWtf8(input)
 					if len(s) != outSize {
 						b.Fatalf("DecodeWtf8(%v) = %v, want %v", input, s, outSize)
@@ -499,7 +499,7 @@ func BenchmarkDecodeUTF16(b *testing.B) {
 
 			b.Run(fmt.Sprintf("DecodeWtf8_SliceVer/%s/%d", tc.name, size), func(b *testing.B) {
 				b.SetBytes(int64(outSize))
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					s := DecodeWtf8_SliceVer(input)
 					if len(s) != outSize {
 						b.Fatalf("DecodeWtf8_SliceVer(%v) = %v, want %v", input, s, outSize)
@@ -509,7 +509,7 @@ func BenchmarkDecodeUTF16(b *testing.B) {
 
 			b.Run(fmt.Sprintf("Syscall/%s/%d", tc.name, size), func(b *testing.B) {
 				b.SetBytes(int64(outSize))
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					s := syscall.UTF16ToString(input)
 					if len(s) != outSize {
 						b.Fatalf("ConvertUTF16_SSE2(%v) = %v, want %v", input, s, outSize)
@@ -519,7 +519,7 @@ func BenchmarkDecodeUTF16(b *testing.B) {
 
 			b.Run(fmt.Sprintf("utf16Package/%s/%d", tc.name, size), func(b *testing.B) {
 				b.SetBytes(int64(outSize))
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					s := uf16PackageWrapper(input)
 					// decodes to utf8 instead of wtf8, different output for invalid surrogates
 					if len(s) != outSize {

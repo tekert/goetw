@@ -921,7 +921,7 @@ func AllocEventFilterEventID_old(filter []uint16) (f *EventFilterEventID) {
 	// buf[0] should always be valid
 	f = (*EventFilterEventID)(unsafe.Pointer(&buf[0]))
 	eid := unsafe.Pointer((&f.Events[0]))
-	for i := 0; i < len(filter); i++ {
+	for i := range filter {
 		*((*uint16)(eid)) = filter[i]
 		eid = unsafe.Add(eid, 2)
 	}
@@ -1043,8 +1043,8 @@ type EventTraceLogfile struct {
 	Union1        uint32             // (LogFileMode [NOT USED] | ProcessTraceMode)
 	CurrentEvent  EventTrace         // (on output) Current Event from this stream.
 	LogfileHeader TraceLogfileHeader // (on output) logfile header structure
+	
 	//BufferCallback *EventTraceBufferCallback
-
 	BufferCallback uintptr // callback before each buffer is read
 
 	// following variables are filled for BufferCallback.
@@ -2063,7 +2063,7 @@ type TimeZoneInformation struct {
 	StandardBias int32
 	DaylightName [32]uint16
 	DaylightDate SystemTime
-	DaylightBias  int32
+	DaylightBias int32
 }
 
 // https://learn.microsoft.com/en-en/windows/win32/api/minwinbase/ns-minwinbase-systemtime
