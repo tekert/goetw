@@ -226,11 +226,6 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 			// Not a MOF event, no fallback possible.
 			err = apiErr
 		}
-
-		if err != nil {
-			// conlog.SampledErrorWithErrSig("GetEventInformation", err).Interface("eventRecord", erh.EventRec).Msg("Failed to get trace event info")
-			// err = &LoggedError{Err: err}
-		}
 	}
 
 	erh.teiBuffer = &storage.teiBuffer // Keep a reference
@@ -840,10 +835,11 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 func (e *EventRecordHelper) getCachedPropNames() []string {
 	// Get property names from cache or generate them.
 	key := eventSchemaID{
-		ProviderGUID: e.TraceInfo.ProviderGUID,
-		EventID:      e.EventID(),
-		Version:      e.TraceInfo.EventDescriptor.Version,
-		Opcode:       e.TraceInfo.EventDescriptor.Opcode,
+		ProviderGUID: e.TraceInfo.ProviderGUID,            // 64 bits
+		EventID:      e.EventID(),                         // 16 bits
+		Version:      e.TraceInfo.EventDescriptor.Version, // 8 bits
+		// Opcode not needed but removing this causes a performance 2% drop. (aligment?) 96 bits vs 88 bits
+		Opcode: e.TraceInfo.EventDescriptor.Opcode,
 	}
 	var names []string
 	if key.EventID == 0 {
