@@ -1544,6 +1544,9 @@ type EventHeader struct {
 	ThreadId        uint32 // Thread Id
 	ProcessId       uint32 // Process Id
 	// Event Timestamp (this may or may not be in Filetime format, depending on logFile.ProcessTraceMode)
+	// Use EventRecordHelper.Timestamp() to get the correct time.Time value.
+	// If etw.PROCESS_TRACE_MODE_RAW_TIMESTAMP is set on the Consumer, this is the raw timestamp
+	// If it is not set, this is in Filetime format.
 	TimeStamp       int64
 	ProviderId      GUID   // Provider Id
 	EventDescriptor EventDescriptor
