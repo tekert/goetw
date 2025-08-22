@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -166,6 +167,12 @@ type EventRecordHelper struct {
 
 	// A reference to the thread-local storage for this trace.
 	storage *traceStorage
+
+	// Converted timestamp in FILETIME format (100ns intervals since 1601-01-01).
+	// This field is populated by the consumer callback based on the session's clock type.
+	// It provides a consistent timestamp format regardless of the original clock type
+	// (QPC, System Time, CPU Clock) used by the session.
+	correctFiletime int64
 }
 
 func (e *EventRecordHelper) remainingUserDataLength() uint16 {
@@ -181,6 +188,29 @@ func (e *EventRecordHelper) addPropError() {
 	if c != nil && c.trace != nil {
 		c.trace.ErrorPropsParse.Add(1)
 	}
+}
+
+// Timestamp returns the correct EventRecord timestamp as time.Time.
+// This timestamp is always in FILETIME format regardless of the original
+// session clock type (QPC, System Time, CPU Clock),
+// providing a consistent time representation.
+//
+// For the Raw timestamp, use EventHeader.RawTimestamp() or
+// EventHeader.RawTimestampUTC().
+func (e *EventRecordHelper) Timestamp() time.Time {
+	return FromFiletime(e.correctFiletime)
+}
+
+// TODO: test this, do wmitime objects (from PerfInfo provider) come as FILETIME or Session set resolution?
+// TimestampFromRaw will get the correct timestamp depending on the trace session clock settings.
+// will convert the parameter to filetime if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set.
+// If that flag is not set for the trace session, it will return the parameter as is.
+// This is mostly used when properties of MOF events contain Wmitime values.
+func (e *EventRecordHelper) TimestampFromRaw(wmitime int64) time.Time {
+	// getUserContext() will not be nil if EventRecordHelper was created.
+	// trace will also exist
+	e.EventRec.getUserContext().trace.filetimeFromTimestamp(e.EventRec)
+	return FromFiletime(wmitime)
 }
 
 // Release EventRecordHelper back to memory pool.
@@ -424,7 +454,8 @@ func (e *EventRecordHelper) setEventMetadata(event *Event) {
 	event.System.Task.Value = uint8(e.TraceInfo.EventDescriptor.Task)
 	event.System.Task.Name = e.TraceInfo.TaskName()
 
-	event.System.TimeCreated.SystemTime = e.EventRec.EventHeader.UTCTimeStamp()
+	// Use the converted timestamp if available, otherwise fall back to raw timestamp
+	event.System.TimeCreated.SystemTime = e.Timestamp()
 
 	if e.TraceInfo.IsMof() {
 		var eventType string

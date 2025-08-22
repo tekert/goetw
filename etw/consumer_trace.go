@@ -19,12 +19,16 @@ type ConsumerTrace struct {
 	TraceName  string
 	TraceNameW *uint16 // UTF-16 representation of TraceName for Windows API calls
 
+	// ClockType holds the clock resolution used for timestamps in this trace session.
+	// This is determined when the trace is opened by the consumer.
+	ClockType ClockType
+
 	// handle that OpenTrace returned if open = true, else 0
 	handle syscall.Handle
 
 	open bool // True is the trace is open
 
-	// Keep ETW traceContext alive (don't nil it or they can be crashes.)
+	// Keep ETW traceContext alive (don't nil it or everything crashes)
 	_ctx *traceContext
 
 	// True if the trace is currently blocking in ProcessTrace
@@ -49,6 +53,13 @@ type ConsumerTrace struct {
 	// traceProps holds EVENT_TRACE_PROPERTIES_V2 structure for querying session statistics.
 	// This is only available for real-time sessions and is nil for ETL file traces.
 	traceProps *EventTraceProperties2Wrapper
+
+	// Timestamp conversion fields for raw timestamp processing
+	// Used only if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set.
+	// Read WNODE_HEADER structure Remarks on microsoft site for details.
+	timeStampScale    float64 // Scale factor for converting raw timestamps to 100ns units
+	timeStampBase     int64   // Base timestamp for FILETIME conversion (calculated from first event)
+	timeStampBaseInit bool    // Whether timeStampBase has been initialized
 
 	// The RTLostEvent event type indicates that one or more realtime events were lost.
 	// The RTLostEvent and RTLostBuffer event types are delivered before processing
@@ -108,23 +119,102 @@ type ConsumerTrace struct {
 	ErrorPropsParse atomic.Uint64
 }
 
+// ClockType defines the clock resolution used for event timestamps in a trace session.
+type ClockType uint32
+
+const (
+	ClockTypeUnknown                 ClockType = 0 // Unknown or not specified.
+	ClockTypeQueryPerformanceCounter ClockType = 1 // High-resolution Query Performance Counter (QPC).
+	ClockTypeSystemTime              ClockType = 2 // System time (100ns intervals).
+	ClockTypeCpuCycleCounter         ClockType = 3 // CPU cycle counter (unreliable).
+)
+
+// String returns a human-readable name for the clock type.
+func (ct ClockType) String() string {
+	switch ct {
+	case ClockTypeQueryPerformanceCounter:
+		return "QueryPerformanceCounter"
+	case ClockTypeSystemTime:
+		return "SystemTime"
+	case ClockTypeCpuCycleCounter:
+		return "CpuCycleCounter"
+	default:
+		return "Unknown"
+	}
+}
+
+// filetimeFromTimestamp Converts timestamp to FILETIME based on session's clock type.
+// This implements the ETW timestamp conversion procedure as documented in the Windows API.
+//
+// Steps taken from the Microsoft documentation: WNODE_HEADER structure Remarks:
+// https://learn.microsoft.com/en-us/windows/win32/etw/wnode-header
+func (t *ConsumerTrace) filetimeFromTimestamp(er *EventRecord) (filetime int64) {
+	filetimeStamp := er.EventHeader.TimeStamp
+
+	if t.traceLogfile.GetProcessTraceMode()&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
+		// Initialize timestamp conversion parameters on first event
+		if !t.timeStampBaseInit {
+			header := &t.traceLogfile.LogfileHeader
+
+			// Calculate scale factor based on clock type (ReservedFlags field)
+			switch ClockType(header.ReservedFlags) {
+			case ClockTypeQueryPerformanceCounter:
+				if header.PerfFreq != 0 {
+					// header.PerfFre is QauadPart in go, LARGE_INTEGER.QuadPart = base var.
+					// Convert PerfFreq to float64 for division
+					t.timeStampScale = 10000000.0 / float64(header.PerfFreq)
+				} else {
+					t.timeStampScale = 1.0 // Fallback to avoid division by zero
+				}
+			case ClockTypeSystemTime:
+				t.timeStampScale = 1.0 // Already in 100ns units
+				// Note that the remaining steps are unnecessary for events using system time,
+				// since the events already provide their time stamps in FILETIME units.
+			case ClockTypeCpuCycleCounter:
+				cpuSpeed := header.GetCpuSpeedInMHz()
+				if cpuSpeed != 0 {
+					t.timeStampScale = 10.0 / float64(cpuSpeed)
+				} else {
+					t.timeStampScale = 1.0 // Fallback to avoid division by zero
+				}
+			default:
+				t.timeStampScale = 1.0 // Unknown clock type, no conversion
+			}
+
+			// Calculate timestamp base from the first event
+			t.timeStampBase = header.StartTime - int64(t.timeStampScale*float64(er.EventHeader.TimeStamp))
+			t.timeStampBaseInit = true
+
+			conlog.Debug().Str("trace", t.TraceName).
+				Str("clockType", t.ClockType.String()).
+				Float64("timeStampScale", t.timeStampScale).
+				Int64("timeStampBase", t.timeStampBase).
+				Msg("Initialized timestamp conversion parameters")
+		}
+
+		// Convert raw timestamp to FILETIME
+		filetimeStamp = t.timeStampBase + int64(t.timeStampScale*float64(er.EventHeader.TimeStamp))
+	}
+	return filetimeStamp
+}
+
 // IsTraceOpen returns true if the trace is currently open and ready for processing.
 // A trace is considered open when OpenTrace has been successfully called and
 // the trace handle is valid. This does not indicate whether ProcessTrace is
 // currently running.
 func (t *ConsumerTrace) IsTraceOpen() bool {
-    return t.open
+	return t.open
 }
 
 // Lock locks the logfile statistics for reading.
 // It should be used in conjunction with GetLogFile() and Unlock().
 func (t *ConsumerTrace) Lock() {
-    t.logfileMu.RLock()
+	t.logfileMu.RLock()
 }
 
 // Unlock unlocks the logfile statistics.
 func (t *ConsumerTrace) Unlock() {
-    t.logfileMu.RUnlock()
+	t.logfileMu.RUnlock()
 }
 
 // GetLogFile returns a pointer to the current EventTraceLogfile statistics.
@@ -139,7 +229,7 @@ func (t *ConsumerTrace) Unlock() {
 //	fmt.Printf("Buffers Read: %d\n", stats.BuffersRead)
 //	trace.Unlock()
 func (t *ConsumerTrace) GetLogFile() *EventTraceLogfile {
-    return &t.traceLogfile
+	return &t.traceLogfile
 }
 
 // GetLogFileCopy returns a safe-to-read copy of the last known EventTraceLogfile state.

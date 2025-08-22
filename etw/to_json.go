@@ -138,7 +138,7 @@ func (h *TraceLogfileHeader) ToJSON() (JsonLogHeader, error) {
 		Version:            fmt.Sprintf("%d.%d.%d.%d", major, minor, sub, subMinor),
 		ProviderVersion:    fmt.Sprintf("Build version: %d", h.ProviderVersion),
 		NumberOfProcessors: h.NumberOfProcessors,
-		EndTime:            UnixTimeStamp(h.EndTime).UTC(),
+		EndTime:            FromFiletime(h.EndTime).UTC(),
 		TimerResolution:    h.TimerResolution,
 		MaxFileSize:        h.MaximumFileSize,
 		LogFileMode:        hexf.NUm32p(h.LogFileMode, false),
@@ -147,9 +147,9 @@ func (h *TraceLogfileHeader) ToJSON() (JsonLogHeader, error) {
 		PointerSize:        h.GetPointerSize(),
 		EventsLost:         h.GetEventsLost(),
 		CpuSpeedInMHz:      h.GetCpuSpeedInMHz(),
-		BootTime:           UnixTimeStamp(h.BootTime).UTC(),
+		BootTime:           FromFiletime(h.BootTime).UTC(),
 		PerfFreq:           h.PerfFreq,
-		StartTime:          UnixTimeStamp(h.StartTime).UTC(),
+		StartTime:          FromFiletime(h.StartTime).UTC(),
 		ReservedFlags:      h.ReservedFlags,
 		BuffersLost:        h.BuffersLost,
 		TimeZone: JsonTimeZoneInfo{
@@ -176,7 +176,7 @@ func (etl *EventTraceLogfile) ToJSON() (*JsonLogfile, error) {
 	}
 
 	safe := &JsonLogfile{
-		CurrentTime:   UnixTimeStamp(etl.CurrentTime).UTC(),
+		CurrentTime:   FromFiletime(etl.CurrentTime).UTC(),
 		BuffersRead:   etl.BuffersRead,
 		ProcessMode:   etl.GetProcessTraceModeStrings(),
 		LogfileHeader: header,
@@ -218,7 +218,7 @@ func (e *EventHeader) MarshalJSON() ([]byte, error) {
 		EventProperty:   e.EventProperty,
 		ThreadId:        e.ThreadId,
 		ProcessId:       e.ProcessId,
-		TimeStamp:       e.UTCTimeStamp(),
+		TimeStamp:       FromFiletime(e.TimestampRaw()), // Asumming Filetime format
 		ProviderId:      e.ProviderId.StringU(),
 		EventDescriptor: e.EventDescriptor,
 		KernelTime:      e.GetKernelTime(),

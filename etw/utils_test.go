@@ -10,6 +10,7 @@ import (
 	"sync"
 	"syscall"
 	"testing"
+	"time"
 	"unsafe"
 
 	"github.com/tekert/goetw/internal/test"
@@ -341,4 +342,55 @@ func TestUTF16PtrToStringConcurrent(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+// Wite a test to test UnixTimeStamp2
+func TestFiletimeConversion(t *testing.T) {
+	// Only test valid FILETIME values (uint64)
+	fileTimes := []uint64{
+		0,                             // Windows epoch
+		116444736000000000,            // Unix epoch
+		132456789012345678,            // Arbitrary value
+		10000000,                      // 1 second after Windows epoch
+		116444736000000000 + 10000000, // 1 second after Unix epoch
+		116444736000000000 - 10000000, // 1 second before Unix epoch
+		429496729500000000,            // Large value, but still valid
+	}
+
+	for _, fileTime := range fileTimes {
+		sysFileTime := syscall.Filetime{
+			LowDateTime:  uint32(fileTime),
+			HighDateTime: uint32(fileTime >> 32),
+		}
+		expected := time.Unix(0, sysFileTime.Nanoseconds())
+
+		result := FromFiletime(int64(fileTime))
+		if !result.Equal(expected) {
+			t.Errorf("fileTime=%d: time.Unix(0, (fileTime-116444736000000000)*100) failed: got %v, want %v", fileTime, result, expected)
+		}
+	}
+}
+
+func BenchmarkFiletimeConversion(b *testing.B) {
+	fileTimes := []int64{
+		0,
+		116444736000000000,
+	}
+
+	for _, fileTime := range fileTimes {
+		sysFileTime := syscall.Filetime{
+			LowDateTime:  uint32(fileTime),
+			HighDateTime: uint32(fileTime >> 32),
+		}
+		b.Run(fmt.Sprintf("Default_%d", fileTime), func(b *testing.B) {
+			for b.Loop() {
+				_ = time.Unix(0, sysFileTime.Nanoseconds())
+			}
+		})
+		b.Run(fmt.Sprintf("Optimized_%d", fileTime), func(b *testing.B) {
+			for b.Loop() {
+				_ = FromFiletime(fileTime)
+			}
+		})
+	}
 }

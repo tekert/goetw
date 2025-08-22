@@ -1043,7 +1043,7 @@ type EventTraceLogfile struct {
 	Union1        uint32             // (LogFileMode [NOT USED] | ProcessTraceMode)
 	CurrentEvent  EventTrace         // (on output) Current Event from this stream.
 	LogfileHeader TraceLogfileHeader // (on output) logfile header structure
-	
+
 	//BufferCallback *EventTraceBufferCallback
 	BufferCallback uintptr // callback before each buffer is read
 
@@ -1142,17 +1142,6 @@ type EventRecord struct {
 	UserData          uintptr                      // Event specific data in binary format.
 	UserContext       uintptr                      // Context from OpenTrace
 }
-
-/*
-Un-used uncomment if necessary
-func (e *EventRecord) pointer() uintptr {
-	return (uintptr)(unsafe.Pointer(e))
-}
-
-func (e *EventRecord) pointerOffset(offset uintptr) uintptr {
-	return e.pointer() + offset
-}
-*/
 
 // EventID returns the event ID of the event record.
 // If the event is XML-based (manifest), it returns the EventDescriptor ID.
@@ -1554,7 +1543,8 @@ type EventHeader struct {
 	EventProperty   uint16 // User given event property
 	ThreadId        uint32 // Thread Id
 	ProcessId       uint32 // Process Id
-	TimeStamp       int64  // Event Timestamp
+	// Event Timestamp (this may or may not be in Filetime format, depending on logFile.ProcessTraceMode)
+	TimeStamp       int64
 	ProviderId      GUID   // Provider Id
 	EventDescriptor EventDescriptor
 	ProcessorTime   uint64 // Processor Clock (KernelTime | UserTime)
@@ -1575,19 +1565,15 @@ func (e *EventHeader) GetUserTime() uint32 {
 	return uint32(e.ProcessorTime >> 32)
 }
 
-// TODO(tekert): delete this, has worse performance when near second boundary
-// the new UTCTimeStamp() has more consistent performance in all benchmark tests.
-// precision was the same for both.
-func (e *EventHeader) UTCTimeStamp_old() time.Time {
-	nano := int64(10000000)
-	sec := int64(float64(e.TimeStamp)/float64(nano) - 11644473600.0)
-	nsec := ((e.TimeStamp - 11644473600*nano) - sec*nano) * 100
-	return time.Unix(sec, nsec).UTC()
-}
 
-// UTCTimeStamp converts event timestamp to UTC time
-func (e *EventHeader) UTCTimeStamp() time.Time {
-	return UnixTimeStamp(e.TimeStamp).UTC()
+// TimestampRaw returns the raw timestamp of the event.
+// This may NOT be in Filetime format, it is the raw value as stored in the event header.
+// To know in wich format is it, check the logFile.ProcessTraceMode used for this trace.
+//
+// if etw.PROCESS_TRACE_MODE_RAW_TIMESTAMP is NOT set, the TimeStamp is in Filetime format.
+// if it is set, use the EventRecordHelper.Timestamp() method to get the correct time.Time value.
+func (e *EventHeader) TimestampRaw() int64 {
+	return e.TimeStamp
 }
 
 // https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_descriptor

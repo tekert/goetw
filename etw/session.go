@@ -199,6 +199,9 @@ func NewRealTimeEventTraceProperties() *EventTraceProperties2Wrapper {
 	traceProps.Wnode.Guid = GUID{}     // Will be set by etw
 	// Only used if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set in the Consumer side
 	traceProps.Wnode.ClientContext = 1 // QPC
+	seslog.Debug().Uint32("ClientContext", traceProps.Wnode.ClientContext).
+		Str("ClockType", ClockType(traceProps.Wnode.ClientContext).String()).
+		Msg("Session configured with clock type")
 	// WNODE_FLAG_ALL_DATA Flag is part of the legacy WMI query interface,
 	// its is for querying data not for starting a trace session.
 	// WNODE_FLAG_VERSIONED_PROPERTIES means use EventTraceProperties2
@@ -215,6 +218,28 @@ func NewRealTimeEventTraceProperties() *EventTraceProperties2Wrapper {
 	traceProps.LoggerNameOffset = traceProps.GetTraceNameOffset()
 
 	return traceProps
+}
+
+// SetClockResolution sets the clock resolution for the session.
+// Set this before calling Start() to ensure the session uses the desired clock type.
+// returns true if the clock resolution was set successfully.
+func (s *RealTimeSession) SetClockResolution(c ClockType) bool {
+	// If the session is already started, we cannot change the clock resolution.
+	if s.IsStarted() {
+		return false
+	}
+	if c < 1 || c > 2 {
+		seslog.Error().Uint32("ClockType", uint32(c)).
+			Msg("Invalid clock type, must be between QPC, SystemTime and CpuCycle")
+		return false
+	}
+	s.traceProps.Wnode.ClientContext = uint32(c)
+
+	seslog.Debug().Uint32("ClientContext", s.traceProps.Wnode.ClientContext).
+		Str("ClockType", ClockType(s.traceProps.Wnode.ClientContext).String()).
+		Msg("Session configured with clock type")
+
+	return true
 }
 
 // IsStarted returns true if the session is already started

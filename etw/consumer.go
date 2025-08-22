@@ -96,6 +96,12 @@ type Consumer struct {
 	// returns true event processing will continue, otherwise it is aborted.
 	// Filtering out events here has the lowest overhead on the consumer side, but the
 	// full cost of event generation and delivery has already been incurred.
+	//
+	// NOTE: The timestamp in
+	// EventRecord.EventHeader.TimeStamp is the raw timestamp and its in FILETIME
+	// format only if PROCESS_TRACE_MODE_RAW_TIMESTAMP is not set.
+	// if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set, use the EventRecordHelperCallback
+	// on later callbacks to access the converted timestamp via EventRecordHelper.Timestamp().
 	EventRecordCallback func(*EventRecord) bool
 
 	// [2] Callback which executes after TraceEventInfo is parsed.
@@ -347,10 +353,16 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 
 	// We must always get the context first. It might be nil if the trace is
 	// closing or if the event is a system notification without a context.
-	if er.getUserContext() == nil {
+	usrCtx := er.getUserContext()
+	if usrCtx == nil {
 		setError(fmt.Errorf("EventRecord has no UserContext, skipping event"))
 		return
 	}
+
+	// Convert EventRecord timestamp to FILETIME based on ClientContext settings.
+	// Does nothing if PROCESS_TRACE_MODE_RAW_TIMESTAMP is not set.
+	// If that flag is not set, the timestamp is already in FILETIME format.
+	filetimeStamp := usrCtx.trace.filetimeFromTimestamp(er)
 
 	// calling EventHeaderCallback if possible
 	if c.EventRecordCallback != nil {
@@ -364,6 +376,9 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	// we get the TraceContext from EventRecord.UserContext
 	// Parse TRACE_EVENT_INFO from the event record
 	if h, err := newEventRecordHelper(er); err == nil {
+		// Store the converted timestamp in the helper for user access
+		h.correctFiletime = filetimeStamp
+
 		// initialize the helper later if not skipped.
 
 		// return mem to pool when done (big performance improvement)
@@ -525,6 +540,11 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	// Since pointers may not be valid when the trace is closed,
 	// we clone the EventTraceLogfile structure (except the pointers).
 	ti.traceLogfile = *loggerInfo.Clone()
+
+	// Determine and store the clock type from the log file header.
+	// The ReservedFlags field indicates the clock resolution used by the session.
+	ti.ClockType = ClockType(ti.traceLogfile.LogfileHeader.ReservedFlags)
+	seslog.Info().Str("trace", name).Str("ClockType", ti.ClockType.String()).Msg("Consumer opened trace")
 
 	return nil
 }
