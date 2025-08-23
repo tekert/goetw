@@ -1081,10 +1081,13 @@ func (e *EventTraceLogfile) GetProcessTraceModeStrings() []string {
 	return modes
 }
 
+// SetProcessTraceMode sets the ProcessTraceMode field of the EventTraceLogfile struct.
+// Overwrites any existing value.
 func (e *EventTraceLogfile) SetProcessTraceMode(ptm uint32) {
 	e.Union1 = ptm
 }
 
+// TODO: delete?
 // * NOTE(tekert): Not used, instead they are using uintptr, wonder why
 type EventCallback func(*EventTrace)
 type EventRecordCallback func(*EventRecord) uintptr // New, replaces EventCallback
@@ -1537,18 +1540,18 @@ typedef struct _EVENT_HEADER {
 } EVENT_HEADER, *PEVENT_HEADER;
 */
 type EventHeader struct {
-	Size            uint16 // Event Size
-	HeaderType      uint16 // Header Type
-	Flags           uint16 // Flags
-	EventProperty   uint16 // User given event property
-	ThreadId        uint32 // Thread Id
-	ProcessId       uint32 // Process Id
+	Size          uint16 // Event Size
+	HeaderType    uint16 // Header Type
+	Flags         uint16 // Flags
+	EventProperty uint16 // User given event property
+	ThreadId      uint32 // Thread Id
+	ProcessId     uint32 // Process Id
 	// Event Timestamp (this may or may not be in Filetime format, depending on logFile.ProcessTraceMode)
 	// Use EventRecordHelper.Timestamp() to get the correct time.Time value.
 	// If etw.PROCESS_TRACE_MODE_RAW_TIMESTAMP is set on the Consumer, this is the raw timestamp
 	// If it is not set, this is in Filetime format.
 	TimeStamp       int64
-	ProviderId      GUID   // Provider Id
+	ProviderId      GUID // Provider Id
 	EventDescriptor EventDescriptor
 	ProcessorTime   uint64 // Processor Clock (KernelTime | UserTime)
 	ActivityId      GUID   // Activity Id
@@ -1567,7 +1570,6 @@ func (e *EventHeader) GetUserTime() uint32 {
 	// Extract UserTime (higher 32 bits)
 	return uint32(e.ProcessorTime >> 32)
 }
-
 
 // TimestampRaw returns the raw timestamp of the event.
 // This may NOT be in Filetime format, it is the raw value as stored in the event header.
@@ -2240,6 +2242,111 @@ const (
 	EventSecurityAddSACL = EventSecurityOperation(3)
 	EventSecurityMax     = EventSecurityOperation(4)
 )
+
+// taken from 10.0.19041.0 /winnt.h
+// https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
+const (
+	////////////////////////////////////////////////////////////////////////
+	//                                                                    //
+	//               NT Defined Privileges                                //
+	//                                                                    //
+	////////////////////////////////////////////////////////////////////////
+
+	SE_CREATE_TOKEN_NAME                      = "SeCreateTokenPrivilege"
+	SE_ASSIGNPRIMARYTOKEN_NAME                = "SeAssignPrimaryTokenPrivilege"
+	SE_LOCK_MEMORY_NAME                       = "SeLockMemoryPrivilege"
+	SE_INCREASE_QUOTA_NAME                    = "SeIncreaseQuotaPrivilege"
+	SE_UNSOLICITED_INPUT_NAME                 = "SeUnsolicitedInputPrivilege"
+	SE_MACHINE_ACCOUNT_NAME                   = "SeMachineAccountPrivilege"
+	SE_TCB_NAME                               = "SeTcbPrivilege"
+	SE_SECURITY_NAME                          = "SeSecurityPrivilege"
+	SE_TAKE_OWNERSHIP_NAME                    = "SeTakeOwnershipPrivilege"
+	SE_LOAD_DRIVER_NAME                       = "SeLoadDriverPrivilege"
+	SE_SYSTEM_PROFILE_NAME                    = "SeSystemProfilePrivilege"
+	SE_SYSTEMTIME_NAME                        = "SeSystemtimePrivilege"
+	SE_PROF_SINGLE_PROCESS_NAME               = "SeProfileSingleProcessPrivilege"
+	SE_INC_BASE_PRIORITY_NAME                 = "SeIncreaseBasePriorityPrivilege"
+	SE_CREATE_PAGEFILE_NAME                   = "SeCreatePagefilePrivilege"
+	SE_CREATE_PERMANENT_NAME                  = "SeCreatePermanentPrivilege"
+	SE_BACKUP_NAME                            = "SeBackupPrivilege"
+	SE_RESTORE_NAME                           = "SeRestorePrivilege"
+	SE_SHUTDOWN_NAME                          = "SeShutdownPrivilege"
+	SE_DEBUG_NAME                             = "SeDebugPrivilege"
+	SE_AUDIT_NAME                             = "SeAuditPrivilege"
+	SE_SYSTEM_ENVIRONMENT_NAME                = "SeSystemEnvironmentPrivilege"
+	SE_CHANGE_NOTIFY_NAME                     = "SeChangeNotifyPrivilege"
+	SE_REMOTE_SHUTDOWN_NAME                   = "SeRemoteShutdownPrivilege"
+	SE_UNDOCK_NAME                            = "SeUndockPrivilege"
+	SE_SYNC_AGENT_NAME                        = "SeSyncAgentPrivilege"
+	SE_ENABLE_DELEGATION_NAME                 = "SeEnableDelegationPrivilege"
+	SE_MANAGE_VOLUME_NAME                     = "SeManageVolumePrivilege"
+	SE_IMPERSONATE_NAME                       = "SeImpersonatePrivilege"
+	SE_CREATE_GLOBAL_NAME                     = "SeCreateGlobalPrivilege"
+	SE_TRUSTED_CREDMAN_ACCESS_NAME            = "SeTrustedCredManAccessPrivilege"
+	SE_RELABEL_NAME                           = "SeRelabelPrivilege"
+	SE_INC_WORKING_SET_NAME                   = "SeIncreaseWorkingSetPrivilege"
+	SE_TIME_ZONE_NAME                         = "SeTimeZonePrivilege"
+	SE_CREATE_SYMBOLIC_LINK_NAME              = "SeCreateSymbolicLinkPrivilege"
+	SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME = "SeDelegateSessionUserImpersonatePrivilege"
+
+	// Token Specific Access Rights.
+
+	TOKEN_ASSIGN_PRIMARY    = 0x0001
+	TOKEN_DUPLICATE         = 0x0002
+	TOKEN_IMPERSONATE       = 0x0004
+	TOKEN_QUERY             = 0x0008
+	TOKEN_QUERY_SOURCE      = 0x0010
+	TOKEN_ADJUST_PRIVILEGES = 0x0020
+	TOKEN_ADJUST_GROUPS     = 0x0040
+	TOKEN_ADJUST_DEFAULT    = 0x0080
+	TOKEN_ADJUST_SESSIONID  = 0x0100
+
+	// Privilege attributes
+
+	SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001
+	SE_PRIVILEGE_ENABLED            = 0x00000002
+	SE_PRIVILEGE_REMOVED            = 0x00000004
+	SE_PRIVILEGE_USED_FOR_ACCESS    = 0x80000000
+)
+
+// winnt.h
+// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-luid
+/*
+typedef struct _LUID {
+  DWORD LowPart;
+  LONG  HighPart;
+} LUID, *PLUID;
+*/
+type LUID struct {
+	LowPart  uint32
+	HighPart int32
+}
+
+// winnt.h
+// https://learn.microsoft.com/es-es/windows/win32/api/winnt/ns-winnt-luid_and_attributes
+/*
+typedef struct _LUID_AND_ATTRIBUTES {
+  LUID  Luid;
+  DWORD Attributes;
+} LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
+*/
+type LUID_AND_ATTRIBUTES struct {
+	Luid       LUID
+	Attributes uint32
+}
+
+// winnt.h
+// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-token_privileges
+/*
+typedef struct _TOKEN_PRIVILEGES {
+  DWORD               PrivilegeCount;
+  LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
+} TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
+*/
+type TOKEN_PRIVILEGES struct {
+	PrivilegeCount uint32
+	Privileges     [1]LUID_AND_ATTRIBUTES
+}
 
 // wmistr.h (v10.0.19041.0)
 //

@@ -5,6 +5,7 @@ package etw
 import (
 	"fmt"
 	"os/user"
+	"syscall"
 	"unsafe"
 )
 
@@ -47,19 +48,17 @@ func GetAccessString(guid *GUID) (s string, err error) {
 // if sid is empty: current user is used.
 func AddProviderAccess(guid *GUID, sidString string, rights uint32) (err error) {
 	var sid *SID
-
 	if sidString != "" {
 		if sid, err = ConvertStringSidToSidW(sidString); err != nil {
 			err = fmt.Errorf("failed to convert string to sid: %w", err)
 			return
 		}
 	} else {
-		sid, err = currentUserSid()
+		sid, err = GetCurrentSID()
 		if err != nil {
 			return fmt.Errorf("failed to get current user sid %s", err)
 		}
 	}
-
 	return EventAccessControl(
 		guid,
 		uint32(EventSecurityAddDACL),
@@ -86,7 +85,7 @@ func SetProviderAccess(guid GUID, sidString string, rights uint32) (err error) {
 			return fmt.Errorf("failed to convert string %s to sid %s", sidString, err)
 		}
 	} else {
-		sid, err = currentUserSid()
+		sid, err = GetCurrentSID()
 		if err != nil {
 			return fmt.Errorf("failed to get current user sid %s", err)
 		}
@@ -111,7 +110,8 @@ func SetProviderAccess(guid GUID, sidString string, rights uint32) (err error) {
 	return nil
 }
 
-func currentUserSid() (sid *SID, err error) {
+// GetCurrentSID retrieves the SID of the current user as a *SID structure.
+func GetCurrentSID() (sid *SID, err error) {
 	currentUser, err := user.Current()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current user: %w", err)
@@ -119,7 +119,8 @@ func currentUserSid() (sid *SID, err error) {
 	return ConvertStringSidToSidW(currentUser.Uid)
 }
 
-func currentUserSID_Is(sidString string) (r bool, err error) {
+// IsCurrentSid checks if the provided SID string matches the current user's SID.
+func IsCurrentSid(sidString string) (r bool, err error) {
 	currentUser, err := user.Current()
 	if err != nil {
 		return false, fmt.Errorf("failed to get current user: %w", err)
@@ -130,4 +131,69 @@ func currentUserSID_Is(sidString string) (r bool, err error) {
 		return false, fmt.Errorf("invalid sid: %w", err)
 	}
 	return (currentUser.Uid == sidString), nil
+}
+
+// enablePrivilege enables a specific Windows privilege for the current process
+func enablePrivilege(privilegeName string) error {
+	var tokenHandle syscall.Token
+
+	// Get current process handle
+	processHandle, err := syscall.GetCurrentProcess()
+	if err != nil {
+		return fmt.Errorf("GetCurrentProcess failed: %v", err)
+	}
+
+	// Use the process handle to open the process token
+	err = syscall.OpenProcessToken(processHandle,
+		TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY, &tokenHandle)
+	if err != nil {
+		return fmt.Errorf("OpenProcessToken failed: %v", err)
+	}
+	defer syscall.CloseHandle(syscall.Handle(tokenHandle))
+
+	// Lookup privilege LUID
+	var luid LUID
+	privName, err := syscall.UTF16PtrFromString(privilegeName)
+	if err != nil {
+		return fmt.Errorf("UTF16PtrFromString failed: %v", err)
+	}
+
+	err = LookupPrivilegeValue(nil, privName, &luid)
+	if err != nil {
+		return fmt.Errorf("failed to lookup privilege %s: %v", privilegeName, err)
+	}
+
+	// Set up TOKEN_PRIVILEGES structure
+	var tp TOKEN_PRIVILEGES
+	tp.PrivilegeCount = 1
+	tp.Privileges[0].Luid = luid
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED
+
+	// Enable the privilege
+	err = AdjustTokenPrivileges(tokenHandle, false, &tp, uint32(unsafe.Sizeof(tp)), nil, nil)
+	if err != nil {
+		return fmt.Errorf("AdjustTokenPrivileges failed: %v", err)
+	}
+
+	return nil
+}
+
+// EnableProfilingPrivileges enables the SeSystemProfilePrivilege required for EVENT_TRACE_FLAG_PROFILE
+// This must be called before starting an ETW session with profiling enabled.
+// Returns an error if the privilege cannot be enabled (usually means not running as administrator).
+func EnableProfilingPrivileges() error {
+	return enablePrivilege(SE_SYSTEM_PROFILE_NAME)
+}
+
+//	The name of the privilege,
+//	as defined in the Winnt.h header file. For example, this parameter could specify the constant,
+//	SE_SECURITY_NAME, or its corresponding string, "SeSecurityPrivilege".
+//
+// Look in https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
+func EnablePrivileges(privName string) error {
+	if err := enablePrivilege(privName); err != nil {
+		fmt.Printf("Warning: Could not enable privilege %s: %v\n", privName, err)
+	}
+
+	return nil
 }

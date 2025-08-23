@@ -3,6 +3,7 @@
 package etw
 
 import (
+	"fmt"
 	"syscall"
 	"unsafe"
 )
@@ -268,10 +269,8 @@ WINADVAPI WINBOOL WINAPI ConvertStringSidToSidW(
 	PSID *Sid);
 */
 func ConvertStringSidToSidW(stringSid string) (sid *SID, err error) {
-
 	var rc uintptr
 	var utf16Sid *uint16
-
 	if utf16Sid, err = syscall.UTF16PtrFromString(stringSid); err != nil {
 		return
 	}
@@ -279,12 +278,10 @@ func ConvertStringSidToSidW(stringSid string) (sid *SID, err error) {
 	rc, _, err = convertStringSidToSidW.Call(
 		uintptr(unsafe.Pointer(utf16Sid)),
 		uintptr(unsafe.Pointer(&sid)))
-
 	if rc != 0 {
 		// success
 		err = nil
 	}
-
 	return
 }
 
@@ -314,4 +311,52 @@ func ConvertSidToStringSidW(sid *SID) (string, error) {
 	}
 
 	return "", err
+}
+
+func AdjustTokenPrivileges(
+	tokenHandle syscall.Token,
+	disableAllPrivileges bool,
+	newState *TOKEN_PRIVILEGES,
+	bufferLength uint32,
+	previousState *TOKEN_PRIVILEGES,
+	returnLength *uint32) error {
+
+	var disableAll uintptr
+	if disableAllPrivileges {
+		disableAll = 1
+	}
+
+	r1, _, lastErr := adjustTokenPrivileges.Call(
+		uintptr(tokenHandle),
+		disableAll,
+		uintptr(unsafe.Pointer(newState)),
+		uintptr(bufferLength),
+		uintptr(unsafe.Pointer(previousState)),
+		uintptr(unsafe.Pointer(returnLength)))
+	// AdjustTokenPrivileges returns 0 on failure
+	if r1 == 0 {
+		return fmt.Errorf("AdjustTokenPrivileges failed: %v: Err %w", lastErr, syscall.Errno(r1))
+	}
+	// Check if all privileges were assigned
+	if lastErr == ERROR_NOT_ALL_ASSIGNED {
+		return fmt.Errorf("not all privileges were assigned: %v", lastErr)
+	}
+
+	return nil
+}
+
+func LookupPrivilegeValue(
+	systemName *uint16,
+	name *uint16,
+	luid *LUID) error {
+
+	r1, _, lastErr := lookupPrivilegeValueW.Call(
+		uintptr(unsafe.Pointer(systemName)),
+		uintptr(unsafe.Pointer(name)),
+		uintptr(unsafe.Pointer(luid)))
+
+	if r1 == 0 {
+		return fmt.Errorf("LookupPrivilegeValue failed: %v: Err %w", lastErr, syscall.Errno(r1))
+	}
+	return nil
 }
