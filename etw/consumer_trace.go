@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 )
 
 // ConsumerTrace holds the state and statistics for a single trace session
@@ -55,11 +56,10 @@ type ConsumerTrace struct {
 	traceProps *EventTraceProperties2Wrapper
 
 	// Timestamp conversion fields for raw timestamp processing
-	// Used only if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set.
-	// Read WNODE_HEADER structure Remarks on microsoft site for details.
+	// Used only if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set (or etl file, see notes).
+	// More info: WNODE_HEADER structure Remarks on microsoft site for details.
 	timeStampScale    float64 // Scale factor for converting raw timestamps to 100ns units
-	timeStampBase     int64   // Base timestamp for FILETIME conversion (calculated from first event)
-	timeStampBaseInit bool    // Whether timeStampBase has been initialized
+	timeStampBaseInit bool    // Whether timeStampScale has been initialized
 
 	// The RTLostEvent event type indicates that one or more realtime events were lost.
 	// The RTLostEvent and RTLostBuffer event types are delivered before processing
@@ -117,6 +117,9 @@ type ConsumerTrace struct {
 	// due to parsing errors. This can occur when event data is corrupted, has an
 	// unexpected format, or when the property parsing logic encounters unsupported data types.
 	ErrorPropsParse atomic.Uint64
+
+	// Start time of the trace session
+	StartTime time.Time
 }
 
 // ClockType defines the clock resolution used for event timestamps in a trace session.
@@ -143,59 +146,75 @@ func (ct ClockType) String() string {
 	}
 }
 
-// filetimeFromTimestamp Converts timestamp to FILETIME based on session's clock type.
-// This implements the ETW timestamp conversion procedure as documented in the Windows API.
-//
-// Steps taken from the Microsoft documentation: WNODE_HEADER structure Remarks:
-// https://learn.microsoft.com/en-us/windows/win32/etw/wnode-header
-func (t *ConsumerTrace) filetimeFromTimestamp(er *EventRecord) (filetime int64) {
-	filetimeStamp := er.EventHeader.TimeStamp
+func (t *ConsumerTrace) fromEventTimestamp(er *EventRecord) (filetime int64) {
+	// For ETL file traces if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set timestamps are in raw format
+	// but GetProcessTraceMode() does not return that flag (maybe a bug?) so we must enforce conversion
+	// for traces that are not realtime. (since we dont know if that flag is active or not)
+	if (t.traceLogfile.GetProcessTraceMode()&
+		PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0) ||
+		!t.realtime {
+		return t.fromRawTimestamp(er.EventHeader.TimeStamp)
+	}
+	return er.EventHeader.TimeStamp
+}
 
-	if t.traceLogfile.GetProcessTraceMode()&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
-		// Initialize timestamp conversion parameters on first event
-		if !t.timeStampBaseInit {
-			header := &t.traceLogfile.LogfileHeader
+// fromRawTimestamp converts a raw timestamp to an absolute FILETIME.
+// It uses the session's clock type to apply the correct scaling factor to the raw
+// tick value and calculates the final FILETIME relative to the system's boot time.
+// This method caches the scaling factor for performance.
+func (t *ConsumerTrace) fromRawTimestamp(timestamp int64) (filetime int64) {
+	// Initialize the scaling factor on the first call. This is a one-time setup
+	// per trace session and is safe for concurrent use as it's idempotent.
+	if !t.timeStampBaseInit {
+		logheader := &t.traceLogfile.LogfileHeader
 
-			// Calculate scale factor based on clock type (ReservedFlags field)
-			switch ClockType(header.ReservedFlags) {
-			case ClockTypeQueryPerformanceCounter:
-				if header.PerfFreq != 0 {
-					// header.PerfFre is QauadPart in go, LARGE_INTEGER.QuadPart = base var.
-					// Convert PerfFreq to float64 for division
-					t.timeStampScale = 10000000.0 / float64(header.PerfFreq)
-				} else {
-					t.timeStampScale = 1.0 // Fallback to avoid division by zero
-				}
-			case ClockTypeSystemTime:
-				t.timeStampScale = 1.0 // Already in 100ns units
-				// Note that the remaining steps are unnecessary for events using system time,
-				// since the events already provide their time stamps in FILETIME units.
-			case ClockTypeCpuCycleCounter:
-				cpuSpeed := header.GetCpuSpeedInMHz()
-				if cpuSpeed != 0 {
-					t.timeStampScale = 10.0 / float64(cpuSpeed)
-				} else {
-					t.timeStampScale = 1.0 // Fallback to avoid division by zero
-				}
-			default:
-				t.timeStampScale = 1.0 // Unknown clock type, no conversion
+		// Calculate the scale factor to convert raw ticks into 100-nanosecond intervals.
+		switch ClockType(logheader.ReservedFlags) {
+		case ClockTypeQueryPerformanceCounter:
+			if logheader.PerfFreq != 0 {
+				// Scale factor = (100ns intervals per second) / (QPC ticks per second)
+				t.timeStampScale = 10000000.0 / float64(logheader.PerfFreq)
+			} else {
+				t.timeStampScale = 1.0 // Fallback to avoid division by zero.
 			}
-
-			// Calculate timestamp base from the first event
-			t.timeStampBase = header.StartTime - int64(t.timeStampScale*float64(er.EventHeader.TimeStamp))
-			t.timeStampBaseInit = true
-
-			conlog.Debug().Str("trace", t.TraceName).
-				Str("clockType", t.ClockType.String()).
-				Float64("timeStampScale", t.timeStampScale).
-				Int64("timeStampBase", t.timeStampBase).
-				Msg("Initialized timestamp conversion parameters")
+		case ClockTypeSystemTime:
+			// SystemTime is already in 100ns FILETIME intervals, but relative to boot.
+			t.timeStampScale = 1.0
+		case ClockTypeCpuCycleCounter:
+			cpuSpeed := logheader.GetCpuSpeedInMHz()
+			if cpuSpeed != 0 {
+				// Scale factor = (100ns intervals per second) / (CPU ticks per second)
+				// (10,000,000 / (cpuSpeed * 1,000,000)) = 10.0 / cpuSpeed
+				t.timeStampScale = 10.0 / float64(cpuSpeed)
+			} else {
+				t.timeStampScale = 1.0 // Fallback.
+			}
+		default:
+			t.timeStampScale = 1.0 // Unknown clock type, assume no scaling.
 		}
 
-		// Convert raw timestamp to FILETIME
-		filetimeStamp = t.timeStampBase + int64(t.timeStampScale*float64(er.EventHeader.TimeStamp))
+		t.timeStampBaseInit = true // Mark as initialized.
+
+		conlog.Debug().Str("trace", t.TraceName).
+			Str("clockType", t.ClockType.String()).
+			Float64("timeStampScale", t.timeStampScale).
+			Msg("Initialized raw timestamp conversion parameters")
 	}
-	return filetimeStamp
+
+	// Calculate the number of 100ns intervals represented by the raw timestamp.
+	scaledTicks := int64(t.timeStampScale * float64(timestamp))
+
+	// For real-time sessions and file traces with raw timestamps, the final
+	// FILETIME is the boot time plus the scaled ticks since boot.
+	return t.traceLogfile.LogfileHeader.BootTime + scaledTicks
+}
+
+// fromQPC is now a convenience wrapper around the main raw timestamp conversion logic.
+// It ensures that properties containing QPC values are converted correctly.
+func (t *ConsumerTrace) fromQPC(qpcTicks int64) (filetime int64) {
+	// This assumes the session's clock type is QPC. If another clock type is active,
+	// this conversion might be inaccurate, but PerfInfo events are documented to use QPC.
+	return t.fromRawTimestamp(qpcTicks)
 }
 
 // IsTraceOpen returns true if the trace is currently open and ready for processing.

@@ -29,79 +29,38 @@ type noCopy struct{}
 func (*noCopy) Lock()   {}
 func (*noCopy) Unlock() {}
 
-// Windows FILETIME constants
-const (
-	WINDOWS_TICK     = 100         // 100-nanosecond intervals
-	EPOCH_DIFF       = 11644473600 // seconds between Windows epoch (1601) and Unix epoch (1970)
-	TICKS_PER_SECOND = 10000000    // 1 second = 10,000,000 ticks
-)
-
-
-// UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
-// to a Unixtime.Time, This is wrapper for UnixTimeStampU who uses the correct unsigned form.
-// Microsoft documentation uses signed int for FILETIME but it can never be negative...
-//
-//go:inline
-func UnixFiletime(fileTime int64) time.Time {
-	return UnixTimeStampU(uint64(fileTime))
-}
-
-// UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
-// to a Unixtime.Time, This is wrapper for UnixTimeStampU who uses the correct unsigned form.
-// Microsoft documentation uses signed int for FILETIME but it can never be negative...
-//
-//go:inline
-func UnixTimeStamp(fileTime int64) time.Time {
-	return UnixTimeStampU(uint64(fileTime))
-}
-
 // Faster than syscall.Filetime.Nanoseconds() on edge cases.
 // UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
 // to a Unixtime.Time
-func UnixTimeStampU(fileTime uint64) time.Time {
-	// Convert to Unix epoch
-	unixTime := fileTime - (EPOCH_DIFF * TICKS_PER_SECOND)
-
-	// Calculate seconds and remaining ticks
-	seconds := unixTime / TICKS_PER_SECOND
-	remaining := unixTime % TICKS_PER_SECOND
-
-	// Convert remaining ticks to nanoseconds (multiply by 100)
-	nanos := remaining * WINDOWS_TICK
-
-	return time.Unix(int64(seconds), int64(nanos))
+//
+//go:inline
+func FromFiletime(fileTime int64) time.Time {
+	return time.Unix(0, (fileTime-116444736000000000)*100)
 }
 
-// UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
+// FromFiletimeUTC converts a Windows FILETIME (100-nanosecond intervals since 1601)
 // to a Unix UTC time.Time
-func UTCTimeStamp(ft *syscall.Filetime) time.Time {
+//
+//go:inline
+func FromFiletimeUTC(fileTime int64) time.Time {
+	return time.Unix(0, (fileTime-116444736000000000)*100).UTC()
+}
+
+// FromSyscallFiletime converts a Windows FILETIME (100-nanosecond intervals since 1601)
+// to a Unix time.Time
+//
+//go:inline
+func FromSyscallFiletime(ft *syscall.Filetime) time.Time {
+	return time.Unix(0, ft.Nanoseconds())
+}
+
+// FromSyscallFiletimeUCT converts a Windows FILETIME (100-nanosecond intervals since 1601)
+// to a Unix UTC time.Time
+//
+//go:inline
+func FromSyscallFiletimeUCT(ft *syscall.Filetime) time.Time {
 	return time.Unix(0, ft.Nanoseconds()).UTC()
 }
-
-func max(a, b int) int {
-	if a < b {
-		return b
-	}
-	return a
-}
-
-// // UTF16PtrToString transforms a *uint16 to a Go string
-// DEPRECATED the one ported from go syscall package is 48% faster than this
-// wich uses UTF16AtOffsetToString_slow
-// func UTF16PtrToString(utf16 *uint16) string {
-// 	return UTF16AtOffsetToString_slow(uintptr(unsafe.Pointer(utf16)), 0)
-// }
-
-// too many allocations - DEPRECATED
-// func UTF16AtOffsetToString_slow(pstruct uintptr, offset uintptr) string {
-// 	out := make([]uint16, 0, 64)
-// 	wc := (*uint16)(unsafe.Pointer(pstruct + offset))
-// 	for i := uintptr(2); *wc != 0; i += 2 {
-// 		out = append(out, *wc)
-// 		wc = (*uint16)(unsafe.Pointer(pstruct + offset + i))
-// 	}
-// 	return syscall.UTF16ToString(out)
-// }
 
 func CopyData(pointer unsafe.Pointer, size int) []byte {
 	if size <= 0 {
@@ -113,16 +72,6 @@ func CopyData(pointer unsafe.Pointer, size int) []byte {
 	copy(dst, src)
 	return dst
 }
-
-// inneficient - delete 3x slower than CopyData and a bit unsafe with uintptr.
-// func CopyData_old(pointer uintptr, size int) []byte {
-// 	out := make([]byte, 0, size)
-// 	for it := pointer; it != pointer+uintptr(size); it++ {
-// 		b := (*byte)(unsafe.Pointer(it))
-// 		out = append(out, *b)
-// 	}
-// 	return out
-// }
 
 // UUID is a simple UUIDgenerator
 func UUID() (uuid string, err error) {

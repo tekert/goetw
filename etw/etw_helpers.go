@@ -201,16 +201,21 @@ func (e *EventRecordHelper) Timestamp() time.Time {
 	return FromFiletime(e.correctFiletime)
 }
 
-// TODO: test this, do wmitime objects (from PerfInfo provider) come as FILETIME or Session set resolution?
-// TimestampFromRaw will get the correct timestamp depending on the trace session clock settings.
-// will convert the parameter to filetime if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set.
-// If that flag is not set for the trace session, it will return the parameter as is.
-// This is mostly used when properties of MOF events contain Wmitime values.
-func (e *EventRecordHelper) TimestampFromRaw(wmitime int64) time.Time {
+// TimestampFrom converts a raw timestamp value from an event property (like WmiTime)
+// into an absolute time.Time, using the session's clock type and conversion settings.
+func (e *EventRecordHelper) TimestampFrom(rawTimestamp int64) time.Time {
 	// getUserContext() will not be nil if EventRecordHelper was created.
-	// trace will also exist
-	e.EventRec.getUserContext().trace.filetimeFromTimestamp(e.EventRec)
-	return FromFiletime(wmitime)
+	filetime := e.userContext().trace.fromRawTimestamp(rawTimestamp)
+	return FromFiletime(filetime)
+}
+
+// This is just a wrapper for EventRecordHelper.TimestampFrom
+//
+// FromQPC converts a raw Query Performance Counter (QPC) value from a property
+// into an absolute time.Time, using the session's boot time and frequency.
+func (e *EventRecordHelper) FromQPC(qpcTicks int64) time.Time {
+	filetime := e.userContext().trace.fromQPC(qpcTicks)
+	return FromFiletime(filetime)
 }
 
 // Release EventRecordHelper back to memory pool.

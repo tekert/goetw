@@ -362,7 +362,9 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	// Convert EventRecord timestamp to FILETIME based on ClientContext settings.
 	// Does nothing if PROCESS_TRACE_MODE_RAW_TIMESTAMP is not set.
 	// If that flag is not set, the timestamp is already in FILETIME format.
-	filetimeStamp := usrCtx.trace.filetimeFromTimestamp(er)
+	// File traces use QPC timestamps
+	filetimeStamp := usrCtx.trace.fromEventTimestamp(er)
+
 
 	// calling EventHeaderCallback if possible
 	if c.EventRecordCallback != nil {
@@ -488,6 +490,8 @@ func (c *Consumer) close(wait bool) (lastErr error) {
 	return
 }
 
+// TODO(tekert): implement function to set ProcessTraceMode flags before consumer is started.
+
 // OpenTrace opens a Trace for consumption.
 // All traces are opened with the new PROCESS_TRACE_MODE_EVENT_RECORD flag
 func (c *Consumer) OpenTrace(name string) (err error) {
@@ -511,10 +515,11 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	// PROCESS_TRACE_MODE_RAW_TIMESTAMP don't convert TimeStamp member of EVENT_HEADER and EVENT_TRACE_HEADER to system time
 	// PROCESS_TRACE_MODE_REAL_TIME to receive events in real time
 	//loggerInfo.SetProcessTraceMode(PROCESS_TRACE_MODE_EVENT_RECORD | PROCESS_TRACE_MODE_RAW_TIMESTAMP | PROCESS_TRACE_MODE_REAL_TIME)
+	var tracemode uint32 = PROCESS_TRACE_MODE_EVENT_RECORD | PROCESS_TRACE_MODE_RAW_TIMESTAMP
 	if !ti.realtime {
-		loggerInfo.SetProcessTraceMode(PROCESS_TRACE_MODE_EVENT_RECORD)
+		loggerInfo.SetProcessTraceMode(tracemode)
 	} else {
-		loggerInfo.SetProcessTraceMode(PROCESS_TRACE_MODE_EVENT_RECORD | PROCESS_TRACE_MODE_REAL_TIME)
+		loggerInfo.SetProcessTraceMode(tracemode | PROCESS_TRACE_MODE_REAL_TIME)
 	}
 	loggerInfo.BufferCallback = syscall.NewCallbackCDecl(c.bufferCallback)
 	loggerInfo.Callback = syscall.NewCallbackCDecl(c.callback)
@@ -715,6 +720,7 @@ func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
 	seslog.Info().Str("trace", name).Interface("goroutineID", goroutineID).Msg("Starting processing trace")
 
 	trace.processing = true
+	trace.StartTime = time.Now()
 	// https://docs.microsoft.com/en-us/windows/win32/api/evntrace/nf-evntrace-processtrace
 	// IMPORTANT:
 	// Won't return even if canceled (CloseTrace or callbackBuffer returning 0),
