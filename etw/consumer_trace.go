@@ -67,11 +67,6 @@ type ConsumerTrace struct {
 	timeStampScale    float64 // Scale factor for converting raw timestamps to 100ns units
 	timeStampBaseInit bool    // Whether timeStampScale has been initialized
 
-	// User to cache repeated calls to fromRawTimestamp() within the same event.
-	// Since we can't put this info anywhere else, we store it here.
-	// The alternative is to replace the EventRecord Timestamp but that defeats the purpose.
-	currentEventFiletime int64 // Timestamp of the current event being processed (FILETIME format)
-
 	// The RTLostEvent event type indicates that one or more realtime events were lost.
 	// The RTLostEvent and RTLostBuffer event types are delivered before processing
 	// events from the buffer.
@@ -302,8 +297,12 @@ func (t *ConsumerTrace) updateTraceLogFile(bufferLogFile *EventTraceLogfile) {
 //   - *EventTracePropertyData2: A pointer to the trace property data structure containing the session settings
 //   - error: An error if the query operation fails, nil otherwise
 func (t *ConsumerTrace) QueryTrace() (prop *EventTraceProperties2Wrapper, err error) {
-	if t.traceProps == nil {
+	if !t.realtime {
 		return nil, fmt.Errorf("trace has no session properties to query (likely a file-based trace)")
+	}
+	if t.traceProps == nil {
+		// This can happen if the trace was created but never associated with a live session.
+		t.traceProps = NewQueryTraceProperties(t.TraceName)
 	}
 	// This function uses the trace properties structure previously set during trace start.
 	// It resets LogFileNameOffset to 0 to maintain existing log file name settings.

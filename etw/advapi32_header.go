@@ -1340,14 +1340,13 @@ func (e *EventRecord) IsMof() bool {
 //
 // If the raw timestamp flag is not set, it just uses the FILETIME returned by etw in time.Time format.
 func (e *EventRecord) Timestamp() time.Time {
-	trace := e.userContext().trace // this will always exist if we are processing events or just panic
-	return FromFiletime(trace.currentEventFiletime)
+	return e.TimestampFromProp(e.EventHeader.TimeStamp)
 }
 
 // TimestampFromProp converts a raw timestamp value from an event property (like WmiTime)
 // into an absolute time.Time, using the session's clock type and conversion settings.
 func (e *EventRecord) TimestampFromProp(propTimestamp int64) time.Time {
-	// getUserContext() will not be nil if EventRecordHelper was created.
+	// userContext() will not be nil if The Consumer is running and processing events.
 	filetime := e.userContext().trace.fromRawTimestamp(propTimestamp)
 	return FromFiletime(filetime)
 }

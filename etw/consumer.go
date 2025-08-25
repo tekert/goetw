@@ -335,22 +335,6 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		c.lastError.Store(err) // TODO: no longer useful?
 	}
 
-	// Skips the event if it is the event trace header. Log files contain this event
-	// but real-time sessions do not. The event contains the same information as
-	// the EVENT_TRACE_LOGFILE.LogfileHeader member that you can access when you open
-	// the trace.
-	if er.EventHeader.ProviderId.Equals(EventTraceGuid) &&
-		er.EventHeader.EventDescriptor.Opcode == EVENT_TRACE_TYPE_INFO {
-		conlog.Debug().Interface("event", er).Msg("Skipping EventTraceGuid event")
-		// Skip this event.
-		return
-	}
-
-	if er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
-		c.handleLostEvent(er)
-		return
-	}
-
 	// We must always get the context first. It might be nil if the trace is
 	// closing or if the event is a system notification without a context.
 	usrCtx := er.userContext()
@@ -359,12 +343,22 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		return
 	}
 
-	// Convert EventRecord timestamp to FILETIME based on Session
-	// ClientContext settings (Controller side where the trace is).
-	// Does nothing if PROCESS_TRACE_MODE_RAW_TIMESTAMP (Consumer side) is not set.
-	// If that flag is not set, ETW already converts it to FILETIME format.
-	if usrCtx.trace.processTraceMode&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
-		usrCtx.trace.currentEventFiletime = usrCtx.trace.fromRawTimestamp(er.EventHeader.TimeStamp)
+	// Skips the event if it is the event trace header. Log files contain this event
+	// but real-time sessions do not. The event contains the same information as
+	// the EVENT_TRACE_LOGFILE.LogfileHeader member that you can access when you open
+	// the trace.
+	if !usrCtx.trace.realtime {
+		if er.EventHeader.ProviderId.Equals(EventTraceGuid) &&
+			er.EventHeader.EventDescriptor.Opcode == EVENT_TRACE_TYPE_INFO {
+			conlog.Debug().Interface("event", er).Msg("Skipping EventTraceGuid event")
+			// Skip this event.
+			return
+		}
+	}
+
+	if er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
+		c.handleLostEvent(er)
+		return
 	}
 
 	// calling EventHeaderCallback if possible
@@ -377,6 +371,16 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	// we get the TraceContext from EventRecord.UserContext
 	// Parse TRACE_EVENT_INFO from the event record
 	if h, err := newEventRecordHelper(er); err == nil {
+
+		// Convert EventRecord timestamp to FILETIME based on Session
+		// ClientContext settings (Controller side where the trace is).
+		// Does nothing if PROCESS_TRACE_MODE_RAW_TIMESTAMP (Consumer side) is not set.
+		// If that flag is not set, ETW already converts it to FILETIME format.
+		if usrCtx.trace.processTraceMode&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
+			h.timestamp = usrCtx.trace.fromRawTimestamp(er.EventHeader.TimeStamp)
+		} else {
+			h.timestamp = er.EventHeader.TimeStamp
+		}
 
 		// return mem to pool when done (big performance improvement)
 		// only releases non nil allocations so it's safe to use before h.initialize.
@@ -793,8 +797,15 @@ func (c *Consumer) LastError() error {
 	return nil
 }
 
-// Stop blocks and waits for the ProcessTrace to empty it's buffer.
-// Will CloseTrace all traces and wait for the ProcessTrace goroutines to return.
+// Stop initiates a graceful shutdown of the consumer.
+//
+// It performs the following steps:
+//  1. Signals all trace processing loops to stop.
+//  2. Calls CloseTrace for each open trace handle, which prevents new events from being delivered.
+//  3. Waits indefinitely for the ProcessTrace function to finish processing all events
+//     remaining in the ETW buffers.
+//
+// This is the safest method to ensure no events are lost. It blocks until the shutdown is complete.
 func (c *Consumer) Stop() (err error) {
 	// ProcessTrace will exit only if the session buffer is empty.
 	c.closeTimeout = 0
@@ -802,15 +813,19 @@ func (c *Consumer) Stop() (err error) {
 	return c.close(true)
 }
 
-// Call blocks and returns after timeout or if ProcessTrace goroutines finish earlier.
-// Will CloseTrace all traces before returning.
+// StopWithTimeout initiates a shutdown with a timeout.
 //
-// Delays to close ProcessTrace can happen if the etw buffer for ProcessTrace is full
-// and the callback is not returning fast enough to empty the buffer or is blocked
-// for some reason.
+// It follows the same graceful shutdown sequence as Stop, but if the ProcessTrace
+// function for any trace does not return within the specified timeout, the consumer
+// will stop waiting for it and return. The underlying goroutine for the timed-out
+// ProcessTrace call will be detached and left to finish on its own.
 //
-// timeout = -1 is as if Abort() was called.
-// timeout = 0  is as if Stop() was called.
+// This is useful for preventing an indefinite block if an ETW session is unresponsive.
+//
+// Special timeout values:
+//   - timeout > 0: Waits for the specified duration.
+//   - timeout = 0: Behaves exactly like Stop(), waiting indefinitely.
+//   - timeout < 0: Behaves exactly like Abort(), returning immediately.
 func (c *Consumer) StopWithTimeout(timeout time.Duration) (err error) {
 	// ProcessTrace will exit only if the session buffer is empty.
 	c.closeTimeout = timeout
@@ -818,13 +833,17 @@ func (c *Consumer) StopWithTimeout(timeout time.Duration) (err error) {
 	return c.close(true)
 }
 
-// Abort stops the Consumer and won't wait for the ProcessTrace calls
-// to return, forcing the consumer to stop immediately, this can
-// cause some remaining events to be lost.
-// Will CloseTrace all traces and then detach ProcessTrace goroutines.
-// goroutines stuck in ProcessTrace will be left processing events.
+// Abort forces an immediate, non-graceful shutdown of the consumer.
+//
+// It calls CloseTrace to signal the end of consumption but does *not* wait for
+// the ProcessTrace goroutines to finish processing buffered events. The underlying
+// goroutines are detached and may continue running in the background until they
+// naturally complete.
+//
+// Use this method when an immediate return is required and the potential loss of
+// in-flight events is acceptable.
 func (c *Consumer) Abort() (err error) {
-	c.closeTimeout = -1
+	c.closeTimeout = -1 // A negative value signals an immediate return.
 	c.cancel()
 	return c.close(false)
 }
