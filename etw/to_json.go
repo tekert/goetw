@@ -154,10 +154,10 @@ func (h *TraceLogfileHeader) ToJSON() (JsonLogHeader, error) {
 		BuffersLost:        h.BuffersLost,
 		TimeZone: JsonTimeZoneInfo{
 			Bias:         h.TimeZone.Bias,
-			StandardName: UTF16SliceToString(h.TimeZone.StandardName[:]),
+			StandardName: FromUTF16Slice(h.TimeZone.StandardName[:]),
 			StandardDate: JsonTime(h.TimeZone.StandardDate.ToTime()),
 			StandardBias: h.TimeZone.StandardBias,
-			DaylightName: UTF16SliceToString(h.TimeZone.DaylightName[:]),
+			DaylightName: FromUTF16Slice(h.TimeZone.DaylightName[:]),
 			DaylightDate: JsonTime(h.TimeZone.DaylightDate.ToTime()),
 			DaylightBias: h.TimeZone.DaylightBias,
 		},
@@ -187,10 +187,10 @@ func (etl *EventTraceLogfile) ToJSON() (*JsonLogfile, error) {
 	}
 
 	if etl.LogFileName != nil {
-		safe.LogFileName = UTF16PtrToString(etl.LogFileName)
+		safe.LogFileName = FromUTF16Pointer(etl.LogFileName)
 	}
 	if etl.LoggerName != nil {
-		safe.LoggerName = UTF16PtrToString(etl.LoggerName)
+		safe.LoggerName = FromUTF16Pointer(etl.LoggerName)
 	}
 
 	return safe, nil
@@ -204,7 +204,7 @@ func (e *EventHeader) MarshalJSON() ([]byte, error) {
 		EventProperty   uint16          `json:"EventProperty"`
 		ThreadId        uint32          `json:"ThreadId"`
 		ProcessId       uint32          `json:"ProcessId"`
-		TimeStamp       time.Time       `json:"TimeStamp"`
+		TimeStampRaw    int64           `json:"TimeStamp"`
 		ProviderId      string          `json:"ProviderId"`
 		EventDescriptor EventDescriptor `json:"EventDescriptor"`
 		KernelTime      uint32          `json:"KernelTime"`
@@ -218,7 +218,7 @@ func (e *EventHeader) MarshalJSON() ([]byte, error) {
 		EventProperty:   e.EventProperty,
 		ThreadId:        e.ThreadId,
 		ProcessId:       e.ProcessId,
-		TimeStamp:       FromFiletime(e.TimestampRaw()), // Asumming Filetime format
+		TimeStampRaw:    e.TimestampRaw(),
 		ProviderId:      e.ProviderId.StringU(),
 		EventDescriptor: e.EventDescriptor,
 		KernelTime:      e.GetKernelTime(),
@@ -281,6 +281,7 @@ func (er *EventRecord) MarshalJSON() (b []byte, err error) {
 
 	aux := struct {
 		EventHeader          EventHeader                   `json:"EventHeader"`
+		CorrectTimeStamp     time.Time                     `json:"TimeStamp"`
 		BufferContext        EtwBufferContext              `json:"BufferContext"`
 		ExtendedDataCount    uint16                        `json:"ExtendedDataCount"`
 		UserDataLength       uint16                        `json:"UserDataLength"`
@@ -298,6 +299,7 @@ func (er *EventRecord) MarshalJSON() (b []byte, err error) {
 		ExtStackTrace        *EventStackTrace              `json:"StackTrace,omitempty"`
 	}{
 		EventHeader:       er.EventHeader,
+		CorrectTimeStamp:  er.Timestamp(),
 		BufferContext:     er.BufferContext,
 		ExtendedDataCount: er.ExtendedDataCount,
 		UserDataLength:    er.UserDataLength,

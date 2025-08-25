@@ -136,7 +136,8 @@ func (p *Property) FormatToString() (string, error) {
 			p.value, err = p.decodeToString(p.evtPropInfo.OutType())
 			if err != nil {
 				//p.evtRecordHelper.addPropError() // we have to try the old parser anyway.
-				conlog.Debug().Err(err).Msg("failed to parse property with custom parser")
+				conlog.SampledTraceWithErrSig("decodeToString", err).
+					Msg("failed to parse property with custom parser")
 				// fallback to tdh parser
 				p.value, _, err = p.formatToStringTdh()
 			}
@@ -249,6 +250,7 @@ func (p *Property) formatToStringTdh() (value string, udc uint16, err error) {
 		// definition in the publisher's manifest.
 		// Seems some kernel properties can't be parsed with Tdh, maybe is a pointer to kernel memory?
 		// UPDATE: the MOF classes types are wrong, this is not usuable for kernel events.
+		// TODO: remove this now that we have MOF parsing in the custom parser?
 		if p.erh.TraceInfo.IsMof() {
 			if value = p.fixMOFProp(); value != "" {
 				err = nil
@@ -269,7 +271,7 @@ func (p *Property) formatToStringTdh() (value string, udc uint16, err error) {
 
 	}
 
-	value = UTF16SliceToString(*buffPtr)
+	value = FromUTF16Slice(*buffPtr)
 
 	return
 }

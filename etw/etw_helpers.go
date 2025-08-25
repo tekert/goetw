@@ -26,6 +26,9 @@ var (
 	// propertyNameCache stores slices of property names keyed by event schema.
 	// This avoids repeatedly converting UTF-16 names to Go strings for common events.
 	propertyNameCache sync.Map
+
+	// cache for metadata on fully parsed events
+	hostname, _ = os.Hostname()
 )
 
 // eventSchemaID is used as a key to cache event metadata like property names.
@@ -167,12 +170,6 @@ type EventRecordHelper struct {
 
 	// A reference to the thread-local storage for this trace.
 	storage *traceStorage
-
-	// Converted timestamp in FILETIME format (100ns intervals since 1601-01-01).
-	// This field is populated by the consumer callback based on the session's clock type.
-	// It provides a consistent timestamp format regardless of the original clock type
-	// (QPC, System Time, CPU Clock) used by the session.
-	correctFiletime int64
 }
 
 func (e *EventRecordHelper) remainingUserDataLength() uint16 {
@@ -180,7 +177,7 @@ func (e *EventRecordHelper) remainingUserDataLength() uint16 {
 }
 
 func (e *EventRecordHelper) userContext() (c *traceContext) {
-	return (*traceContext)(unsafe.Pointer(e.EventRec.UserContext))
+	return e.EventRec.userContext()
 }
 
 func (e *EventRecordHelper) addPropError() {
@@ -190,32 +187,20 @@ func (e *EventRecordHelper) addPropError() {
 	}
 }
 
-// Timestamp returns the correct EventRecord timestamp as time.Time.
-// This timestamp is always in FILETIME format regardless of the original
-// session clock type (QPC, System Time, CPU Clock),
-// providing a consistent time representation.
+// Timestamp returns the timestamp of the event as a time.Time from FILETIME.
 //
-// For the Raw timestamp, use EventHeader.RawTimestamp() or
-// EventHeader.RawTimestampUTC().
+// goetw converts the original timestamp clocktype to FILETIME if raw PROCESS_TRACE_MODE_RAW_TIMESTAMP is set.
+//
+// Session ClientContext: QPC, SystemTime and CPUClocks clocktypes are correctly converted to FILETIME.
+// If the raw timestamp flag is not set, it just uses the FILETIME returned by etw in time.Time format.
 func (e *EventRecordHelper) Timestamp() time.Time {
-	return FromFiletime(e.correctFiletime)
+	return e.EventRec.Timestamp()
 }
 
-// TimestampFrom converts a raw timestamp value from an event property (like WmiTime)
+// TimestampFromProp converts a raw timestamp value from an event property (like WmiTime)
 // into an absolute time.Time, using the session's clock type and conversion settings.
-func (e *EventRecordHelper) TimestampFrom(rawTimestamp int64) time.Time {
-	// getUserContext() will not be nil if EventRecordHelper was created.
-	filetime := e.userContext().trace.fromRawTimestamp(rawTimestamp)
-	return FromFiletime(filetime)
-}
-
-// This is just a wrapper for EventRecordHelper.TimestampFrom
-//
-// FromQPC converts a raw Query Performance Counter (QPC) value from a property
-// into an absolute time.Time, using the session's boot time and frequency.
-func (e *EventRecordHelper) FromQPC(qpcTicks int64) time.Time {
-	filetime := e.userContext().trace.fromQPC(qpcTicks)
-	return FromFiletime(filetime)
+func (e *EventRecordHelper) TimestampFromProp(propTimestamp int64) time.Time {
+	return e.EventRec.TimestampFromProp(propTimestamp)
 }
 
 // Release EventRecordHelper back to memory pool.
@@ -230,7 +215,7 @@ func (e *EventRecordHelper) release() {
 // Creates a new EventRecordHelper that has the EVENT_RECORD and gets a TRACE_EVENT_INFO for that event.
 func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	erh = helperPool.Get().(*EventRecordHelper)
-	storage := er.getUserContext().storage
+	storage := er.userContext().storage
 
 	// Reset the thread-local storage before processing a new event.
 	storage.reset()
@@ -417,7 +402,7 @@ func (e *EventRecordHelper) setEventMetadataNoTrace(event *Event) {
 }
 
 func (e *EventRecordHelper) setEventMetadata(event *Event) {
-	event.System.Computer, _ = os.Hostname()
+	event.System.Computer = hostname
 
 	// Some Providers don't have a ProcessID or ThreadID (there are set 0xFFFFFFFF)
 	// because some events are logged by separate threads
@@ -496,9 +481,12 @@ func (e *EventRecordHelper) getPropertySize(i uint32) (size uint32, err error) {
 	return
 }
 
-// Helps when a property length needs to be calculated using a previous property value
-// This has to be called on every property to cache the integer values as it goes.
-func (e *EventRecordHelper) cacheIntergerValues(i uint32) {
+// cacheIntegerValues helps when a property length or array count needs to be
+// calculated using a previous property's value. It is called for each property
+// as its metadata is accessed, caching any scalar integer value. This ensures
+// that when a subsequent property's length or count is calculated, the value
+// it depends on is readily available.
+func (e *EventRecordHelper) cacheIntegerValues(i uint32) {
 	epi := (*e.epiArray)[i]
 	// If this property is a scalar integer, remember the value in case it
 	// is needed for a subsequent property's that has the PropertyParamLength flag set.
@@ -543,7 +531,7 @@ func (e *EventRecordHelper) getEpiAt(i uint32) *EventPropertyInfo {
 	if epi == nil {
 		epi = e.TraceInfo.GetEventPropertyInfoAt(i)
 		(*e.epiArray)[i] = epi
-		e.cacheIntergerValues(i)
+		e.cacheIntegerValues(i)
 	}
 	return epi
 }
@@ -722,8 +710,10 @@ func (e *EventRecordHelper) getPropertyLength(i uint32) (propLength uint16, size
 				break // Use TdhGetPropertySize
 			}
 
-			log.Warn().Uint16("intype", epi.InType().V()).Str("outtype",
-				epi.OutType().String()).Msg("unexpected length of 0")
+			conlog.SampledWarn("proplength").
+				Uint16("intype", epi.InType().V()).
+				Str("outtype", epi.OutType().String()).
+				Msg("unexpected length of 0")
 		}
 
 		// We already know how to get the size for each intype, but a single mistake could crash the event.
@@ -828,7 +818,7 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 		// C++ Definition example: wchar_t ThreadName[1]; (Variadic arrays)
 		// arrayCount is usualy a cap in this case. Fixed 256 byte array usually.
 		mofString := unsafe.Slice((*uint16)(unsafe.Pointer(e.userDataIt)), arrayCount)
-		value := UTF16SliceToString(mofString)
+		value := FromUTF16Slice(mofString)
 		e.SetProperty(arrayName, value)
 		e.userDataIt += (uintptr(arrayCount) * 2) // advance pointer
 		return nil                                // Array parsed, we're done with this property.
@@ -892,7 +882,7 @@ func (e *EventRecordHelper) getCachedPropNames() []string {
 		names = make([]string, e.TraceInfo.PropertyCount)
 		for i := range names {
 			epi := e.TraceInfo.GetEventPropertyInfoAt(uint32(i))
-			names[i] = UTF16AtOffsetToString(e.TraceInfo.pointer(), uintptr(epi.NameOffset))
+			names[i] = FromUTF16AtOffset(e.TraceInfo.pointer(), uintptr(epi.NameOffset))
 		}
 		propertyNameCache.Store(key, names)
 	}
@@ -900,7 +890,6 @@ func (e *EventRecordHelper) getCachedPropNames() []string {
 }
 
 // Prepare will partially decode the event, extracting event info for later
-// This is a performance optimization to avoid decoding the event values now.
 //
 // There is a lot of information available in the event even without decoding,
 // including timestamp, PID, TID, provider ID, activity ID, and the raw data.
@@ -913,7 +902,7 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 		// If there aren't any event property info structs, use the UserData directly.
 		if (e.EventRec.EventHeader.Flags & EVENT_HEADER_FLAG_STRING_ONLY) != 0 {
 			str := (*uint16)(unsafe.Pointer(e.EventRec.UserData))
-			value := UTF16SliceToString(
+			value := FromUTF16Slice(
 				unsafe.Slice(str, e.EventRec.UserDataLength/2))
 			if e.EventRec.UserDataLength != 0 {
 				e.SetProperty("String", value)
@@ -1016,7 +1005,7 @@ func (e *EventRecordHelper) prepareMofPropertyFix(remainingData []byte, remainin
 		eventID == 5357 || // Thread/End
 		eventID == 5359) && // Thread/DCEnd
 		remaining > 2 {
-		threadName := UTF16BytesToString(remainingData)
+		threadName := FromUTF16Bytes(remainingData)
 		e.SetProperty("ThreadName", threadName)
 		return nil
 	}
@@ -1024,37 +1013,13 @@ func (e *EventRecordHelper) prepareMofPropertyFix(remainingData []byte, remainin
 	// Handle SystemConfig PnP events with device names
 	if eventID == 1807 && // SystemConfig/PnP
 		remaining > 2 {
-		deviceName := UTF16BytesToString(remainingData)
+		deviceName := FromUTF16Bytes(remainingData)
 		e.SetProperty("DeviceName", deviceName)
 		return nil
 	}
 
 	return fmt.Errorf("unhandled MOF event %d", eventID)
 }
-
-// Get the MOF class GUID
-func (e *EventRecordHelper) mofClassGuid() *GUID {
-	return &e.EventRec.EventHeader.ProviderId
-}
-
-// Get the MOF event type
-func (e *EventRecordHelper) mofEventType() uint8 {
-	return e.EventRec.EventHeader.EventDescriptor.Opcode
-}
-
-// Get the MOF class version
-func (e *EventRecordHelper) mofClassVersion() uint8 {
-	return e.EventRec.EventHeader.EventDescriptor.Version
-}
-
-// ? Done.. we build a TraceEventInfo from the EventRecord instead of the other way around.
-// func (e *EventRecordHelper) prepareMofEvent() error {
-
-// }
-
-// func parseMofProperty(data []byte, prop MofPropertyDef) (any, int, error) {
-
-// }
 
 func (e *EventRecordHelper) buildEvent() (event *Event, err error) {
 	event = NewEvent()
@@ -1389,3 +1354,84 @@ func (e *EventRecordHelper) Skippable() {
 func (e *EventRecordHelper) Skip() {
 	e.Flags.Skip = true
 }
+
+// ! TESTING, try todo these in another way.
+/*
+// GetPropertyUintAt finds and decodes a single property by its zero-based index,
+// returning it as a uint64. This is a high-performance method for selectively
+// reading data from high-frequency events without the overhead of preparing all properties.
+//
+// The function performs a lightweight scan from the beginning of the event data for each
+// call and does not modify the state of the EventRecordHelper, making it safe to use
+// in any callback.
+func (e *EventRecordHelper) GetPropertyUintAt(index uint32) (uint64, error) {
+	p, err := e.getPropertyAt(index)
+	if err != nil {
+		return 0, err
+	}
+	return p.GetUInt()
+}
+
+// GetPropertyStringAt finds and decodes a single property by its zero-based index,
+// returning it as a string. This is a high-performance method for selectively
+// reading data from high-frequency events without the overhead of preparing all properties.
+//
+// The function performs a lightweight scan from the beginning of the event data for each
+// call and does not modify the state of the EventRecordHelper, making it safe to use
+// in any callback.
+func (e *EventRecordHelper) GetPropertyStringAt(index uint32) (string, error) {
+	p, err := e.getPropertyAt(index)
+	if err != nil {
+		return "", err
+	}
+	return p.FormatToString()
+}
+
+// getPropertyAt is an internal helper that scans to the specified property index
+// and prepares it for parsing. The function does not modify the state of the
+// EventRecordHelper, making it safe to use in any callback.
+func (e *EventRecordHelper) getPropertyAt(index uint32) (*Property, error) {
+	if e.TraceInfo == nil {
+		return nil, fmt.Errorf("no trace info available to get property at index %d", index)
+	}
+	if index >= e.TraceInfo.PropertyCount {
+		return nil, fmt.Errorf("property index %d out of bounds (max %d)", index, e.TraceInfo.PropertyCount-1)
+	}
+
+	// Save original state that will be modified by the scan.
+	originalUserDataIt := e.userDataIt
+	originalPropIdx := e.storage.propIdx
+
+	// The integerValues and epiArray caches are essential for the scan.
+	// We must clear them to ensure a clean scan from the beginning,
+	// as they might hold state from a previous partial parse.
+	clear(*e.integerValues)
+	clear(*e.epiArray)
+
+	// Set iterator to the start for this local scan.
+	e.userDataIt = e.EventRec.UserData
+	defer func() {
+		// Restore original state. This makes the function stateless to the caller.
+		e.userDataIt = originalUserDataIt
+		e.storage.propIdx = originalPropIdx
+	}()
+
+	// Scan up to the target property, advancing the iterator.
+	for i := uint32(0); i < index; i++ {
+		// getPropertyLength is the lightest way to calculate the size.
+		// It correctly populates the epiArray and integerValues caches as it goes.
+		_, sizeBytes, err := e.getPropertyLength(i)
+		if err != nil {
+			return nil, fmt.Errorf("error calculating size for preceding property %d: %w", i, err)
+		}
+		e.userDataIt += uintptr(sizeBytes)
+		if e.userDataIt > e.userDataEnd {
+			return nil, fmt.Errorf("event data overrun while scanning for property %d", index)
+		}
+	}
+
+	// At the target index, create a temporary property and decode its value.
+	// We pass a dummy name as it's not used for decoding the scalar value.
+	return e.prepareProperty(index, "")
+}
+*/

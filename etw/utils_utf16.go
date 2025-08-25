@@ -8,11 +8,11 @@ import (
 
 const maxUtf16CachedLength = 256 // Maximum string length to cache (prevents cache pollution from large strings)
 
-// utf16Convert performs a cache lookup for a given string slice and its hash.
+// decodeUtf16 performs a cache lookup for a given string slice and its hash.
 // On a cache miss, it calls the final utf16 conversion function and stores the result in the cache.
 //
 //go:inline
-func utf16Convert(s []uint16, h uint64, n int) string {
+func decodeUtf16(s []uint16, h uint64, n int) string {
 	// For long strings, convert directly without caching to avoid polluting the cache.
 	if n >= maxUtf16CachedLength {
 		return utf16f.DecodeWtf8(s)
@@ -40,10 +40,10 @@ func fnvHash(data []uint16) uint64 {
 	return h
 }
 
-// UTF16PtrToString is the most performant way to convert a null-terminated
+// FromUTF16Pointer is the most performant way to convert a null-terminated
 // UTF-16 pointer to a Go string. It finds the string length and calculates
 // its hash in a single pass to optimize cache lookups.
-func UTF16PtrToString(p *uint16) string {
+func FromUTF16Pointer(p *uint16) string {
 	if p == nil {
 		return ""
 	}
@@ -70,33 +70,33 @@ func UTF16PtrToString(p *uint16) string {
 	}
 	s := unsafe.Slice(p, n)
 
-	return utf16Convert(s, h, n)
+	return decodeUtf16(s, h, n)
 }
 
-// UTF16SliceToString converts a UTF-16 slice to a string, using a cache for performance.
+// FromUTF16Slice converts a UTF-16 slice to a string, using a cache for performance.
 // For best performance, use UTF16PtrToString2 when you have a pointer.
-func UTF16SliceToString(s []uint16) string {
+func FromUTF16Slice(s []uint16) string {
 	if len(s) == 0 {
 		return ""
 	}
 	// Pass h=0 to signal that the hash needs to be computed inside the helper function.
-	return utf16Convert(s, 0, len(s))
+	return decodeUtf16(s, 0, len(s))
 }
 
-// UTF16AtOffsetToString converts a UTF-16 string at a given offset from a pointer.
-func UTF16AtOffsetToString(pstruct uintptr, offset uintptr) string {
+// FromUTF16AtOffset converts a UTF-16 string at a given offset from a pointer.
+func FromUTF16AtOffset(pstruct uintptr, offset uintptr) string {
 	ptr := (*uint16)(unsafe.Pointer(pstruct + offset))
-	return UTF16PtrToString(ptr)
+	return FromUTF16Pointer(ptr)
 }
 
-// UTF16BytesToString transforms a byte slice of UTF16 encoded characters to a Go string.
-func UTF16BytesToString(b []byte) string {
+// FromUTF16Bytes transforms a byte slice of UTF16 encoded characters to a Go string.
+func FromUTF16Bytes(b []byte) string {
 	if len(b) == 0 {
 		return ""
 	}
 	// This re-slice is safe because we calculate the correct length in uint16 chars.
 	s := unsafe.Slice((*uint16)(unsafe.Pointer(unsafe.SliceData(b))), len(b)/2)
-	return UTF16SliceToString(s)
+	return FromUTF16Slice(s)
 }
 
 // Wcslen finds the length of a null-terminated UTF-16 string in characters.

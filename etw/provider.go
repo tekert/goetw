@@ -88,49 +88,49 @@ type Provider struct {
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_filter_descriptor EVENT_FILTER_TYPE_EVENT_ID
 	Filters []ProviderFilter
 
-    // EnableProperties specifies flags from the EVENT_ENABLE_PROPERTY_* constants.
-    // These flags control special ETW features for the provider when enabling it in a trace session.
+	// EnableProperties specifies flags from the EVENT_ENABLE_PROPERTY_* constants.
+	// These flags control special ETW features for the provider when enabling it in a trace session.
 	//
 	// Enabled by default: (EVENT_ENABLE_PROPERTY_PROCESS_START_KEY)
-    //
-    // Supported flags (combine using bitwise OR):
-    //
-    //   EVENT_ENABLE_PROPERTY_IGNORE_KEYWORD_0
-    //     - Filters out events where the event's keyword is 0.
-    //
-    //   EVENT_ENABLE_PROPERTY_PROVIDER_GROUP
-    //     - Enables a provider group rather than an individual event provider.
-    //
-    //   EVENT_ENABLE_PROPERTY_PROCESS_START_KEY
-    //     - Includes the Process Start Key in the event's extended data.
-    //       Retrieve with: EventRecord.ExtProcessStartKey()
-    //
-    //   EVENT_ENABLE_PROPERTY_EVENT_KEY
-    //     - Includes a unique Event Key in the event's extended data.
-    //       Retrieve with: EventRecord.ExtEventKey()
-    //
-    //   EVENT_ENABLE_PROPERTY_EXCLUDE_INPRIVATE
-    //     - Filters out events marked as InPrivate or from InPrivate processes.
-    //
-    //   EVENT_ENABLE_PROPERTY_SID
-    //     - Includes the security identifier (SID) of the user in the event's extended data.
-    //       Retrieve with: EventRecord.ExtSid()
-    //
-    //   EVENT_ENABLE_PROPERTY_TS_ID
-    //     - Includes the terminal session identifier in the event's extended data.
-    //       Retrieve with: EventRecord.ExtTerminalSessionID()
-    //
-    //   EVENT_ENABLE_PROPERTY_STACK_TRACE
-    //     - Adds a call stack trace to the extended data of events written using EventWrite.
-    //       Retrieve with: EventRecord.ExtStackTrace()
-    //
-    //   EVENT_ENABLE_PROPERTY_CONTAINER_ID
-    //     - Includes the container ID (GUID) in the event's extended data.
-    //       Retrieve with: EventRecord.ExtContainerID()
-    //
-    // Example usage:
-    //   prov.EnableProperties = EVENT_ENABLE_PROPERTY_PROCESS_START_KEY | EVENT_ENABLE_PROPERTY_SID
-    //
+	//
+	// Supported flags (combine using bitwise OR):
+	//
+	//   EVENT_ENABLE_PROPERTY_IGNORE_KEYWORD_0
+	//     - Filters out events where the event's keyword is 0.
+	//
+	//   EVENT_ENABLE_PROPERTY_PROVIDER_GROUP
+	//     - Enables a provider group rather than an individual event provider.
+	//
+	//   EVENT_ENABLE_PROPERTY_PROCESS_START_KEY
+	//     - Includes the Process Start Key in the event's extended data.
+	//       Retrieve with: EventRecord.ExtProcessStartKey()
+	//
+	//   EVENT_ENABLE_PROPERTY_EVENT_KEY
+	//     - Includes a unique Event Key in the event's extended data.
+	//       Retrieve with: EventRecord.ExtEventKey()
+	//
+	//   EVENT_ENABLE_PROPERTY_EXCLUDE_INPRIVATE
+	//     - Filters out events marked as InPrivate or from InPrivate processes.
+	//
+	//   EVENT_ENABLE_PROPERTY_SID
+	//     - Includes the security identifier (SID) of the user in the event's extended data.
+	//       Retrieve with: EventRecord.ExtSid()
+	//
+	//   EVENT_ENABLE_PROPERTY_TS_ID
+	//     - Includes the terminal session identifier in the event's extended data.
+	//       Retrieve with: EventRecord.ExtTerminalSessionID()
+	//
+	//   EVENT_ENABLE_PROPERTY_STACK_TRACE
+	//     - Adds a call stack trace to the extended data of events written using EventWrite.
+	//       Retrieve with: EventRecord.ExtStackTrace()
+	//
+	//   EVENT_ENABLE_PROPERTY_CONTAINER_ID
+	//     - Includes the container ID (GUID) in the event's extended data.
+	//       Retrieve with: EventRecord.ExtContainerID()
+	//
+	// Example usage:
+	//   prov.EnableProperties = EVENT_ENABLE_PROPERTY_PROCESS_START_KEY | EVENT_ENABLE_PROPERTY_SID
+	//
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-enable_trace_parameters
 	EnableProperties uint32
 }
@@ -167,8 +167,10 @@ func IsKnownProvider(p string) bool {
 // Example: "Microsoft-Windows-Kernel-File:0xff:12,13,14"
 //
 // NOTE: For finding events ID check the manifest in your system.
-//  > logman query providers "provider-name"
-//  > wevtutil gp "provider-name"
+//
+//	> logman query providers "provider-name"
+//	> wevtutil gp "provider-name"
+//
 // Or Use https://github.com/zodiacon/EtwExplorer
 //
 // More info at:
@@ -251,7 +253,7 @@ func EnumerateProviders() (m ProviderMap) {
 	for i := uintptr(0); i < uintptr(buf.NumberOfProviders); i++ {
 		ptpi := (*TraceProviderInfo)(unsafe.Pointer(it + i*unsafe.Sizeof(buf.TraceProviderInfoArray[0])))
 		guidString := ptpi.ProviderGuid.StringU()
-		name := UTF16AtOffsetToString(startProvEnumInfo, uintptr(ptpi.ProviderNameOffset))
+		name := FromUTF16AtOffset(startProvEnumInfo, uintptr(ptpi.ProviderNameOffset))
 		p := Provider{}
 		p.GUID = ptpi.ProviderGuid
 		p.Name = name

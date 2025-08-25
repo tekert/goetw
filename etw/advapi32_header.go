@@ -675,7 +675,7 @@ type EventTraceProperties2 struct {
 	LogFileMode     uint32 // sequential, circular
 	FlushTimer      uint32 // buffer flush timer, in seconds
 	EnableFlags     uint32 // trace enable flags
-	AgeLimit        int32  // AgeLimit (Not used) or FlushThreshold (Number of buffers to fill before flushing)
+	FlushThreshold  int32  // AgeLimit (Not used) or FlushThreshold (Number of buffers to fill before flushing)
 
 	// data returned to caller
 	NumberOfBuffers     uint32         // no of buffers in use
@@ -737,7 +737,8 @@ func (e *EventTraceProperties2Wrapper) GetTraceNameOffset() uint32 {
 	return uint32(unsafe.Offsetof(EventTraceProperties2Wrapper{}.LogFileName))
 }
 
-func (e *EventTraceProperties2Wrapper) SetTraceName_old(name string) *uint16 {
+// Deprecated: use SetTraceName instead.
+func (e *EventTraceProperties2Wrapper) SetTraceNameUnsafe(name string) *uint16 {
 	if len(name) >= ((cap(e.LoggerName) / 2) - 1) { // 1 for null terminator
 		panic("LoggerName too long")
 	}
@@ -774,7 +775,8 @@ func (e *EventTraceProperties2Wrapper) GetLogFileName() *uint16 {
 	return (*uint16)(unsafe.Pointer(uintptr(unsafe.Pointer(e)) + uintptr(e.LogFileNameOffset)))
 }
 
-func (e *EventTraceProperties2Wrapper) SetLogFileName_old(fName string) *uint16 {
+// Deprecated: use SetLogFileName instead.
+func (e *EventTraceProperties2Wrapper) SetLogFileNameUnsafe(fName string) *uint16 {
 	if len(fName) >= ((cap(e.LogFileName) / 2) - 1) { // 1 for null terminator
 		panic("LogFileName too long")
 	}
@@ -986,43 +988,42 @@ type FileTime struct {
 // https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-event_trace_logfilew
 // v10.0.16299.0 /evntrace.h
 /*
-struct _EVENT_TRACE_LOGFILEW {
-    LPWSTR                  LogFileName;      // Logfile Name
-    LPWSTR                  LoggerName;       // LoggerName
-    LONGLONG                CurrentTime;      // timestamp of last event
-    ULONG                   BuffersRead;      // buffers read to date
-    union {
-        // Mode of the logfile
-        ULONG               LogFileMode;
-        // Processing flags used on Vista and above
-        ULONG               ProcessTraceMode;
-    } DUMMYUNIONNAME;
-    EVENT_TRACE             CurrentEvent;     // Current Event from this stream.
-    TRACE_LOGFILE_HEADER    LogfileHeader;    // logfile header structure
-    PEVENT_TRACE_BUFFER_CALLBACKW             // callback before each buffer
-                            BufferCallback;   // is read
-    //
-    // following variables are filled for BufferCallback.
-    //
-    ULONG                   BufferSize;
-    ULONG                   Filled;
-    ULONG                   EventsLost;
-    //
-    // following needs to be propagated to each buffer
-    //
-    union {
-        // Callback with EVENT_TRACE
-        PEVENT_CALLBACK         EventCallback;
-        // Callback with EVENT_RECORD on Vista and above
-        PEVENT_RECORD_CALLBACK  EventRecordCallback;
-    } DUMMYUNIONNAME2;
+	struct _EVENT_TRACE_LOGFILEW {
+	    LPWSTR                  LogFileName;      // Logfile Name
+	    LPWSTR                  LoggerName;       // LoggerName
+	    LONGLONG                CurrentTime;      // timestamp of last event
+	    ULONG                   BuffersRead;      // buffers read to date
+	    union {
+	        // Mode of the logfile
+	        ULONG               LogFileMode;
+	        // Processing flags used on Vista and above
+	        ULONG               ProcessTraceMode;
+	    } DUMMYUNIONNAME;
+	    EVENT_TRACE             CurrentEvent;     // Current Event from this stream.
+	    TRACE_LOGFILE_HEADER    LogfileHeader;    // logfile header structure
+	    PEVENT_TRACE_BUFFER_CALLBACKW             // callback before each buffer
+	                            BufferCallback;   // is read
+	    //
+	    // following variables are filled for BufferCallback.
+	    //
+	    ULONG                   BufferSize;
+	    ULONG                   Filled;
+	    ULONG                   EventsLost;
+	    //
+	    // following needs to be propagated to each buffer
+	    //
+	    union {
+	        // Callback with EVENT_TRACE
+	        PEVENT_CALLBACK         EventCallback;
+	        // Callback with EVENT_RECORD on Vista and above
+	        PEVENT_RECORD_CALLBACK  EventRecordCallback;
+	    } DUMMYUNIONNAME2;
 
-    ULONG                   IsKernelTrace;    // TRUE for kernel logfile
+	    ULONG                   IsKernelTrace;    // TRUE for kernel logfile
 
-    PVOID                   Context;          // reserved for internal use
-};
+	    PVOID                   Context;          // reserved for internal use
+	};
 */
-
 // The EVENT_TRACE_LOGFILE structure stores information about a trace data source.
 //
 // The EVENT_TRACE_LOGFILE structure is used when calling OpenTrace.
@@ -1040,7 +1041,7 @@ type EventTraceLogfile struct {
 	LoggerName    *uint16            // LoggerName
 	CurrentTime   int64              // (on output) timestamp of last event
 	BuffersRead   uint32             // (on output) buffers read to date
-	Union1        uint32             // (LogFileMode [NOT USED] | ProcessTraceMode)
+	Union1        uint32             // (LogFileMode [NOT USED?] | ProcessTraceMode)
 	CurrentEvent  EventTrace         // (on output) Current Event from this stream.
 	LogfileHeader TraceLogfileHeader // (on output) logfile header structure
 
@@ -1087,11 +1088,9 @@ func (e *EventTraceLogfile) SetProcessTraceMode(ptm uint32) {
 	e.Union1 = ptm
 }
 
-// TODO: delete?
-// * NOTE(tekert): Not used, instead they are using uintptr, wonder why
-type EventCallback func(*EventTrace)
-type EventRecordCallback func(*EventRecord) uintptr // New, replaces EventCallback
-type EventTraceBufferCallback func(*EventTraceLogfile) uint32
+func (e *EventTraceLogfile) GetLogFileMode() uint32 {
+	return e.Union1
+}
 
 // Clone creates a deep copy of the EventTraceLogfile struct.
 // It allocates new memory for string pointers and copies all fields.
@@ -1334,6 +1333,34 @@ func (e *EventRecord) IsMof() bool {
 	return e.EventHeader.Flags&EVENT_HEADER_FLAG_CLASSIC_HEADER != 0
 }
 
+// Timestamp returns the timestamp of the event as a time.Time from FILETIME.
+//
+// This converts the original timestamp clocktype to FILETIME using the current trace session data
+// if raw PROCESS_TRACE_MODE_RAW_TIMESTAMP is set. (QPC, SystemTime or CPUClocks)
+//
+// If the raw timestamp flag is not set, it just uses the FILETIME returned by etw in time.Time format.
+func (e *EventRecord) Timestamp() time.Time {
+	trace := e.userContext().trace // this will always exist if we are processing events or just panic
+	return FromFiletime(trace.currentEventFiletime)
+}
+
+// TimestampFromProp converts a raw timestamp value from an event property (like WmiTime)
+// into an absolute time.Time, using the session's clock type and conversion settings.
+func (e *EventRecord) TimestampFromProp(propTimestamp int64) time.Time {
+	// getUserContext() will not be nil if EventRecordHelper was created.
+	filetime := e.userContext().trace.fromRawTimestamp(propTimestamp)
+	return FromFiletime(filetime)
+}
+
+// TimestampRaw returns the raw timestamp of the event as an int64.
+// This is the original timestamp provided by ETW, without any conversion.
+// The meaning of this timestamp depends on the clock type of the trace session.
+// It could be in QPC ticks, CPU clock ticks, or FILETIME format.
+// Use Timestamp() to get a time.Time with the correct conversion applied.
+func (e *EventRecord) TimestampRaw() int64 {
+	return e.EventHeader.TimestampRaw()
+}
+
 // // Used for performance-critical slice length modification.
 // type sliceHeader struct {
 // 	Data uintptr
@@ -1488,6 +1515,43 @@ func (e *EventRecord) PointerSize() uint32 {
 	return 8
 }
 
+// Get the MOF class GUID
+func (e *EventRecord) MofClassGuid() *GUID {
+	return &e.EventHeader.ProviderId
+}
+
+// Get the MOF event type
+func (e *EventRecord) MofEventType() uint8 {
+	return e.EventHeader.EventDescriptor.Opcode
+}
+
+// Get the MOF class version
+func (e *EventRecord) MofClassVersion() uint8 {
+	return e.EventHeader.EventDescriptor.Version
+}
+
+// TODO(tekert): add more Get<Type>At methods as needed
+
+// GetUint32At reads a uint32 value from the UserData buffer at a specific byte offset.
+// It performs bounds checking to prevent memory access violations.
+// This is an unsafe, high-performance method for well-known event layouts.
+func (e *EventRecord) GetUint32At(offset uintptr) (uint32, error) {
+	if offset+4 > uintptr(e.UserDataLength) {
+		return 0, fmt.Errorf("offset %d is out of bounds for UserData length %d", offset+4, e.UserDataLength)
+	}
+	return *(*uint32)(unsafe.Pointer(e.UserData + offset)), nil
+}
+
+// GetInt8At reads an int8 value from the UserData buffer at a specific byte offset.
+// It performs bounds checking to prevent memory access violations.
+// This is an unsafe, high-performance method for well-known event layouts.
+func (e *EventRecord) GetInt8At(offset uintptr) (int8, error) {
+	if offset+1 > uintptr(e.UserDataLength) {
+		return 0, fmt.Errorf("offset %d is out of bounds for UserData length %d", offset+1, e.UserDataLength)
+	}
+	return *(*int8)(unsafe.Pointer(e.UserData + offset)), nil
+}
+
 // https://learn.microsoft.com/en-us/windows/win32/api/evntcons/ns-evntcons-event_header_extended_data_item
 // v10.0.19041.0 /evntcons.h
 /*
@@ -1546,12 +1610,13 @@ type EventHeader struct {
 	EventProperty uint16 // User given event property
 	ThreadId      uint32 // Thread Id
 	ProcessId     uint32 // Process Id
-	// Event Timestamp (this may or may not be in Filetime format, depending on logFile.ProcessTraceMode)
-	// Use EventRecordHelper.Timestamp() to get the correct time.Time value.
-	// If etw.PROCESS_TRACE_MODE_RAW_TIMESTAMP is set on the Consumer, this is the raw timestamp
-	// If it is not set, this is in Filetime format.
-	TimeStamp       int64
-	ProviderId      GUID // Provider Id
+	// if etw.PROCESS_TRACE_MODE_RAW_TIMESTAMP is set
+	// this timestamp clock format is converted to FILETIME
+	// (following microsoft docs) by goetw,
+	// otherwise it is in FILETIME format already.
+	// Use Timestamp() to get in time.Time format.
+	TimeStamp       int64 // FILETIME format
+	ProviderId      GUID  // Provider Id
 	EventDescriptor EventDescriptor
 	ProcessorTime   uint64 // Processor Clock (KernelTime | UserTime)
 	ActivityId      GUID   // Activity Id
@@ -1571,15 +1636,15 @@ func (e *EventHeader) GetUserTime() uint32 {
 	return uint32(e.ProcessorTime >> 32)
 }
 
-// TimestampRaw returns the raw timestamp of the event.
-// This may NOT be in Filetime format, it is the raw value as stored in the event header.
-// To know in wich format is it, check the logFile.ProcessTraceMode used for this trace.
+// Timestamp returns the raw timestamp of the event.
+// This timestamp may not be in FILETIME format if etw.PROCESS_TRACE_MODE_RAW_TIMESTAMP is set.
 //
-// if etw.PROCESS_TRACE_MODE_RAW_TIMESTAMP is NOT set, the TimeStamp is in Filetime format.
-// if it is set, use the EventRecordHelper.Timestamp() method to get the correct time.Time value.
+// To get the FILETIME converted to time.Time, use EventRecord.Timestamp()
 func (e *EventHeader) TimestampRaw() int64 {
 	return e.TimeStamp
 }
+
+
 
 // https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_descriptor
 // v10.0.19041.0 /evntprov.h
@@ -1727,6 +1792,7 @@ type EventDescriptor struct {
 	Keyword uint64
 }
 
+// Deprecated: use EventRecord instead.
 // https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-event_trace
 // v10.0.16299.0 /evntrace.h
 //

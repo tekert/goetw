@@ -365,7 +365,7 @@ func (t *TraceEventInfo) pointerOffset(offset uintptr) uintptr {
 
 func (t *TraceEventInfo) stringAt(offset uintptr) string {
 	if offset > 0 {
-		return UTF16AtOffsetToString(t.pointer(), offset)
+		return FromUTF16AtOffset(t.pointer(), offset)
 	}
 	return ""
 }
@@ -446,7 +446,7 @@ func (t *TraceEventInfo) KeywordsName() []string {
 		var pKeyword = (*uint16)(unsafe.Add(unsafe.Pointer(t), t.KeywordsNameOffset))
 		// The list is terminated with two null characters.
 		for *pKeyword != 0 {
-			utf8Key := UTF16PtrToString(pKeyword)
+			utf8Key := FromUTF16Pointer(pKeyword)
 			names = append(names, utf8Key)
 			// Advance pointer by string length + 1 (null terminator)
 			strLen := uintptr(Wcslen(pKeyword)+1) * 2 // *2 for UTF16
@@ -924,7 +924,7 @@ func (i *EventPropertyInfo) SetCountPropertyIndex(index uint16) {
 
 // SetLength sets the fixed length for the property.
 func (i *EventPropertyInfo) SetLength(length uint16) {
-    i.LengthUnion = length
+	i.LengthUnion = length
 }
 
 // Zero-based index to the element of the property array that contains the first member of the structure.

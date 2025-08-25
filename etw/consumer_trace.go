@@ -51,6 +51,12 @@ type ConsumerTrace struct {
 	// logfileMu protects logfile against concurrent access.
 	logfileMu sync.RWMutex
 
+	// processTraceMode caches the trace processing flags. This value is set when
+	// the trace is opened and is immutable for the lifetime of the session.
+	// It is used in the hot path for timestamp conversion to avoid locking.
+	processTraceMode uint32
+	bootTime         int64 // Cached boot time from LogfileHeader for timestamp calculations
+
 	// traceProps holds EVENT_TRACE_PROPERTIES_V2 structure for querying session statistics.
 	// This is only available for real-time sessions and is nil for ETL file traces.
 	traceProps *EventTraceProperties2Wrapper
@@ -60,6 +66,11 @@ type ConsumerTrace struct {
 	// More info: WNODE_HEADER structure Remarks on microsoft site for details.
 	timeStampScale    float64 // Scale factor for converting raw timestamps to 100ns units
 	timeStampBaseInit bool    // Whether timeStampScale has been initialized
+
+	// User to cache repeated calls to fromRawTimestamp() within the same event.
+	// Since we can't put this info anywhere else, we store it here.
+	// The alternative is to replace the EventRecord Timestamp but that defeats the purpose.
+	currentEventFiletime int64 // Timestamp of the current event being processed (FILETIME format)
 
 	// The RTLostEvent event type indicates that one or more realtime events were lost.
 	// The RTLostEvent and RTLostBuffer event types are delivered before processing
@@ -118,7 +129,7 @@ type ConsumerTrace struct {
 	// unexpected format, or when the property parsing logic encounters unsupported data types.
 	ErrorPropsParse atomic.Uint64
 
-	// Start time of the trace session
+	// Start time of the trace session (set manually by goetw when the trace is started)
 	StartTime time.Time
 }
 
@@ -146,26 +157,18 @@ func (ct ClockType) String() string {
 	}
 }
 
-func (t *ConsumerTrace) fromEventTimestamp(er *EventRecord) (filetime int64) {
-	// For ETL file traces if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set timestamps are in raw format
-	// but GetProcessTraceMode() does not return that flag (maybe a bug?) so we must enforce conversion
-	// for traces that are not realtime. (since we dont know if that flag is active or not)
-	if (t.traceLogfile.GetProcessTraceMode()&
-		PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0) ||
-		!t.realtime {
-		return t.fromRawTimestamp(er.EventHeader.TimeStamp)
-	}
-	return er.EventHeader.TimeStamp
-}
-
 // fromRawTimestamp converts a raw timestamp to an absolute FILETIME.
 // It uses the session's clock type to apply the correct scaling factor to the raw
 // tick value and calculates the final FILETIME relative to the system's boot time.
-// This method caches the scaling factor for performance.
+//
+// Notes: some providers properties will be in Session Wnode.ClientContext clocktype, example QPC
+// (like PerfInfo provider) even if raw timestamp is not active, we use this so
+// that users can get the correct timestamp based on that property->event->session.
 func (t *ConsumerTrace) fromRawTimestamp(timestamp int64) (filetime int64) {
 	// Initialize the scaling factor on the first call. This is a one-time setup
 	// per trace session and is safe for concurrent use as it's idempotent.
 	if !t.timeStampBaseInit {
+		t.logfileMu.RLock()
 		logheader := &t.traceLogfile.LogfileHeader
 
 		// Calculate the scale factor to convert raw ticks into 100-nanosecond intervals.
@@ -192,11 +195,13 @@ func (t *ConsumerTrace) fromRawTimestamp(timestamp int64) (filetime int64) {
 		default:
 			t.timeStampScale = 1.0 // Unknown clock type, assume no scaling.
 		}
-
+		t.logfileMu.RUnlock()
 		t.timeStampBaseInit = true // Mark as initialized.
 
 		conlog.Debug().Str("trace", t.TraceName).
 			Str("clockType", t.ClockType.String()).
+			Int64("BootTime", t.bootTime).
+			Uint32("ProcessTraceMode", t.processTraceMode).
 			Float64("timeStampScale", t.timeStampScale).
 			Msg("Initialized raw timestamp conversion parameters")
 	}
@@ -206,15 +211,7 @@ func (t *ConsumerTrace) fromRawTimestamp(timestamp int64) (filetime int64) {
 
 	// For real-time sessions and file traces with raw timestamps, the final
 	// FILETIME is the boot time plus the scaled ticks since boot.
-	return t.traceLogfile.LogfileHeader.BootTime + scaledTicks
-}
-
-// fromQPC is now a convenience wrapper around the main raw timestamp conversion logic.
-// It ensures that properties containing QPC values are converted correctly.
-func (t *ConsumerTrace) fromQPC(qpcTicks int64) (filetime int64) {
-	// This assumes the session's clock type is QPC. If another clock type is active,
-	// this conversion might be inaccurate, but PerfInfo events are documented to use QPC.
-	return t.fromRawTimestamp(qpcTicks)
+	return t.bootTime + scaledTicks
 }
 
 // IsTraceOpen returns true if the trace is currently open and ready for processing.
@@ -277,16 +274,16 @@ func (t *ConsumerTrace) updateTraceLogFile(bufferLogFile *EventTraceLogfile) {
 	t.logfileMu.Lock()
 	defer t.logfileMu.Unlock()
 
-	// TODO: detect file name changes and update it too
+	// The LogFileName and LoggerName pointers in bufferLogFile are only valid
+	// for the duration of the callback. We must not copy them. The correct
+	// names are already stored in our traceLogfile from OpenTrace.
 
-	// Update non-pointer fields
+	// Update statistics and other fields that change per buffer.
 	t.traceLogfile.CurrentTime = bufferLogFile.CurrentTime
 	t.traceLogfile.BuffersRead = bufferLogFile.BuffersRead
 	t.traceLogfile.BufferSize = bufferLogFile.BufferSize
 	t.traceLogfile.Filled = bufferLogFile.Filled
 	t.traceLogfile.EventsLost = bufferLogFile.EventsLost
-
-	// Copy entire LogfileHeader
 	t.traceLogfile.LogfileHeader = bufferLogFile.LogfileHeader
 
 	// Copy Union1 fields

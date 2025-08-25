@@ -252,7 +252,7 @@ func ConvertSecurityDescriptorToStringSecurityDescriptorW(
 		uintptr(unsafe.Pointer(&pStringSecurityDescriptor)),
 		uintptr(unsafe.Pointer(&stringSecurityDescriptorLen)))
 	if err == ERROR_SUCCESS {
-		s := UTF16PtrToString(pStringSecurityDescriptor)
+		s := FromUTF16Pointer(pStringSecurityDescriptor)
 		if _, err := syscall.LocalFree(syscall.Handle(unsafe.Pointer(pStringSecurityDescriptor))); err != nil {
 			return "", err
 		}
@@ -303,7 +303,7 @@ func ConvertSidToStringSidW(sid *SID) (string, error) {
 
 	if rc != 0 {
 		// success
-		sidstr := UTF16PtrToString(pStringSid)
+		sidstr := FromUTF16Pointer(pStringSid)
 		if _, err := syscall.LocalFree(syscall.Handle(unsafe.Pointer(pStringSid))); err != nil {
 			return "", err
 		}

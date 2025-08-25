@@ -108,16 +108,16 @@ type Consumer struct {
 	// To filter out some events call Skip method of EventRecordHelper
 	// As Properties are not parsed yet, trying to get/set Properties is
 	// not possible and might cause unexpected behaviours.
-	// errors returned by this callback will be logged
-	// to skip further processing of the event set EventRecordHelper.Flags.Skip = true
+	// errors returned by this callback will be logged.
+	// To skip further processing of the event set EventRecordHelper.Flags.Skip = true
 	EventRecordHelperCallback func(*EventRecordHelper) error
 
 	// [3] Callback executed after event properties got prepared (step before parsing).
 	// Properties are not parsed yet and this is the right place to filter
 	// events based only on some properties.
 	// NB: events skipped in EventRecordCallback never reach this function
-	// errors returned by this callback will be logged
-	// to skip further processing of the event set EventRecordHelper.Flags.Skip = true
+	// errors returned by this callback will be logged.
+	// To skip further processing of the event set EventRecordHelper.Flags.Skip = true
 	EventPreparedCallback func(*EventRecordHelper) error
 
 	// [4] Callback executed after the event got parsed and defines what to do
@@ -133,9 +133,9 @@ type Consumer struct {
 	// This is incremented based on RT_LostEvent notifications.
 	LostEvents atomic.Uint64
 
-	// Skipped tracks the total number of events that were filtered out by callbacks.
-	// Events are counted as skipped when any callback returns false or calls Skip().
-	Skipped atomic.Uint64
+	// // Skipped tracks the total number of events that were filtered out by callbacks.
+	// // Events are counted as skipped when any callback returns false or calls Skip().
+	// Skipped atomic.Uint64
 
 	// closeTimeout specifies the maximum time to wait for ProcessTrace to complete
 	// when closing the Consumer. If ProcessTrace doesn't return within this timeout,
@@ -160,7 +160,7 @@ type traceContext struct {
 // Helper function to get the traceContext from the UserContext
 // These are used from ETW callbacks to get a reference back to our context.
 // NOTE: keep the pointer alive
-func (er *EventRecord) getUserContext() *traceContext {
+func (er *EventRecord) userContext() *traceContext {
 	return (*traceContext)(unsafe.Pointer(er.UserContext))
 }
 func (e *EventTraceLogfile) getContext() *traceContext {
@@ -271,7 +271,7 @@ func (c *Consumer) handleLostEvent(e *EventRecord) {
 		conlog.Error().Err(err).Msg("Failed to get event information for lost event")
 	}
 
-	ctx := e.getUserContext()
+	ctx := e.userContext()
 	if ctx != nil && ctx.trace != nil && err == nil {
 		switch traceInfo.EventDescriptor.Opcode {
 		case 32:
@@ -330,7 +330,7 @@ func (c *Consumer) bufferCallback(e *EventTraceLogfile) uintptr {
 func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	// Count the number of events with errors, but only once per event.
 	setError := func(err error) {
-		er.getUserContext().trace.ErrorEvents.Add(1)
+		er.userContext().trace.ErrorEvents.Add(1)
 		c.reportError(err, er)
 		c.lastError.Store(err) // TODO: no longer useful?
 	}
@@ -353,18 +353,19 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 
 	// We must always get the context first. It might be nil if the trace is
 	// closing or if the event is a system notification without a context.
-	usrCtx := er.getUserContext()
+	usrCtx := er.userContext()
 	if usrCtx == nil {
 		setError(fmt.Errorf("EventRecord has no UserContext, skipping event"))
 		return
 	}
 
-	// Convert EventRecord timestamp to FILETIME based on ClientContext settings.
-	// Does nothing if PROCESS_TRACE_MODE_RAW_TIMESTAMP is not set.
-	// If that flag is not set, the timestamp is already in FILETIME format.
-	// File traces use QPC timestamps
-	filetimeStamp := usrCtx.trace.fromEventTimestamp(er)
-
+	// Convert EventRecord timestamp to FILETIME based on Session
+	// ClientContext settings (Controller side where the trace is).
+	// Does nothing if PROCESS_TRACE_MODE_RAW_TIMESTAMP (Consumer side) is not set.
+	// If that flag is not set, ETW already converts it to FILETIME format.
+	if usrCtx.trace.processTraceMode&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
+		usrCtx.trace.currentEventFiletime = usrCtx.trace.fromRawTimestamp(er.EventHeader.TimeStamp)
+	}
 
 	// calling EventHeaderCallback if possible
 	if c.EventRecordCallback != nil {
@@ -373,15 +374,9 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		}
 	}
 
-	// TODO: some MOF events will not have a TRACE_EVENT_INFO and error here
-
 	// we get the TraceContext from EventRecord.UserContext
 	// Parse TRACE_EVENT_INFO from the event record
 	if h, err := newEventRecordHelper(er); err == nil {
-		// Store the converted timestamp in the helper for user access
-		h.correctFiletime = filetimeStamp
-
-		// initialize the helper later if not skipped.
 
 		// return mem to pool when done (big performance improvement)
 		// only releases non nil allocations so it's safe to use before h.initialize.
@@ -396,22 +391,26 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		if h.Flags.Skip {
 			return
 		}
+		// Event if it's not skipped, return if no further processing is needed
+		if c.EventPreparedCallback == nil && c.EventCallback == nil {
+			return
+		}
 
 		// initialize record helper
 		h.initialize()
 
+		// Use TraceInfo to prepare properties without parsing the values yet.
 		if err := h.prepareProperties(); err != nil {
 			setError(fmt.Errorf("prepareProperties failed: %w", err))
 			return
 		}
 
-		// running a hook before parsing event properties
+		// The user can parse properties in this callback by using EventRecordHelper.Get*
 		if c.EventPreparedCallback != nil {
 			if err := c.EventPreparedCallback(h); err != nil {
 				setError(fmt.Errorf("EventPreparedCallback failed: %w", err))
 			}
 		}
-
 		// check if we must skip event after next hook
 		if h.Flags.Skip || c.EventCallback == nil {
 			return
@@ -421,7 +420,6 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		if event, err = h.buildEvent(); err != nil {
 			setError(fmt.Errorf("buildEvent failed: %w", err))
 		}
-
 		if err := c.EventCallback(event); err != nil {
 			setError(fmt.Errorf("EventCallback failed: %w", err))
 		}
@@ -500,8 +498,8 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 
 	var traceHandle syscall.Handle
 	ti := c.getOrAddTrace(name)
-	// Important: we must keep a Go reference so we save this first to ti._ctx
-	// so that it is not garbage collected
+	// Important: we must keep a Go reference, so we save this first to ti._ctx
+	// to prevent being garbage collected
 	ti._ctx = &traceContext{
 		trace:    ti,
 		consumer: c,
@@ -514,13 +512,13 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	// PROCESS_TRACE_MODE_EVENT_RECORD to receive EventRecords (new format)
 	// PROCESS_TRACE_MODE_RAW_TIMESTAMP don't convert TimeStamp member of EVENT_HEADER and EVENT_TRACE_HEADER to system time
 	// PROCESS_TRACE_MODE_REAL_TIME to receive events in real time
-	//loggerInfo.SetProcessTraceMode(PROCESS_TRACE_MODE_EVENT_RECORD | PROCESS_TRACE_MODE_RAW_TIMESTAMP | PROCESS_TRACE_MODE_REAL_TIME)
 	var tracemode uint32 = PROCESS_TRACE_MODE_EVENT_RECORD | PROCESS_TRACE_MODE_RAW_TIMESTAMP
-	if !ti.realtime {
-		loggerInfo.SetProcessTraceMode(tracemode)
-	} else {
-		loggerInfo.SetProcessTraceMode(tracemode | PROCESS_TRACE_MODE_REAL_TIME)
+	if ti.realtime {
+		tracemode = tracemode | PROCESS_TRACE_MODE_REAL_TIME
 	}
+	// NOTE: for ETL the Union (ProcessTraceMode | LogFileMode) member is set to LogFileMode:
+	// https://learn.microsoft.com/en-us/windows/win32/etw/logging-mode-constants
+	loggerInfo.SetProcessTraceMode(tracemode)
 	loggerInfo.BufferCallback = syscall.NewCallbackCDecl(c.bufferCallback)
 	loggerInfo.Callback = syscall.NewCallbackCDecl(c.callback)
 	loggerInfo.Context = uintptr(unsafe.Pointer(ti._ctx))
@@ -545,6 +543,15 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	// Since pointers may not be valid when the trace is closed,
 	// we clone the EventTraceLogfile structure (except the pointers).
 	ti.traceLogfile = *loggerInfo.Clone()
+
+	// NOTE: we save the tracemode we used to open the trace to know if we should handle raw timestamps for each trace callback.
+	// ! For ETL file traces the returned ProcessTraceMode is overwrriten with the logfile.LogfileHeader.LogFileMode.
+	// ! If we dont set this, timestamps using raw mode will not be converted by this library when consuming from ETL file traces.
+	ti.processTraceMode = tracemode
+	//ti.processTraceMode = loggerInfo.GetProcessTraceMode() // this works fine for real time traces but not for ETL files.
+
+	// Cache the bootime for lock-free access in the event callback.
+	ti.bootTime = loggerInfo.LogfileHeader.BootTime
 
 	// Determine and store the clock type from the log file header.
 	// The ReservedFlags field indicates the clock resolution used by the session.

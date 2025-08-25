@@ -193,6 +193,7 @@ func NewSystemTraceProviderSession(name string) (s *RealTimeSession) {
 func NewRealTimeEventTraceProperties() *EventTraceProperties2Wrapper {
 	traceProps, size := NewEventTracePropertiesV2()
 
+	// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-event_trace_properties_v2
 	// https://learn.microsoft.com/en-us/windows/win32/etw/wnode-header
 	// Necessary fields for SessionProperties struct
 	traceProps.Wnode.BufferSize = size // this is optimized by ETWframework
@@ -468,11 +469,11 @@ func (s *RealTimeSession) Flush() error {
 
 // NewQueryTraceProperties creates a properties structure used to query an existing
 // ETW session by its name. The `traceName` parameter specifies the name of the
-// running session to query, which can belong to any process on the system.
+// running session to query, which can belong to any session on the system.
 //
 // This function initializes an [EventTraceProperties2Wrapper] with the minimum
 // fields required by the ControlTrace API for an EVENT_TRACE_CONTROL_QUERY
-// operation. The wrapper handles the complex memory layout of the underlying
+// operation. The wrapper handles the memory layout of the underlying
 // Windows struct, which requires a single contiguous buffer for both the
 // properties and the session name string, avoiding manual pointer arithmetic.
 func NewQueryTraceProperties(traceName string) *EventTraceProperties2Wrapper {
