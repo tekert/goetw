@@ -3,6 +3,7 @@
 package etw
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -24,19 +25,29 @@ type ConsumerTrace struct {
 	// This is determined when the trace is opened by the consumer.
 	ClockType ClockType
 
-	// handle that OpenTrace returned if open = true, else 0
+	// handle that OpenTrace returned, valid until CloseTrace is called.
 	handle syscall.Handle
 
-	open bool // True is the trace is open
+	open bool // True is the trace is not closed
 
 	// Keep ETW traceContext alive (don't nil it or everything crashes)
 	_ctx *traceContext
 
-	// True if the trace is currently blocking in ProcessTrace
-	processing bool
+	// True if the trace is currently blocking in ProcessTrace. Must be accessed atomically.
+	processing atomic.Bool
 
-	// is a realtime trace session or etl file trace
+	// Is a realtime trace session or etl file trace
 	realtime bool
+
+	// Per-trace context for individual cancellation via BufferCallback.
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	// done is a channel that is closed when the ProcessTrace goroutine for this trace has exited.
+	done chan struct{}
+
+	// closeTimeout holds the timeout duration for a specific CloseTrace call.
+	closeTimeout time.Duration
 
 	// traceLogfile holds the last EventTraceLogfile structure received from a
 	// buffer callback. Access to this struct must be protected by logfileMu.
@@ -133,7 +144,7 @@ type ClockType uint32
 
 const (
 	ClockTypeUnknown                 ClockType = 0 // Unknown or not specified.
-	ClockTypeQueryPerformanceCounter ClockType = 1 // High-resolution Query Performance Counter (QPC).
+	ClockTypeQueryPerformanceCounter ClockType = 1 // High-resolution Query Performance Counter (QPC). default.
 	ClockTypeSystemTime              ClockType = 2 // System time (100ns intervals).
 	ClockTypeCpuCycleCounter         ClockType = 3 // CPU cycle counter (unreliable).
 )
@@ -315,6 +326,8 @@ func (t *ConsumerTrace) QueryTrace() (prop *EventTraceProperties2Wrapper, err er
 
 func newConsumerTrace(tname string) *ConsumerTrace {
 	t := &ConsumerTrace{}
+	t.ctx, t.cancel = context.WithCancel(context.Background())
+	t.done = make(chan struct{})
 
 	t.TraceName = tname
 	t.TraceNameW, _ = syscall.UTF16PtrFromString(tname)

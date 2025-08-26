@@ -303,18 +303,18 @@ func (c *Consumer) bufferCallback(e *EventTraceLogfile) uintptr {
 	// ensure userctx is not garbage collected after CloseTrace or it crashes invalid mem.
 	userctx := e.getContext()
 
-	if userctx != nil && userctx.trace.open {
+	if userctx == nil || c.ctx.Err() != nil || userctx.trace.ctx.Err() != nil {
+		// if the consumer or a trace has been stopped we
+		// don't process event records anymore
+		// return 0 to stop ProcessTrace
+		conlog.SampledTrace("bufferCallback").Msg("Context canceled, stopping ProcessTrace via BufferCallback.")
+		return 0 // Returning 0 terminates ProcessTrace.
+	}
+
+	if userctx.trace.open {
 		userctx.trace.updateTraceLogFile(e)
 	}
 
-	if c.ctx.Err() != nil {
-		// if the consumer has been stopped we
-		// don't process event records anymore
-		// return 0 to stop ProcessTrace
-		conlog.SampledTrace("bufferCallback").Msg("bufferCallback: Context canceled, stopping ProcessTrace...")
-
-		return 0
-	}
 	// we keep processing event records
 	return 1
 }
@@ -335,8 +335,8 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		c.lastError.Store(err) // TODO: no longer useful?
 	}
 
-	// We must always get the context first. It might be nil if the trace is
-	// closing or if the event is a system notification without a context.
+	// We must always get the context first. just in case. if the context is there
+	// then everything inside is valid while ProcessTrace is running.
 	usrCtx := er.userContext()
 	if usrCtx == nil {
 		setError(fmt.Errorf("EventRecord has no UserContext, skipping event"))
@@ -434,51 +434,106 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	return
 }
 
-// TODO(tekert): selective close a single trace handle
-// close closes the open handles and eventually waits for ProcessTrace goroutines
+// stopTrace handles the shutdown logic for a single trace. It is the definitive
+// function for stopping a trace, ensuring thread safety and proper resource cleanup.
+func (c *Consumer) stopTrace(name string, timeout time.Duration) error {
+	v, ok := c.traces.Load(name)
+	if !ok {
+		return nil // Not found, already closed.
+	}
+	trace := v.(*ConsumerTrace)
+
+	// If not processing, it's already stopped or never started.
+	if !trace.processing.Load() {
+		return nil
+	}
+
+	// Set the timeout that processTraceWithTimeout will use.
+	trace.closeTimeout = timeout
+	trace.cancel()
+	c.closeTrace(trace, name)
+
+	// Wait for the goroutine to fully exit or time out.
+	<-trace.done
+
+	seslog.Debug().Str("trace", name).Msg("Trace closed.")
+
+	return nil
+}
+
+// closeTrace is the minimal, thread-safe helper to call the Windows CloseTrace API.
+// It also handles the final cleanup of the trace from the consumer's map.
+func (c *Consumer) closeTrace(trace *ConsumerTrace, name string) (err error) {
+	c.tmu.Lock()
+	defer c.tmu.Unlock()
+
+	if trace.handle == 0 || !trace.open {
+		return
+	}
+	// Mark as closed to prevent further updates or double-closes.
+	defer func() { trace.open = false }()
+
+	// if we don't wait for traces, ERROR_CTX_CLOSE_PENDING is a valid error
+	// The ERROR_CTX_CLOSE_PENDING code indicates that the CloseTrace function
+	// call was successful; the ProcessTrace function will unblock and return
+	// after the etw buffer for the session is empty and the last callback returns.
+	// (ProcessTrace will not receive any new events in it's buffer after you call
+	// the CloseTrace function).
+	seslog.Debug().Str("trace", trace.TraceName).Msg("Closing handle for trace")
+	if err = CloseTrace(trace.handle); err != nil && err != ERROR_CTX_CLOSE_PENDING {
+		seslog.Error().Err(err).Str("trace", trace.TraceName).Msg("CloseTrace API call failed")
+	}
+	trace.handle = 0 // The handle is now invalid, regardless of the error.
+	if !trace.processing.Load() {
+		c.traces.Delete(name)
+	} else {
+		seslog.Warn().Str("trace", name).Msg(`"Trace goroutine was detached during global shutdown;
+				 spawning reaper for eventual cleanup."`)
+		go func() {
+			ticker := time.NewTicker(1 * time.Second) // go 1.23+ collects these.
+			for range ticker.C {
+				if !trace.processing.Load() {
+					// The detached goroutine has finally finished. It is now safe
+					// to remove the trace from the map.
+					c.traces.Delete(name)
+					seslog.Debug().Str("trace", name).Msg("Reaped and cleaned up detached trace.")
+					return // Exit the reaper goroutine.
+				}
+			}
+		}()
+	}
+
+	return
+}
+
+// closeAll closes all open handles and eventually waits for ProcessTrace goroutines
 // to return if wait = true
-func (c *Consumer) close(wait bool) (lastErr error) {
+func (c *Consumer) closeAll(wait bool) (lastErr error) {
 	if c.closed {
 		seslog.Debug().Msg("Consumer already closed.")
 		return
 	}
-	seslog.Debug().Msg("Closing consumer...")
+	seslog.Debug().Msg("Closing all traces for consumer...")
 
-	// closing trace handles
+	// Signal all callbacks to stop processing via the main context.
+	c.cancel()
+
+	// Signal all traces to unblock by calling closeTrace for each one.
 	c.traces.Range(func(key, value any) bool {
-		t := value.(*ConsumerTrace)
-		seslog.Debug().Str("trace", t.TraceName).Msg("Closing handle for trace")
-		// if we don't wait for traces, ERROR_CTX_CLOSE_PENDING is a valid error
-		// The ERROR_CTX_CLOSE_PENDING code indicates that the CloseTrace function
-		// call was successful; the ProcessTrace function will unblock and return
-		// after the etw buffer for the session is empty and the last callback returns.
-		// (ProcessTrace will not receive any new events in it's buffer after you call
-		// the CloseTrace function).
-		if t.handle != 0 {
-			var err error
-			// Mark as closed to prevent further updates
-			c.tmu.Lock()
-			t.open = false
-			if err = CloseTrace(t.handle); err != nil && err != ERROR_CTX_CLOSE_PENDING {
-				seslog.Error().Err(err).Str("trace", t.TraceName).Msg("CloseTrace failed")
-				lastErr = err
-			}
-			t.handle = 0
-			c.tmu.Unlock()
-
-			seslog.Debug().Str("trace", t.TraceName).Msg("handle closed")
-			if err == ERROR_CTX_CLOSE_PENDING {
-				seslog.Debug().Str("trace", t.TraceName).Err(err).Msg("ERROR_CTX_CLOSE_PENDING == true")
-			}
+		name := key.(string)
+		trace := value.(*ConsumerTrace)
+		if err := c.closeTrace(trace, name); err != nil {
+			lastErr = err // Capture the last error encountered.
 		}
 		return true
 	})
 
-	seslog.Debug().Msg("Waiting for ProcessTrace goroutines to end...")
+	// If requested, perform a single, global wait for all goroutines to finish.
 	if wait {
+		seslog.Debug().Msg("Waiting for all ProcessTrace goroutines to end...")
 		c.Wait()
+		seslog.Debug().Msg("All ProcessTrace goroutines ended.")
 	}
-	seslog.Debug().Msg("All ProcessTrace goroutines ended.")
 
 	c.Events.close()
 	seslog.Debug().Msg("Events channel closed.")
@@ -674,6 +729,7 @@ func (c *Consumer) ProcessEvents(fn any) error {
 // Sends event in batches to the Consumer.EventsBatch channel. (better performance)
 // After 200ms have passed or after 20 events have been queued by default.
 func (c *Consumer) DefaultEventCallback(event *Event) error {
+	// Check context before sending to avoid sending events during shutdown.
 	if c.ctx.Err() == nil {
 		c.Events.Send(event) // blocks if channel is full.
 	}
@@ -706,13 +762,15 @@ func (c *Consumer) Start() (err error) {
 	c.traces.Range(func(key, value any) bool {
 		name := key.(string)
 		trace := value.(*ConsumerTrace)
-		if trace.processing {
+		if trace.processing.Load() {
 			return true // continue iteration
 		}
 
 		c.Add(1)
 		go func(name string, trace *ConsumerTrace) {
 			defer c.Done()
+			defer close(trace.done) // Signal completion when this goroutine exits.
+
 			//c.processTrace(name, trace)
 			c.processTraceWithTimeout(name, trace)
 		}(name, trace)
@@ -730,7 +788,7 @@ func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
 	goroutineID := getGoroutineID()
 	seslog.Info().Str("trace", name).Interface("goroutineID", goroutineID).Msg("Starting processing trace")
 
-	trace.processing = true
+	trace.processing.Store(true)
 	trace.StartTime = time.Now()
 	// https://docs.microsoft.com/en-us/windows/win32/api/evntrace/nf-evntrace-processtrace
 	// IMPORTANT:
@@ -750,7 +808,7 @@ func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
 			seslog.Error().Err(lastErr).Msg("ProcessTrace failed")
 		}
 	}
-	trace.processing = false
+	trace.processing.Store(false)
 	trace._ctx = nil // context can be safely released now. (bufferCallback will not be called anymore)
 	seslog.Debug().Str("trace", name).Msg("ProcessTrace finished")
 }
@@ -765,27 +823,39 @@ func (c *Consumer) processTraceWithTimeout(name string, trace *ConsumerTrace) {
 		c.processTrace(name, trace) // blocks until ProcessTrace returns
 	}()
 
-	// When the consumer is stopped (ctx closed) or processTrace returned
-	// we check wich of the two happened.
-	// Consumer stopped -> wait for ProcessTrace to finish or timeout.
-	// ProcessTrace returned -> we return immediately.
+	var timeout time.Duration
+
+	// Wait for one of three conditions:
+	// 1. Global consumer context is canceled (`c.ctx.Done()`).
+	// 2. This specific trace's context is canceled (`trace.ctx.Done()`).
+	// 3. The underlying ProcessTrace function finishes on its own (`pdone`).
 	select {
-	case <-c.ctx.Done(): // Consumer stopped
-		if c.closeTimeout != 0 {
-			select { // Wait for ProcessTrace to flush remaining events or timeout
-			case <-pdone:
-				// ProcessTrace returned before timeout
-				return
-			case <-time.After(c.closeTimeout):
-				seslog.Warn().Str("trace", name).Msg("ProcessTrace did not return within timeout")
-				// Let goroutine continue but we return to unblock c.Wait() in c.close()
-				return
-			}
+	case <-c.ctx.Done(): // Global shutdown signal.
+		seslog.Debug().Str("trace", name).Msg("Global context canceled, shutting down trace...")
+		timeout = c.closeTimeout
+	case <-trace.ctx.Done(): // Individual shutdown signal.
+		seslog.Debug().Str("trace", name).Msg("Trace context canceled, shutting down trace...")
+		timeout = trace.closeTimeout
+	case <-pdone: // ProcessTrace finished cleanly.
+		return // Finished cleanly before any cancellation signal.
+	}
+
+	// If we are here, it means a cancellation occurred. We now handle the shutdown.
+	switch {
+	case timeout > 0: // Wait with a timeout.
+		timer := time.NewTimer(timeout)
+		defer timer.Stop()
+
+		select {
+		case <-pdone:
+			// ProcessTrace returned gracefully before timeout.
+		case <-timer.C:
+			seslog.Warn().Str("trace", name).Msg("ProcessTrace did not return within timeout, detaching goroutine.")
 		}
-		// If forceTimeout == 0, wait for normal completion
+	case timeout == 0: // Wait indefinitely.
 		<-pdone
-	case <-pdone: // ProcessTrace returned
-		// ProcessTrace completed before Consumer stop (context close).
+	default: // (Abort), don't wait at all.
+		// Just return, detaching the goroutine.
 	}
 }
 
@@ -809,8 +879,7 @@ func (c *Consumer) LastError() error {
 func (c *Consumer) Stop() (err error) {
 	// ProcessTrace will exit only if the session buffer is empty.
 	c.closeTimeout = 0
-	c.cancel()
-	return c.close(true)
+	return c.closeAll(true)
 }
 
 // StopWithTimeout initiates a shutdown with a timeout.
@@ -829,8 +898,7 @@ func (c *Consumer) Stop() (err error) {
 func (c *Consumer) StopWithTimeout(timeout time.Duration) (err error) {
 	// ProcessTrace will exit only if the session buffer is empty.
 	c.closeTimeout = timeout
-	c.cancel()
-	return c.close(true)
+	return c.closeAll(true)
 }
 
 // Abort forces an immediate, non-graceful shutdown of the consumer.
@@ -844,6 +912,23 @@ func (c *Consumer) StopWithTimeout(timeout time.Duration) (err error) {
 // in-flight events is acceptable.
 func (c *Consumer) Abort() (err error) {
 	c.closeTimeout = -1 // A negative value signals an immediate return.
-	c.cancel()
-	return c.close(false)
+	return c.closeAll(false)
+}
+
+// StopTrace gracefully shuts down a single trace session by name, with an optional timeout.
+//
+// It signals the specific trace's processing loop to stop, calls the underlying
+// CloseTrace API function, and waits for the processing to complete, respecting the
+// provided timeout. Any buffered events for that trace will be processed before it returns.
+//
+// If a timeout is provided and expires, the function will return, but the underlying
+// processing goroutine will be detached and left to finish on its own.
+//
+// This function is safe for concurrent use.
+func (c *Consumer) StopTrace(name string, timeout ...time.Duration) error {
+	var t time.Duration = 0 // Default to wait indefinitely.
+	if len(timeout) > 0 {
+		t = timeout[0]
+	}
+	return c.stopTrace(name, t)
 }
