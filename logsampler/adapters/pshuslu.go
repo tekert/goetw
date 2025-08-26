@@ -5,6 +5,7 @@ package adapters
 import (
 	"hash/maphash"
 	"strconv"
+	"strings"
 	"sync/atomic"
 
 	"github.com/tekert/goetw/logsampler"
@@ -26,8 +27,10 @@ type SummaryReporter struct {
 
 // LogSummary logs a sampler summary report.
 func (r *SummaryReporter) LogSummary(key string, suppressedCount int64) {
+	baseKey, errSig, _ := strings.Cut(key, ":")
 	r.Logger.Info().
-		Str("samplerKey", key).
+		Str("samplerKey", baseKey).
+		Str("errorSignature", errSig).
 		Int64("suppressedCount", suppressedCount).
 		Msg("log sampler summary")
 }

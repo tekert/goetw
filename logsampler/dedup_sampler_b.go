@@ -152,7 +152,31 @@ func (s *EventDrivenSampler) cleanupStaleKeys(now int64) {
 
 // --- Linked List Helpers (must be called with mutex held) ---
 
+//   (head)A <-> B <-> C <-> D(tail)
+// nil<-prev      ...        next->nil
+
 // removeNode removes an element from the linked list. O(1).
+//
+// Removing a middle node (B):
+//
+//	Before:   A <-> B <-> C
+//	          ^     ^     ^
+//	        prev   prev   prev
+//	          |     |     |
+//	        nil     A     B
+//	After:    A <-> C
+//
+// Removing the head (A):
+//
+//	Before:   A <-> B <-> C
+//	After:    B <-> C
+//	          head = B
+//
+// Removing the tail (C):
+//
+//	Before:   A <-> B <-> C
+//	After:    A <-> B
+//	          tail = B
 func (s *EventDrivenSampler) removeNode(info *eventLogInfo) {
 	if info.prev != nil {
 		info.prev.next = info.next
@@ -167,6 +191,16 @@ func (s *EventDrivenSampler) removeNode(info *eventLogInfo) {
 }
 
 // pushToFront adds an element to the front (head) of the list. O(1).
+//
+// Before:   (head)A <-> B <-> C(tail)
+// After pushing D to front:
+//
+//	D <-> A <-> B <-> C
+//	head = D
+//
+// If list was empty:
+//
+//	D (head & tail)
 func (s *EventDrivenSampler) pushToFront(info *eventLogInfo) {
 	info.next = s.head
 	info.prev = nil
@@ -180,6 +214,16 @@ func (s *EventDrivenSampler) pushToFront(info *eventLogInfo) {
 }
 
 // moveToFront moves an existing element to the front of the list. O(1).
+//
+// Moving tail (D) to front:
+//
+//	Before:   A <-> B <-> C <-> D(tail)
+//	After:    D(head) <-> A <-> B <-> C
+//
+// Moving middle node (B) to front:
+//
+//	Before:   A <-> B <-> C <-> D
+//	After:    B(head) <-> A <-> C <-> D
 func (s *EventDrivenSampler) moveToFront(info *eventLogInfo) {
 	if s.head == info {
 		return // Already at the front

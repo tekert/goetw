@@ -243,7 +243,9 @@ func (c *mockClock) Advance(d time.Duration) {
 	c.currentTime = c.currentTime.Add(d)
 }
 
-func newTestEventDrivenSampler(config sampler.BackoffConfig, reporter sampler.SummaryReporter) (*sampler.EventDrivenSampler, *mockClock) {
+func newTestEventDrivenSampler(config sampler.BackoffConfig,
+	reporter sampler.SummaryReporter) (*sampler.EventDrivenSampler, *mockClock) {
+		
 	s := sampler.NewEventDrivenSampler(config, reporter)
 	clock := &mockClock{currentTime: time.Now()}
 	s.SetClock(clock)
