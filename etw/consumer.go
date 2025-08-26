@@ -450,45 +450,39 @@ func (c *Consumer) stopTrace(name string, timeout time.Duration) error {
 
 	// Set the timeout that processTraceWithTimeout will use.
 	trace.closeTimeout = timeout
-	trace.cancel()
-	c.closeTrace(trace, name)
 
-	// Wait for the goroutine to fully exit or time out.
+	// 1: Signal the context. This provides a fast path for the
+	// BufferCallback to stop processing new events.
+	trace.cancel()
+
+	// 2: Signal the ProcessTrace function directly via the Windows API.
+	// This guarantees that an idle ProcessTrace call will unblock.
+	c.closeTrace(trace)
+
+	// 3: Wait for the supervisor goroutine to finish. This will block
+	// until the trace has finished gracefully, timed out, or been aborted.
 	<-trace.done
 
-	seslog.Debug().Str("trace", name).Msg("Trace closed.")
+	// 4: Perform the final cleanup of the trace from the consumer's map.
+	c.cleanupTrace(trace, name)
 
 	return nil
 }
 
-// closeTrace is the minimal, thread-safe helper to call the Windows CloseTrace API.
-// It also handles the final cleanup of the trace from the consumer's map.
-func (c *Consumer) closeTrace(trace *ConsumerTrace, name string) (err error) {
-	c.tmu.Lock()
-	defer c.tmu.Unlock()
-
-	if trace.handle == 0 || !trace.open {
-		return
-	}
-	// Mark as closed to prevent further updates or double-closes.
-	defer func() { trace.open = false }()
-
-	// if we don't wait for traces, ERROR_CTX_CLOSE_PENDING is a valid error
-	// The ERROR_CTX_CLOSE_PENDING code indicates that the CloseTrace function
-	// call was successful; the ProcessTrace function will unblock and return
-	// after the etw buffer for the session is empty and the last callback returns.
-	// (ProcessTrace will not receive any new events in it's buffer after you call
-	// the CloseTrace function).
-	seslog.Debug().Str("trace", trace.TraceName).Msg("Closing handle for trace")
-	if err = CloseTrace(trace.handle); err != nil && err != ERROR_CTX_CLOSE_PENDING {
-		seslog.Error().Err(err).Str("trace", trace.TraceName).Msg("CloseTrace API call failed")
-	}
-	trace.handle = 0 // The handle is now invalid, regardless of the error.
+// cleanupTrace performs the final cleanup of a trace, deciding whether to
+// delete it from the map immediately or spawn a reaper for a detached goroutine.
+func (c *Consumer) cleanupTrace(trace *ConsumerTrace, name string) {
+	// This check is performed *after* waiting for the goroutine to complete.
 	if !trace.processing.Load() {
+		// The goroutine finished gracefully. It is now safe to remove the trace
+		// from the map.
 		c.traces.Delete(name)
+		seslog.Debug().Str("trace", name).Msg("Trace closed and removed from consumer.")
 	} else {
-		seslog.Warn().Str("trace", name).Msg(`"Trace goroutine was detached during global shutdown;
-				 spawning reaper for eventual cleanup."`)
+		// The goroutine was detached (due to timeout or abort). We must not
+		// delete it from the map yet. Spawn a reaper goroutine to perform
+		// the cleanup once the underlying ProcessTrace call finally returns.
+		seslog.Warn().Str("trace", name).Msg("Trace goroutine was detached; spawning reaper for eventual cleanup.")
 		go func() {
 			ticker := time.NewTicker(1 * time.Second) // go 1.23+ collects these.
 			for range ticker.C {
@@ -502,8 +496,39 @@ func (c *Consumer) closeTrace(trace *ConsumerTrace, name string) (err error) {
 			}
 		}()
 	}
+}
 
-	return
+// closeTrace is the minimal, thread-safe helper to call the Windows CloseTrace API.
+// It only signals the handle to close and does not manage map cleanup.
+func (c *Consumer) closeTrace(trace *ConsumerTrace) (err error) {
+	c.tmu.Lock()
+	defer c.tmu.Unlock()
+
+	if trace.handle == 0 || !trace.open {
+		return nil
+	}
+
+	// The handle will be considered invalid and closed after this point,
+	// regardless of the API call's return value.
+	defer func() {
+		trace.handle = 0
+		trace.open = false
+	}()
+
+	// if we don't wait for traces, ERROR_CTX_CLOSE_PENDING is a valid error
+	// The ERROR_CTX_CLOSE_PENDING code indicates that the CloseTrace function
+	// call was successful; the ProcessTrace function will unblock and return
+	// after the etw buffer for the session is empty and the last callback returns.
+	// (ProcessTrace will not receive any new events in it's buffer after you call
+	// the CloseTrace function).
+	seslog.Debug().Str("trace", trace.TraceName).Msg("Closing handle for trace")
+	err = CloseTrace(trace.handle)
+	if err != nil && err != ERROR_CTX_CLOSE_PENDING {
+		seslog.Error().Err(err).Str("trace", trace.TraceName).Msg("CloseTrace API call failed")
+		return err // Return only on a true error.
+	}
+
+	return nil // Return nil on success or pending close.
 }
 
 // closeAll closes all open handles and eventually waits for ProcessTrace goroutines
@@ -515,25 +540,32 @@ func (c *Consumer) closeAll(wait bool) (lastErr error) {
 	}
 	seslog.Debug().Msg("Closing all traces for consumer...")
 
-	// Signal all callbacks to stop processing via the main context.
+	// 1: Signal the global context for all callbacks.
 	c.cancel()
 
-	// Signal all traces to unblock by calling closeTrace for each one.
+	// 2: Signal all traces to unblock by calling closeTrace for each one.
 	c.traces.Range(func(key, value any) bool {
-		name := key.(string)
 		trace := value.(*ConsumerTrace)
-		if err := c.closeTrace(trace, name); err != nil {
-			lastErr = err // Capture the last error encountered.
+		if err := c.closeTrace(trace); err != nil {
+			lastErr = err // Capture the last real error encountered.
 		}
 		return true
 	})
 
-	// If requested, perform a single, global wait for all goroutines to finish.
+	// 3: If requested, perform a single, global wait for all goroutines to finish.
 	if wait {
 		seslog.Debug().Msg("Waiting for all ProcessTrace goroutines to end...")
 		c.Wait()
 		seslog.Debug().Msg("All ProcessTrace goroutines ended.")
 	}
+
+	// 4: After waiting, iterate again to perform the final cleanup for each trace.
+	c.traces.Range(func(key, value any) bool {
+		name := key.(string)
+		trace := value.(*ConsumerTrace)
+		c.cleanupTrace(trace, name)
+		return true
+	})
 
 	c.Events.close()
 	seslog.Debug().Msg("Events channel closed.")
