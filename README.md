@@ -6,40 +6,6 @@
 
 `goetw` is a high-performance, pure Go library for consuming Event Tracing for Windows (ETW) events. It's designed for efficiency.
 
-## Overview
-
-Basically there are two main elements in ETW, the session(called controller) and the consumer.  
-In go terms, session is a command line app that just setups some buffers and signals some etw providers to write to it. 
-
-Consumer would be another app that just (by name only) hooks into the session created by the controller and starts receiving the events from the providers, this connection is usually called a trace for real time traces.
-
-There are also etl files, the one created with logman or any other tool, where the session is not needed, you just consumer from the file, so you only need a filename instead of session name.
-
-Lastly, for the consumer, there are 4 mainly consuming "levels", each for how fast they are. 
-
-- EventRecordCallback -> [1] this can process like 4 000 000 events/s on modern hardware, here you get the raw EventRecord structure that the etw provider "provided".
-
-- EventRecordHelperCallback -> [2] this one process 2 000 000 events/s, half of the other, here you receive a wrapper with trace info data for that event, that is used to decode the data in the event, the TraceEventInfo.
-This lib uses a bunch of code just to make it easy to consume events from this data, so this callback alone is just not very useful except to do something with the Trace Info. 
-It event handles cases where the schema for the kernel events may be corrupted on systems prior to win11, and uses pre generated mof classes to decode those events if the microsoft parser fails
-
-- EventPreparedCallback -> [3] Here we are down to 1 000 000 events/s, This is where Trace Info was used by goetw to "prepare" meaning, decoding all the positions in the event binary blob where a prop may be, wich name it has, size, etc etc. This where the most code was written and debugged, profiled, a bunch of nasty work so you don't have to. Here the wrapper called `EventRecordHelper` will have 3 maps, each one for the types of properties that where prepared, simple props (map of props), array of props, array of strucs of structs,
-Example: 
-
-`ArrayPropeties`: If an event has a property ThreadIDs defined as ThreadIDs[4], it will be stored in ArrayProperties["ThreadIDs"] as a slice of Property pointers. 
-
-`StructArrays`: If an event has a property IORequests defined as IORequests[3] where each IORequest is a struct with fields like Size, Type, etc., it will be stored in StructArrays["IORequests"] as a slice of maps (each map is a struct instance). 
-
-`StructSingle`: If an event has a property ProcessInfo which is a struct (not an array), it will be stored in StructSingle as a single map of field names to Property pointers. 
-
-The properties are not parsed here, but you can parse them using the Get* methods.
-
-- EventCallback -> [4] This is where the events/s depends on the json parser but on my benchmarks here we just fall to the 300 000 events/s range, this just outputs `Event` structs will all the parsed data plus metadata, This us usually used to do light work, maybe file tracking or analizing events, just like other microsoft tools outputs the decoded events but here you have that data in go.
-
-`ProcessEvents()` is just a wrapper for the Default EventCallback [4] that automatically handles events in a queue using channels and releases memory allocated for each event on return, you can do that using the EventCallback. This was made just to make it really easy to consume events without worring about anything.
-
-So, for goetw, all of these is handled like in the examples below:
-
 ## Examples
 
 The basic workflow involves creating a `Session` to start a trace, enabling one or more `Provider`s, and using a `Consumer` to process the events.
@@ -243,6 +209,39 @@ func main() {
 }
 ```
 **Note:** The workflow for file-based consumption is nearly identical to real-time. The `Consumer` handles the differences internally.
+
+## Overview
+
+Basically there are two main elements in ETW, the session(called controller) and the consumer.  
+In go terms, session is a command line app that just setups some buffers and signals some etw providers to write to it. 
+
+Consumer would be another app that just (by name only) hooks into the session created by the controller and starts receiving the events from the providers, this connection is usually called a trace for real time traces.
+
+There are also etl files, the one created with logman or any other tool, where the session is not needed, you just consumer from the file, so you only need a filename instead of session name.
+
+Lastly, for the consumer, there are 4 mainly consuming "levels", each for how fast they are. 
+
+- EventRecordCallback -> [1] this can process like 4 000 000 events/s on modern hardware, here you get the raw EventRecord structure that the etw provider "provided".
+
+- EventRecordHelperCallback -> [2] this one process 2 000 000 events/s, half of the other, here you receive a wrapper with trace info data for that event, that is used to decode the data in the event, it's the TraceEventInfo.
+This lib uses a bunch of code to make it easy to consume events from this data, so this callback alone is not very useful, you only have the Trace Info. 
+This handles cases where the schema for the nt kernel events may be corrupted on systems, and uses pre generated mof classes to decode those events if the microsoft parser fails to find the schema on your system.
+
+- EventPreparedCallback -> [3] Here we are down to 1 000 000 events/s, This is where Trace Info was used by goetw to "prepare" meaning, decoding all the positions in the event binary blob where a prop may be, wich name it has, size, etc etc. This where the most code was written and debugged, profiled, a bunch of nasty work so you don't have to. Here the wrapper called `EventRecordHelper` will have 3 maps, each one for the types of properties that where prepared, simple props (map of props), array of props, array of strucs of structs,
+Example: 
+
+`ArrayPropeties`: If an event has a property ThreadIDs defined as ThreadIDs[4], it will be stored in ArrayProperties["ThreadIDs"] as a slice of Property pointers. 
+
+`StructArrays`: If an event has a property IORequests defined as IORequests[3] where each IORequest is a struct with fields like Size, Type, etc., it will be stored in StructArrays["IORequests"] as a slice of maps (each map is a struct instance). 
+
+`StructSingle`: If an event has a property ProcessInfo which is a struct (not an array), it will be stored in StructSingle as a single map of field names to Property pointers. 
+
+The properties are not parsed here, but you can parse them using the Get* methods.
+
+- EventCallback -> [4] This is where the events/s depends on the json parser but on my benchmarks here we just fall to the 300 000 events/s range, this just outputs `Event` structs will all the parsed data plus metadata, This us usually used to do light work, maybe file tracking or analizing strings from events, metadata etc, just like other microsoft tools outputs the decoded events but in go.
+
+`ProcessEvents()` is just a wrapper for the Default EventCallback [4] that automatically handles events in a queue using batched channels and releases memory allocated for each event on return, you can do that using the EventCallback. This was made just to make it really easy to consume events without worring about releasing.
+
 
 ## Why made this
 
