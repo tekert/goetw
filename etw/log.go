@@ -6,38 +6,19 @@
 package etw
 
 import (
-	"hash/maphash" // Import maphash
 	"os"
-	"strconv"
-	"sync/atomic"
 	"time"
 
 	"github.com/tekert/goetw/logsampler"
+	"github.com/tekert/goetw/logsampler/adapters"
 
 	plog "github.com/phuslu/log"
 )
 
-// A package-level seed for maphash ensures that hashes are consistent
-// for the lifetime of the application.
-var hashSeed = maphash.MakeSeed()
-
-// plogSummaryReporter is an adapter that implements the sampler.SummaryReporter
-// interface using a phuslu/log logger.
-type plogSummaryReporter struct {
-	logger *plog.Logger
-}
-
-// LogSummary logs a sampler summary report using the configured plog.Logger.
-func (r *plogSummaryReporter) LogSummary(key string, suppressedCount int64) {
-	r.logger.Info().
-		Str("samplerKey", key).
-		Int64("suppressedCount", suppressedCount).
-		Msg("log sampler summary")
-}
-
 // LoggerName defines the name of a logger for configuration.
 type LoggerName string
 
+// LoggerName defines the name of a logger for configuration.
 // Available logger names. Use these as keys when configuring log levels.
 const (
 	ConsumerLogger LoggerName = "consumer"
@@ -45,107 +26,13 @@ const (
 	DefaultLogger  LoggerName = "default"
 )
 
-// Sampler is an alias for the internal sampler interface.
-type Sampler = logsampler.Sampler
-
-// SampledLogger extends plog.Logger with methods for high-performance sampling.
-type SampledLogger struct {
-	*plog.Logger
-	sampler Sampler
-}
-
-// sampled is the private generic implementation for all sampled log calls.
-// It performs the level check, optional error signature hashing, and sampler query
-// before creating a log entry, ensuring maximum performance on suppressed calls.
-func (l *SampledLogger) sampled(level plog.Level, key string, useErrSig bool, err ...error) *plog.Entry {
-	// 1. If the log level is too high, we exit immediately with zero allocations.
-	if plog.Level(atomic.LoadUint32((*uint32)(&l.Logger.Level))) > level {
-		return nil
-	}
-
-	var e error
-	if len(err) > 0 {
-		e = err[0]
-	}
-
-	// 2. If using error signature, create a more granular key.
-	if useErrSig && e != nil {
-		// Use the highly optimized maphash on the entire error string.
-		var h maphash.Hash
-		h.SetSeed(hashSeed)
-		h.WriteString(e.Error())
-
-		// Efficiently build key using a byte buffer and strconv
-		var buf [128]byte
-		b := buf[:0]
-		b = append(b, key...)
-		b = append(b, ':')
-		b = strconv.AppendUint(b, h.Sum64(), 16)
-		key = string(b)
-	}
-
-	// 3. Consult the sampler to see if we should log.
-	if l.sampler != nil {
-		if shouldLog, suppressedCount := l.sampler.ShouldLog(key, e); shouldLog {
-			entry := l.Logger.WithLevel(level)
-			if suppressedCount > 0 {
-				entry.Int64("suppressedCount", suppressedCount)
-			}
-			if e != nil {
-				entry.Err(e)
-			}
-			return entry
-		}
-	} else {
-		// No sampler configured, log directly.
-		entry := l.Logger.WithLevel(level)
-		if e != nil {
-			entry.Err(e)
-		}
-		return entry
-	}
-
-	// The sampler decided to suppress this log.
-	return nil
-}
-
-// SampledError starts a new sampled log event with Error level.
-func (l *SampledLogger) SampledError(key string) *plog.Entry {
-	return l.sampled(plog.ErrorLevel, key, false)
-}
-
-// SampledErrorWithErrSig is like SampledError but uses the error's content for sampling.
-// You dont need to call .Err() on the returned entry, it's done automatically.
-func (l *SampledLogger) SampledErrorWithErrSig(key string, err ...error) *plog.Entry {
-	return l.sampled(plog.ErrorLevel, key, true, err...)
-}
-
-// SampledWarn starts a new sampled log event with Warn level.
-func (l *SampledLogger) SampledWarn(key string) *plog.Entry {
-	return l.sampled(plog.WarnLevel, key, false)
-}
-
-// SampledWarnWithErrSig is like SampledWarn but uses the error's content for sampling.
-// You dont need to call .Err() on the returned entry, it's done automatically.
-func (l *SampledLogger) SampledWarnWithErrSig(key string, err ...error) *plog.Entry {
-	return l.sampled(plog.WarnLevel, key, true, err...)
-}
-
-// SampledTrace starts a new sampled log event with Trace level.
-func (l *SampledLogger) SampledTrace(key string) *plog.Entry {
-	return l.sampled(plog.TraceLevel, key, false)
-}
-
-// SampledTraceWithErrSig is like SampledTrace but uses the error's content for sampling.
-// You dont need to call .Err() on the returned entry, it's done automatically.
-func (l *SampledLogger) SampledTraceWithErrSig(key string, err ...error) *plog.Entry {
-	return l.sampled(plog.TraceLevel, key, true, err...)
-}
+// SampledLogger is an alias for the reusable pshuslug SampledLogger.
+type SampledLogger = adapters.SampledLogger
 
 // LoggerManager manages all three loggers
 type LoggerManager struct {
 	writer  plog.Writer
-	sampler Sampler
+	sampler logsampler.Sampler
 	loggers map[LoggerName]*plog.Logger // Use a map for scalability
 
 	// Keep direct references for convenience and internal use
@@ -165,10 +52,10 @@ var (
 // Initialize loggers on package import
 func init() {
 	loggerManager = NewLoggerManager()
-	conlog = &SampledLogger{
-		Logger:  loggerManager.loggers[ConsumerLogger],
-		sampler: loggerManager.sampler,
-	}
+	conlog = adapters.NewSampledLogger(
+		loggerManager.loggers[ConsumerLogger],
+		loggerManager.sampler,
+	)
 	seslog = loggerManager.seslog
 	log = loggerManager.deflog
 }
@@ -210,7 +97,7 @@ func NewLoggerManager() *LoggerManager {
 	}
 
 	// The sampler needs a logger to report summaries for inactive keys.
-	reporter := &plogSummaryReporter{logger: lm.loggers[DefaultLogger]}
+	reporter := &adapters.SummaryReporter{Logger: lm.loggers[DefaultLogger]}
 	lm.sampler = logsampler.NewDeduplicatingSampler(backoffConfig, reporter)
 
 	// Assign to convenient direct-access variables
@@ -230,13 +117,13 @@ func (lm *LoggerManager) SetBaseContext(ctx []byte) {
 }
 
 // SetSampler changes the active sampler. It safely closes the previous sampler.
-func (lm *LoggerManager) SetSampler(sampler Sampler) {
+func (lm *LoggerManager) SetSampler(sampler logsampler.Sampler) {
 	if lm.sampler != nil {
 		lm.sampler.Close()
 	}
 	lm.sampler = sampler
 	if conlog != nil {
-		conlog.sampler = sampler
+		conlog.Sampler = sampler
 	}
 }
 
@@ -259,12 +146,12 @@ func (lm *LoggerManager) SetLogLevels(levels map[LoggerName]plog.Level) {
 }
 
 // GetSampler returns the error sampler for hot path error logging
-func (lm *LoggerManager) GetSampler() Sampler {
+func (lm *LoggerManager) GetSampler() logsampler.Sampler {
 	return lm.sampler
 }
 
 // SetSampler sets the global sampler for hot-path logging.
-func SetSampler(s Sampler) {
+func SetSampler(s logsampler.Sampler) {
 	loggerManager.SetSampler(s)
 }
 

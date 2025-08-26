@@ -261,6 +261,7 @@ func (er *EventRecord) MarshalJSON() (b []byte, err error) {
 		extData = unsafe.Slice(er.ExtendedData, er.ExtendedDataCount)
 	}
 
+	// TODO(tekert): only do this if trace level is set.
 	var userDataHex string
 	if er.UserDataLength > 0 {
 		userDataSlice := unsafe.Slice((*byte)(unsafe.Pointer(er.UserData)), er.UserDataLength)
