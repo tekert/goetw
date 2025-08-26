@@ -29,6 +29,19 @@ type SummaryReporter interface {
 	LogSummary(key string, suppressedCount int64)
 }
 
+// clock is an interface for getting the current time.
+// It's used to allow for mocking time in tests.
+type clock interface {
+	Now() time.Time
+}
+
+// systemClock implements the clock interface using the system's time.
+type systemClock struct{}
+
+func (c systemClock) Now() time.Time {
+	return time.Now()
+}
+
 // Sampler defines the interface for deciding if a log message should be processed.
 type Sampler interface {
 	// ShouldLog determines if a log event should be written.
@@ -87,6 +100,8 @@ type logInfo struct {
 }
 
 // DeduplicatingSampler provides high-performance, adaptive sampling with exponential backoff.
+// Deprecated: This sampler uses a background goroutine. Use EventDrivenSampler for a goroutine-free alternative
+// that offers simpler lifecycle management.
 type DeduplicatingSampler struct {
 	config   BackoffConfig
 	logs     sync.Map
@@ -95,6 +110,7 @@ type DeduplicatingSampler struct {
 }
 
 // NewDeduplicatingSampler creates a new sampler with exponential backoff.
+// Deprecated: This sampler uses a background goroutine. Use NewEventDrivenSampler for a goroutine-free alternative.
 func NewDeduplicatingSampler(config BackoffConfig, reporter SummaryReporter) *DeduplicatingSampler {
 	s := &DeduplicatingSampler{
 		config:   config,
@@ -226,9 +242,203 @@ func (s *DeduplicatingSampler) garbageCollector() {
 }
 
 // Close stops the background summary reporter and flushes any pending summaries.
+// Deprecated: This sampler uses a background goroutine. Use EventDrivenSampler for a goroutine-free alternative.
 func (s *DeduplicatingSampler) Close() {
 	if s.reporter != nil {
 		close(s.stopCh)
 		s.flushSummaries()
 	}
+}
+
+// --- New EventDrivenSampler ---
+
+const (
+	// cleanupInterval controls how often we perform cleanup operations
+	// This is measured in number of operations, not time
+	cleanupInterval = 1
+)
+
+// eventLogInfo holds the state for a key in the EventDrivenSampler.
+// It also acts as a node in a doubly-linked list for LRU-style eviction.
+type eventLogInfo struct {
+	key             string
+	suppressedCount atomic.Int64
+	lastLogTime     int64
+	activeWindow    int64
+
+	// Pointers for the doubly-linked list
+	prev *eventLogInfo
+	next *eventLogInfo
+}
+
+// EventDrivenSampler provides high-performance, adaptive sampling without background goroutines.
+// It uses a map for fast lookups and a doubly-linked list for efficient time-based ordering.
+type EventDrivenSampler struct {
+	config   BackoffConfig
+	reporter SummaryReporter
+	clock    clock
+	mu       sync.Mutex
+	logs     map[string]*eventLogInfo
+	opCount  atomic.Uint64 // Counter used to amortize cleanup cost
+
+	// Head and tail of the doubly-linked list for LRU-style cleanup.
+	// Head is the oldest, Tail is the newest.
+	head *eventLogInfo
+	tail *eventLogInfo
+}
+
+// NewEventDrivenSampler creates a new sampler that operates without a background goroutine.
+// It requires a SummaryReporter to log summaries of stale keys.
+func NewEventDrivenSampler(config BackoffConfig, reporter SummaryReporter) *EventDrivenSampler {
+	if reporter == nil {
+		return nil
+	}
+	s := &EventDrivenSampler{
+		config:   config,
+		reporter: reporter,
+		clock:    systemClock{},
+		logs:     make(map[string]*eventLogInfo, 64),
+	}
+	return s
+}
+
+// ShouldLog determines if an event should be logged based on its adaptive strategy.
+func (s *EventDrivenSampler) ShouldLog(key string, err error) (bool, int64) {
+	now := s.clock.Now().UnixNano()
+
+	// Periodically check for stale entries. This check is done outside the main lock.
+	if s.config.ResetInterval > 0 && s.opCount.Add(1)&(cleanupInterval-1) == 0 {
+		s.mu.Lock()
+		s.cleanupStaleKeys(now)
+		s.mu.Unlock()
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	info, exists := s.logs[key]
+	if !exists {
+		info = &eventLogInfo{
+			key:          key,
+			lastLogTime:  now,
+			activeWindow: int64(s.config.InitialInterval),
+		}
+		s.logs[key] = info
+		s.pushToFront(info) // Add to the list as the newest entry.
+		return true, 0
+	}
+
+	// Move the accessed entry to the front of the list to mark it as recently used.
+	s.moveToFront(info)
+
+	// Reset backoff if the key has been inactive for the configured reset interval.
+	if s.config.ResetInterval > 0 && now-info.lastLogTime > int64(s.config.ResetInterval) {
+		suppressed := info.suppressedCount.Swap(0)
+		info.activeWindow = int64(s.config.InitialInterval)
+		info.lastLogTime = now
+		return true, suppressed
+	}
+
+	// Check if the active quiet window has passed.
+	if now-info.lastLogTime > info.activeWindow {
+		suppressed := info.suppressedCount.Swap(0)
+		info.lastLogTime = now
+
+		// Calculate and activate the next backoff window.
+		nextWindow := int64(float64(info.activeWindow) * s.config.Factor)
+		if maxInterval := int64(s.config.MaxInterval); nextWindow > maxInterval {
+			nextWindow = maxInterval
+		}
+		info.activeWindow = nextWindow
+		return true, suppressed
+	}
+
+	// We are within the quiet window; suppress the log.
+	info.suppressedCount.Add(1)
+	return false, 0
+}
+
+// cleanupStaleKeys removes stale keys by walking the linked list from the oldest entry.
+// This must be called with the mutex held.
+func (s *EventDrivenSampler) cleanupStaleKeys(now int64) {
+	if s.config.ResetInterval <= 0 {
+		return
+	}
+	staleThreshold := now - int64(s.config.ResetInterval)
+
+	// Walk from the tail (oldest) and remove stale entries.
+	for s.tail != nil && s.tail.lastLogTime < staleThreshold {
+		staleNode := s.tail
+		if suppressed := staleNode.suppressedCount.Swap(0); suppressed > 0 {
+			s.reporter.LogSummary(staleNode.key, suppressed)
+		}
+		delete(s.logs, staleNode.key)
+		s.removeNode(staleNode)
+	}
+}
+
+// --- Linked List Helpers (must be called with mutex held) ---
+
+// removeNode removes an element from the linked list. O(1).
+func (s *EventDrivenSampler) removeNode(info *eventLogInfo) {
+	if info.prev != nil {
+		info.prev.next = info.next
+	} else {
+		s.head = info.next // It was the head
+	}
+	if info.next != nil {
+		info.next.prev = info.prev
+	} else {
+		s.tail = info.prev // It was the tail
+	}
+}
+
+// pushToFront adds an element to the front (head) of the list. O(1).
+func (s *EventDrivenSampler) pushToFront(info *eventLogInfo) {
+	info.next = s.head
+	info.prev = nil
+	if s.head != nil {
+		s.head.prev = info
+	}
+	s.head = info
+	if s.tail == nil {
+		s.tail = info
+	}
+}
+
+// moveToFront moves an existing element to the front of the list. O(1).
+func (s *EventDrivenSampler) moveToFront(info *eventLogInfo) {
+	if s.head == info {
+		return // Already at the front
+	}
+	s.removeNode(info)
+	s.pushToFront(info)
+}
+
+// Flush reports a summary of all suppressed logs and clears the sampler state.
+func (s *EventDrivenSampler) Flush() {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+
+    for key, info := range s.logs {
+        if suppressed := info.suppressedCount.Swap(0); suppressed > 0 {
+            s.reporter.LogSummary(key, suppressed)
+        }
+    }
+
+    // Clear all state
+    s.logs = make(map[string]*eventLogInfo, 64)
+    s.head = nil
+    s.tail = nil
+    s.opCount.Store(0)
+}
+
+// Close is functionally equivalent to Flush for this sampler.
+func (s *EventDrivenSampler) Close() {
+	s.Flush()
+}
+
+// This is a temporary helper for testing to allow injection of a mock clock.
+func (s *EventDrivenSampler) SetClock(c clock) {
+	s.clock = c
 }

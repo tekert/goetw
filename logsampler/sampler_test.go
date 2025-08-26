@@ -204,3 +204,281 @@ func TestDeduplicatingSampler_SteadyRate(t *testing.T) {
 		wg.Wait()
 	})
 }
+
+// mockReporter captures summary calls for testing.
+type mockReporter struct {
+	mu        sync.Mutex
+	summaries map[string]int64
+}
+
+func newMockReporter() *mockReporter {
+	return &mockReporter{
+		summaries: make(map[string]int64),
+	}
+}
+
+func (r *mockReporter) LogSummary(key string, suppressedCount int64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.summaries[key] = suppressedCount
+}
+
+func (r *mockReporter) getSummary(key string) (int64, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	val, ok := r.summaries[key]
+	return val, ok
+}
+
+// mockClock allows deterministic time control in tests.
+type mockClock struct {
+	currentTime time.Time
+}
+
+func (c *mockClock) Now() time.Time {
+	return c.currentTime
+}
+
+func (c *mockClock) Advance(d time.Duration) {
+	c.currentTime = c.currentTime.Add(d)
+}
+
+func newTestEventDrivenSampler(config sampler.BackoffConfig, reporter sampler.SummaryReporter) (*sampler.EventDrivenSampler, *mockClock) {
+	s := sampler.NewEventDrivenSampler(config, reporter)
+	clock := &mockClock{currentTime: time.Now()}
+	s.SetClock(clock)
+	return s, clock
+}
+
+func TestEventDrivenSampler(t *testing.T) {
+
+	t.Run("SingleLogEventTriggersStaleCleanup", func(t *testing.T) {
+		reporter := newMockReporter()
+		cfg := sampler.BackoffConfig{
+			InitialInterval: 10 * time.Millisecond,
+			MaxInterval:     100 * time.Millisecond,
+			Factor:          2.0,
+			ResetInterval:   50 * time.Millisecond,
+		}
+		s, clock := newTestEventDrivenSampler(cfg, reporter)
+		defer s.Close()
+
+		// Generate some logs for a key to build up suppressed count
+		firstKey := "key-to-become-stale"
+		s.ShouldLog(firstKey, nil) // First log - always passes
+
+		// Log several times to trigger exponential backoff and build up suppressed count
+		for i := 0; i < 10; i++ {
+			clock.Advance(1 * time.Millisecond)
+			s.ShouldLog(firstKey, nil) // These will be suppressed
+		}
+
+		// Verify we have suppressed logs but no summary yet
+		if count, ok := reporter.getSummary(firstKey); ok {
+			t.Fatalf("Expected no summary yet for %s, but got count %d", firstKey, count)
+		}
+
+		// Now advance the clock beyond the reset interval to make the key stale
+		clock.Advance(60 * time.Millisecond)
+
+		// Force cleanupInterval number of operations to ensure cleanup happens
+		for i := 0; i < 65; i++ {
+			secondKey := fmt.Sprintf("trigger-key-%d", i)
+			s.ShouldLog(secondKey, nil)
+		}
+
+		// Verify the stale key's suppressed logs were reported
+		if count, ok := reporter.getSummary(firstKey); !ok {
+			t.Fatal("Expected summary for stale key to be reported after a single new log event")
+		} else if count != 10 {
+			t.Fatalf("Expected suppressed count to be 10, got %d", count)
+		}
+
+		// Now log the first key again - it should be treated as a new log (reset)
+		should, suppressed := s.ShouldLog(firstKey, nil)
+		if !should {
+			t.Fatal("Log after reset interval should pass")
+		}
+		if suppressed != 0 {
+			t.Fatalf("Expected suppressed count to be 0 after reset, got %d", suppressed)
+		}
+	})
+
+	t.Run("LogsFirstAndSuppressesSecond", func(t *testing.T) {
+		reporter := newMockReporter()
+		cfg := sampler.BackoffConfig{InitialInterval: 100 * time.Millisecond}
+		s, _ := newTestEventDrivenSampler(cfg, reporter)
+		defer s.Close()
+
+		if should, _ := s.ShouldLog("key1", nil); !should {
+			t.Fatal("First log should pass")
+		}
+		if should, _ := s.ShouldLog("key1", nil); should {
+			t.Fatal("Second log within window should be suppressed")
+		}
+	})
+
+	t.Run("LogsAfterWindowAndReportsSuppressed", func(t *testing.T) {
+		reporter := newMockReporter()
+		cfg := sampler.BackoffConfig{InitialInterval: 100 * time.Millisecond}
+		s, clock := newTestEventDrivenSampler(cfg, reporter)
+		defer s.Close()
+
+		s.ShouldLog("key1", nil) // First log
+		for range 5 {
+			s.ShouldLog("key1", nil) // Suppress 5 times
+		}
+
+		clock.Advance(110 * time.Millisecond)
+
+		should, suppressed := s.ShouldLog("key1", nil)
+		if !should {
+			t.Fatal("Log after window should pass")
+		}
+		if suppressed != 5 {
+			t.Fatalf("Expected to report 5 suppressed logs, got %d", suppressed)
+		}
+	})
+
+	t.Run("AppliesExponentialBackoff", func(t *testing.T) {
+		reporter := newMockReporter()
+		cfg := sampler.BackoffConfig{
+			InitialInterval: 50 * time.Millisecond,
+			MaxInterval:     500 * time.Millisecond,
+			Factor:          2.0,
+		}
+		s, clock := newTestEventDrivenSampler(cfg, reporter)
+		defer s.Close()
+
+		// Initial log
+		if should, _ := s.ShouldLog("key1", nil); !should {
+			t.Fatal("Initial log should always pass")
+		}
+
+		// Advance time by 40ms. This is < 50ms. Should be suppressed.
+		clock.Advance(40 * time.Millisecond)
+		if should, _ := s.ShouldLog("key1", nil); should {
+			t.Fatal("Should have been suppressed by 50ms window")
+		}
+
+		// Advance another 20ms (total 60ms). This is > 50ms. Should log.
+		clock.Advance(20 * time.Millisecond)
+		if should, _ := s.ShouldLog("key1", nil); !should {
+			t.Fatal("Should have logged after 50ms window passed")
+		}
+
+		// Advance 80ms. This is < 100ms (new backoff window). Should be suppressed.
+		clock.Advance(80 * time.Millisecond)
+		if should, _ := s.ShouldLog("key1", nil); should {
+			t.Fatal("Should have been suppressed by 100ms backoff window")
+		}
+	})
+
+	t.Run("OpportunisticallyFlushesStaleKeys", func(t *testing.T) {
+		reporter := newMockReporter()
+		cfg := sampler.BackoffConfig{
+			InitialInterval: 10 * time.Millisecond,
+			ResetInterval:   50 * time.Millisecond,
+		}
+		s, clock := newTestEventDrivenSampler(cfg, reporter)
+		defer s.Close()
+
+		// Use the same key to ensure it's in the same shard
+		baseKey := "stale-test"
+
+		// Log and suppress baseKey once
+		s.ShouldLog(baseKey, nil)
+		clock.Advance(1 * time.Millisecond)
+		s.ShouldLog(baseKey, nil) // Suppressed count is now 1
+
+		// Advance time for baseKey to become stale
+		clock.Advance(60 * time.Millisecond)
+
+		// Log the same key again - this should trigger stale flushing and reset
+		should, suppressed := s.ShouldLog(baseKey, nil)
+		if !should {
+			t.Fatal("Log after reset interval should have passed")
+		}
+		if suppressed != 1 {
+			t.Fatalf("Expected suppressed count to be 1, got %d", suppressed)
+		}
+	})
+
+	t.Run("FlushClearsAllSuppressedLogs", func(t *testing.T) {
+		reporter := newMockReporter()
+		cfg := sampler.BackoffConfig{InitialInterval: 1 * time.Second}
+		s, clock := newTestEventDrivenSampler(cfg, reporter)
+
+		s.ShouldLog("key1", nil) // Log once
+		s.ShouldLog("key1", nil) // Suppress
+		s.ShouldLog("key2", nil) // Log once
+		s.ShouldLog("key2", nil) // Suppress
+		s.ShouldLog("key2", nil) // Suppress
+
+		s.Flush()
+
+		if count, ok := reporter.getSummary("key1"); !ok || count != 1 {
+			t.Fatalf("Expected flushed count for key1 to be 1, got %d", count)
+		}
+		if count, ok := reporter.getSummary("key2"); !ok || count != 2 {
+			t.Fatalf("Expected flushed count for key2 to be 2, got %d", count)
+		}
+
+		// After flush, logging again should start with 0 suppressed
+		s.ShouldLog("key1", nil)
+		clock.Advance(1 * time.Millisecond)
+		should, suppressed := s.ShouldLog("key1", nil)
+		if should {
+			t.Fatal("Should have been suppressed by new window")
+		}
+		if suppressed != 0 {
+			t.Fatalf("Suppressed count should be 0 after a flush, got %d", suppressed)
+		}
+	})
+}
+
+func BenchmarkSamplers(b *testing.B) {
+	reporter := newMockReporter()
+	baseConfig := sampler.BackoffConfig{
+		InitialInterval: 10 * time.Millisecond,
+		MaxInterval:     1 * time.Second,
+		Factor:          2.0,
+		ResetInterval:   5 * time.Second,
+	}
+
+	runBenchmarks := func(b *testing.B, s sampler.Sampler, keyspace int) {
+		b.Run(fmt.Sprintf("SingleCore_%dKeys", keyspace), func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				s.ShouldLog(fmt.Sprintf("key-%d", i%keyspace), nil)
+			}
+		})
+
+		b.Run(fmt.Sprintf("MultiCore_%dKeys", keyspace), func(b *testing.B) {
+			b.ReportAllocs()
+			b.RunParallel(func(pb *testing.PB) {
+				i := 0
+				for pb.Next() {
+					s.ShouldLog(fmt.Sprintf("key-%d", i%keyspace), nil)
+					i++
+				}
+			})
+		})
+	}
+
+	b.Run("DeduplicatingSampler", func(b *testing.B) {
+		s := sampler.NewDeduplicatingSampler(baseConfig, reporter)
+		defer s.Close()
+		b.ResetTimer()
+		runBenchmarks(b, s, 16)
+		runBenchmarks(b, s, 1024)
+	})
+
+	b.Run("EventDrivenSampler", func(b *testing.B) {
+		s := sampler.NewEventDrivenSampler(baseConfig, reporter)
+		defer s.Close()
+		b.ResetTimer()
+		runBenchmarks(b, s, 16)
+		runBenchmarks(b, s, 1024)
+	})
+}
