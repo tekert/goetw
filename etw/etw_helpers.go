@@ -170,6 +170,9 @@ type EventRecordHelper struct {
 
 	// A reference to the thread-local storage for this trace.
 	storage *traceStorage
+
+	// FILETIME format of this event timestamp (in case raw timestamp is used)
+	timestamp int64
 }
 
 func (e *EventRecordHelper) remainingUserDataLength() uint16 {
@@ -194,7 +197,7 @@ func (e *EventRecordHelper) addPropError() {
 // Session ClientContext: QPC, SystemTime and CPUClocks clocktypes are correctly converted to FILETIME.
 // If the raw timestamp flag is not set, it just uses the FILETIME returned by etw in time.Time format.
 func (e *EventRecordHelper) Timestamp() time.Time {
-	return e.EventRec.Timestamp()
+	return FromFiletime(e.timestamp) // use cached filetime timestamp
 }
 
 // TimestampFromProp converts a raw timestamp value from an event property (like WmiTime)
