@@ -1,6 +1,6 @@
 // Package log provides a high-performance, sampled logger built on top of
 // phuslu/log and the goetw/logsampler.
-package adapters
+package logadapters
 
 import (
 	"hash/maphash"

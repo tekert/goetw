@@ -243,8 +243,13 @@ func (s *EventDrivenSampler) Flush() {
 		}
 	}
 
-	// Clear all state
-	s.logs = make(map[string]*eventLogInfo, 64)
+	// Clear the map if its capacity is reasonable; otherwise, create a new one
+	if len(s.logs) > 128 { // Threshold for creating a new map
+		s.logs = make(map[string]*eventLogInfo, 64) // Reset with default capacity
+	} else {
+		clear(s.logs) // Retain the current map and clear its contents
+	}
+
 	s.head = nil
 	s.tail = nil
 	s.opCount.Store(0)
@@ -286,4 +291,41 @@ func (s *EventDrivenSampler) SetClock(c clock) {
 	BenchmarkSamplers/EventDrivenSampler/MultiCore_1024Keys
 	BenchmarkSamplers/EventDrivenSampler/MultiCore_1024Keys-16               5171302               222.9 ns/op            14 B/op          1 allocs/op
 	PASS
+
+
+	Running tool: C:\Program Files\Go\bin\go.exe test -benchmem -run=^$ -bench ^BenchmarkSamplers$ github.com/tekert/goetw/logsampler -v
+
+goos: windows
+goarch: amd64
+pkg: github.com/tekert/goetw/logsampler
+cpu: AMD Ryzen 7 5700X3D 8-Core Processor
+BenchmarkSamplers
+BenchmarkSamplers/DeduplicatingSampler
+BenchmarkSamplers/DeduplicatingSampler/SingleCore_16Keys
+BenchmarkSamplers/DeduplicatingSampler/SingleCore_16Keys-16
+ 9138038	       129.2 ns/op	      46 B/op	       3 allocs/op
+BenchmarkSamplers/DeduplicatingSampler/MultiCore_16Keys
+BenchmarkSamplers/DeduplicatingSampler/MultiCore_16Keys-16
+33004570	        35.85 ns/op	      46 B/op	       3 allocs/op
+BenchmarkSamplers/DeduplicatingSampler/SingleCore_1024Keys
+BenchmarkSamplers/DeduplicatingSampler/SingleCore_1024Keys-16
+ 8197320	       145.2 ns/op	      54 B/op	       3 allocs/op
+BenchmarkSamplers/DeduplicatingSampler/MultiCore_1024Keys
+BenchmarkSamplers/DeduplicatingSampler/MultiCore_1024Keys-16
+29245039	        40.64 ns/op	      54 B/op	       3 allocs/op
+
+BenchmarkSamplers/EventDrivenSampler
+BenchmarkSamplers/EventDrivenSampler/SingleCore_16Keys
+BenchmarkSamplers/EventDrivenSampler/SingleCore_16Keys-16
+14103327	        84.54 ns/op	       6 B/op	       1 allocs/op
+BenchmarkSamplers/EventDrivenSampler/MultiCore_16Keys
+BenchmarkSamplers/EventDrivenSampler/MultiCore_16Keys-16
+ 6484572	       184.4 ns/op	       6 B/op	       1 allocs/op
+BenchmarkSamplers/EventDrivenSampler/SingleCore_1024Keys
+BenchmarkSamplers/EventDrivenSampler/SingleCore_1024Keys-16
+11823987	        99.94 ns/op	      13 B/op	       1 allocs/op
+BenchmarkSamplers/EventDrivenSampler/MultiCore_1024Keys
+BenchmarkSamplers/EventDrivenSampler/MultiCore_1024Keys-16
+ 5769141	       206.8 ns/op	      13 B/op	       1 allocs/op
+PASS
 */
