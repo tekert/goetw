@@ -135,11 +135,11 @@ func (p *Property) FormatToString() (string, error) {
 		} else {
 			p.value, err = p.decodeToString(p.evtPropInfo.OutType())
 			if err != nil {
-				//p.evtRecordHelper.addPropError() // we have to try the old parser anyway.
 				conlog.SampledTraceWithErrSig("decodeToString", err).
 					Msg("failed to parse property with custom parser")
 				// fallback to tdh parser
 				p.value, _, err = p.formatToStringTdh()
+				// error and p.evtRecordHelper.addPropError() already handled inside.
 			}
 		}
 	}
