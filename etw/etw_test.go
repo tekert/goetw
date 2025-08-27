@@ -890,34 +890,34 @@ func TestProviderFiltering(t *testing.T) {
 		FilterType  string
 		Filter      ProviderFilter
 		TestEventID uint16         // Expected common event ID for validation
-		Result      FilterBehavior // Will be set during test
+		Result      FilterBehavior // Expected behavior
 		Message     string         // Will be set during test
 	}
 
 	testCases := []TestCase{
 		// Kernel Memory Provider Tests
-		{"Microsoft-Windows-Kernel-Memory", "EventID-Include", NewEventIDFilter(true, 1), 1, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-Memory", "EventID-Exclude", NewEventIDFilter(false, 10), 10, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-Memory", "PID", NewPIDFilter(currentPID), 0, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-Memory", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-Memory", "EventID-Include", NewEventIDFilter(true, 1), 1, BehaviorApplied, ""},
+		{"Microsoft-Windows-Kernel-Memory", "EventID-Exclude", NewEventIDFilter(false, 10), 10, BehaviorApplied, ""},
+		{"Microsoft-Windows-Kernel-Memory", "PID", NewPIDFilter(currentPID), 0, BehaviorIgnored, ""},
+		{"Microsoft-Windows-Kernel-Memory", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorIgnored, ""},
 
 		// Kernel File Provider Tests
-		{"Microsoft-Windows-Kernel-File", "EventID-Include", NewEventIDFilter(true, 12), 12, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-File", "EventID-Exclude", NewEventIDFilter(false, 14), 14, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-File", "PID", NewPIDFilter(currentPID), 0, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-File", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-File", "EventID-Include", NewEventIDFilter(true, 12), 12, BehaviorApplied, ""},
+		{"Microsoft-Windows-Kernel-File", "EventID-Exclude", NewEventIDFilter(false, 14), 14, BehaviorApplied, ""},
+		{"Microsoft-Windows-Kernel-File", "PID", NewPIDFilter(currentPID), 0, BehaviorIgnored, ""},
+		{"Microsoft-Windows-Kernel-File", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorIgnored, ""},
 
 		// Kernel Process Provider Tests
-		{"Microsoft-Windows-Kernel-Process", "EventID-Include", NewEventIDFilter(true, 1), 1, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-Process", "EventID-Exclude", NewEventIDFilter(false, 2), 2, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-Process", "PID", NewPIDFilter(currentPID), 0, BehaviorUnknown, ""},
-		{"Microsoft-Windows-Kernel-Process", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-Process", "EventID-Include", NewEventIDFilter(true, 1), 1, BehaviorApplied, ""},
+		{"Microsoft-Windows-Kernel-Process", "EventID-Exclude", NewEventIDFilter(false, 2), 2, BehaviorApplied, ""},
+		{"Microsoft-Windows-Kernel-Process", "PID", NewPIDFilter(currentPID), 0, BehaviorIgnored, ""},
+		{"Microsoft-Windows-Kernel-Process", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorIgnored, ""},
 
 		// User-mode RPC Provider Tests
-		{"Microsoft-Windows-RPC", "EventID-Include", NewEventIDFilter(true, 5), 5, BehaviorUnknown, ""},
-		{"Microsoft-Windows-RPC", "EventID-Exclude", NewEventIDFilter(false, 6), 6, BehaviorUnknown, ""},
-		{"Microsoft-Windows-RPC", "PID", NewPIDFilter(currentPID), 0, BehaviorUnknown, ""},
-		{"Microsoft-Windows-RPC", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorUnknown, ""},
+		{"Microsoft-Windows-RPC", "EventID-Include", NewEventIDFilter(true, 5), 5, BehaviorApplied, ""},
+		{"Microsoft-Windows-RPC", "EventID-Exclude", NewEventIDFilter(false, 6), 6, BehaviorApplied, ""},
+		{"Microsoft-Windows-RPC", "PID", NewPIDFilter(currentPID), 0, BehaviorApplied, ""},
+		{"Microsoft-Windows-RPC", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorApplied, ""},
 	}
 
 	for i := range testCases {
@@ -932,8 +932,8 @@ func TestProviderFiltering(t *testing.T) {
 			// Parse and configure provider
 			prov, err := ParseProvider(tc.Provider)
 			if err != nil {
-				tc.Result = BehaviorUnsupported
 				tc.Message = fmt.Sprintf("Failed to parse provider: %v", err)
+				tt.Assert(tc.Result == BehaviorUnsupported, tc.Message)
 				return
 			}
 			prov.Filters = []ProviderFilter{tc.Filter}
@@ -941,8 +941,8 @@ func TestProviderFiltering(t *testing.T) {
 			// Try to enable provider - this is where unsupported filters fail
 			err = ses.EnableProvider(prov)
 			if err != nil {
-				tc.Result = BehaviorUnsupported
 				tc.Message = fmt.Sprintf("EnableProvider failed: %v", err)
+				tt.Assert(tc.Result == BehaviorUnsupported, tc.Message)
 				return
 			}
 
@@ -953,8 +953,8 @@ func TestProviderFiltering(t *testing.T) {
 			c := NewConsumer(ctx).FromSessions(ses)
 			err = c.Start()
 			if err != nil {
-				tc.Result = BehaviorUnsupported
 				tc.Message = fmt.Sprintf("Consumer start failed: %v", err)
+				tt.Assert(tc.Result == BehaviorUnsupported, tc.Message)
 				return
 			}
 			defer c.Stop()
@@ -996,23 +996,34 @@ func TestProviderFiltering(t *testing.T) {
 				}
 
 				// Stop after first few events if no violation
-				if eventCount >= 3 {
+				if eventCount >= 30 {
 					cancel()
 				}
 			})
 
 			<-ctx.Done()
 
+			// Determine actual behavior and compare with expected
+			var actualBehavior FilterBehavior
+			var message string
+
 			if violationFound {
-				tc.Result = BehaviorIgnored
-				tc.Message = fmt.Sprintf("Filter ignored: %s (%d events)", violationMsg, eventCount)
+				actualBehavior = BehaviorIgnored
+				message = fmt.Sprintf("Filter ignored: %s (%d events)", violationMsg, eventCount)
 			} else if eventCount > 0 {
-				tc.Result = BehaviorApplied
-				tc.Message = fmt.Sprintf("Filter applied correctly (%d events)", eventCount)
+				actualBehavior = BehaviorApplied
+				message = fmt.Sprintf("Filter applied correctly (%d events)", eventCount)
 			} else {
-				tc.Result = BehaviorApplied
-				tc.Message = "No events received (filter may be working or provider inactive)"
+				actualBehavior = BehaviorApplied
+				message = "No events received (filter may be working or provider inactive)"
 			}
+
+			// Update test case with results
+			tc.Message = message
+
+			// ENFORCE EXPECTED BEHAVIOR - This will make the test fail if behavior doesn't match
+			tt.Assert(actualBehavior == tc.Result,
+				fmt.Sprintf("Expected %s but got %s. %s", tc.Result.String(), actualBehavior.String(), message))
 		})
 	}
 
