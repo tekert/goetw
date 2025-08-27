@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/tekert/goetw/logsampler"
-	"github.com/tekert/goetw/logsampler/logadapters"
+	"github.com/tekert/goetw/logsampler/adapters/phusluadapter"
 
 	plog "github.com/phuslu/log"
 )
@@ -27,7 +27,7 @@ const (
 )
 
 // SampledLogger is an alias for the reusable pshuslug SampledLogger.
-type SampledLogger = logadapters.SampledLogger
+type SampledLogger = phusluadapter.SampledLogger
 
 // LoggerManager manages all three loggers
 type LoggerManager struct {
@@ -52,7 +52,7 @@ var (
 // Initialize loggers on package import
 func init() {
 	loggerManager = NewLoggerManager()
-	conlog = logadapters.NewSampledLogger(
+	conlog = phusluadapter.NewSampledLogger(
 		loggerManager.loggers[ConsumerLogger],
 		loggerManager.sampler,
 	)
@@ -97,7 +97,7 @@ func NewLoggerManager() *LoggerManager {
 	}
 
 	// The sampler needs a logger to report summaries for inactive keys.
-	reporter := &logadapters.SummaryReporter{Logger: lm.loggers[DefaultLogger]}
+	reporter := &phusluadapter.SummaryReporter{Logger: lm.loggers[DefaultLogger]}
 	lm.sampler = logsampler.NewDeduplicatingSampler(backoffConfig, reporter)
 
 	// Assign to convenient direct-access variables

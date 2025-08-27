@@ -1,6 +1,6 @@
 // Package log provides a high-performance, sampled logger built on top of
 // phuslu/log and the goetw/logsampler.
-package logadapters
+package phusluadapter
 
 import (
 	"hash/maphash"
@@ -26,12 +26,12 @@ type SummaryReporter struct {
 }
 
 // LogSummary logs a sampler summary report.
-func (r *SummaryReporter) LogSummary(key string, suppressedCount int64) {
+func (r *SummaryReporter) LogSummary(key string, suppressedLogs int64) {
 	baseKey, errSig, _ := strings.Cut(key, ":")
 	r.Logger.Info().
 		Str("samplerKey", baseKey).
 		Str("errorSignature", errSig).
-		Int64("suppressedCount", suppressedCount).
+		Int64("suppressed_logs", suppressedLogs).
 		Msg("log sampler summary")
 }
 
@@ -79,10 +79,10 @@ func (l *SampledLogger) Sampled(level plog.Level, key string, useErrSig bool, er
 
 	// 3. Consult the sampler to see if we should log.
 	if l.Sampler != nil {
-		if shouldLog, suppressedCount := l.Sampler.ShouldLog(key, e); shouldLog {
+		if shouldLog, suppressedLogs := l.Sampler.ShouldLog(key, e); shouldLog {
 			entry := l.Logger.WithLevel(level)
-			if suppressedCount > 0 {
-				entry.Int64("suppressedCount", suppressedCount)
+			if suppressedLogs > 0 {
+				entry.Int64("suppressed_logs", suppressedLogs)
 			}
 			if e != nil {
 				entry.Err(e)
