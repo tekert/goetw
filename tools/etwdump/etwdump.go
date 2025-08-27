@@ -407,7 +407,7 @@ func main() {
 			log.Errorf("Error while stopping consumer: %s", err)
 		}
 
-		log.Infof("Skipped: %d", c.Skipped.Load())
+		//log.Infof("Skipped: %d", c.Skipped.Load())
 
 		log.Debug("Stopping producers")
 		for _, p := range producers {
