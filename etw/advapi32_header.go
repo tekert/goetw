@@ -933,7 +933,7 @@ func AllocEventFilterEventID_old(filter []uint16) (f *EventFilterEventID) {
 
 // AllocEventFilterEventID allocates a buffer for an EVENT_FILTER_EVENT_ID structure
 // with a flexible array member.
-func AllocEventFilterEventID(filter []uint16) (f *EventFilterEventID) {
+func AllocEventFilterEventID(filter []uint16) (f *EventFilterEventID, keepAlive *[]byte) {
 	count := uint16(len(filter))
 	// The total size is the header (4 bytes: FilterIn, Reserved, Count)
 	// plus the size of the event data (count * 2 bytes).
@@ -948,6 +948,7 @@ func AllocEventFilterEventID(filter []uint16) (f *EventFilterEventID) {
 		copy(eventsSlice, filter) // Copy the filter data into the flexible array member.
 	}
 
+	keepAlive = &buf // This pointer keeps the slice alive
 	return
 }
 
@@ -1529,7 +1530,15 @@ func (e *EventRecord) MofClassVersion() uint8 {
 	return e.EventHeader.EventDescriptor.Version
 }
 
-// TODO(tekert): add more Get<Type>At methods as needed
+// GetUint64At reads a uint64 value from the UserData buffer at a specific byte offset.
+// It performs bounds checking to prevent memory access violations.
+// This is an unsafe, high-performance method for well-known event layouts.
+func (e *EventRecord) GetUint64At(offset uintptr) (uint64, error) {
+	if offset+8 > uintptr(e.UserDataLength) {
+		return 0, fmt.Errorf("offset %d is out of bounds for UserData length %d", offset+8, e.UserDataLength)
+	}
+	return *(*uint64)(unsafe.Pointer(e.UserData + offset)), nil
+}
 
 // GetUint32At reads a uint32 value from the UserData buffer at a specific byte offset.
 // It performs bounds checking to prevent memory access violations.
@@ -1541,14 +1550,24 @@ func (e *EventRecord) GetUint32At(offset uintptr) (uint32, error) {
 	return *(*uint32)(unsafe.Pointer(e.UserData + offset)), nil
 }
 
+// GetUint16At reads an int16 value from the UserData buffer at a specific byte offset.
+// It performs bounds checking to prevent memory access violations.
+// This is an unsafe, high-performance method for well-known event layouts.
+func (e *EventRecord) GetUint16At(offset uintptr) (uint16, error) {
+	if offset+2 > uintptr(e.UserDataLength) {
+		return 0, fmt.Errorf("offset %d is out of bounds for UserData length %d", offset+2, e.UserDataLength)
+	}
+	return *(*uint16)(unsafe.Pointer(e.UserData + offset)), nil
+}
+
 // GetInt8At reads an int8 value from the UserData buffer at a specific byte offset.
 // It performs bounds checking to prevent memory access violations.
 // This is an unsafe, high-performance method for well-known event layouts.
-func (e *EventRecord) GetInt8At(offset uintptr) (int8, error) {
+func (e *EventRecord) GetUint8At(offset uintptr) (uint8, error) {
 	if offset+1 > uintptr(e.UserDataLength) {
 		return 0, fmt.Errorf("offset %d is out of bounds for UserData length %d", offset+1, e.UserDataLength)
 	}
-	return *(*int8)(unsafe.Pointer(e.UserData + offset)), nil
+	return *(*uint8)(unsafe.Pointer(e.UserData + offset)), nil
 }
 
 // https://learn.microsoft.com/en-us/windows/win32/api/evntcons/ns-evntcons-event_header_extended_data_item
@@ -1642,8 +1661,6 @@ func (e *EventHeader) GetUserTime() uint32 {
 func (e *EventHeader) TimestampRaw() int64 {
 	return e.TimeStamp
 }
-
-
 
 // https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_descriptor
 // v10.0.19041.0 /evntprov.h

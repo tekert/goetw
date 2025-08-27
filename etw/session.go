@@ -8,6 +8,7 @@ package etw
 
 import (
 	"fmt"
+	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -302,10 +303,14 @@ func (s *RealTimeSession) EnableProvider(prov Provider) (err error) {
 	var descriptors []EventFilterDescriptor
 	// The data backing the pointers in the descriptors is managed by Go's GC.
 	// It will be kept alive on the stack/heap during the synchronous EnableTraceEx2 call.
+	var keepAlives []any
 	for _, f := range prov.Filters {
-		desc, _ := f.build() // cleanup is not needed for these simple filter types
+		desc, buf := f.build() // cleanup is not needed for these simple filter types
 		if desc.Type != EVENT_FILTER_TYPE_NONE {
 			descriptors = append(descriptors, desc)
+			if buf != nil {
+				keepAlives = append(keepAlives, buf)
+			}
 		}
 	}
 
@@ -331,6 +336,10 @@ func (s *RealTimeSession) EnableProvider(prov Provider) (err error) {
 	); err != nil {
 		return fmt.Errorf("EnableTraceEx2 failed for provider %s (%s): %w", prov.Name, prov.GUID.String(), err)
 	}
+
+	// By reaching this point, the C call is done. The `cleanups` slice
+	// can now go out of scope, and the GC is free to collect the buffers.
+	runtime.KeepAlive(keepAlives)
 
 	s.enabledProviders = append(s.enabledProviders, prov)
 

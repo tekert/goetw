@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 	"unsafe"
@@ -135,8 +136,9 @@ func serializeFiltersForAutologger(filters []ProviderFilter) (string, error) {
 	var totalDataSize uint32
 
 	// 1. Build descriptors and copy data for each filter.
+	var keepAlives []any
 	for _, f := range filters {
-		desc, cleanup := f.build()
+		desc, keepAlive := f.build()
 
 		if desc.Type != EVENT_FILTER_TYPE_NONE {
 			data := unsafe.Slice((*byte)(unsafe.Pointer(uintptr(desc.Ptr))), desc.Size)
@@ -146,14 +148,14 @@ func serializeFiltersForAutologger(filters []ProviderFilter) (string, error) {
 
 			infos = append(infos, filterInfo{desc: desc, data: dataCopy})
 			totalDataSize += desc.Size
+			keepAlives = append(keepAlives, keepAlive)
 		}
 
 		// Cleanup must be called after we are done with the memory from build(),
 		// but before the next loop iteration to avoid resource leaks.
-		if cleanup != nil {
-			cleanup()
-		}
+		//_ = keepAlive
 	}
+	runtime.KeepAlive(keepAlives)
 
 	if len(infos) == 0 {
 		return "", nil

@@ -18,7 +18,7 @@ import (
 // in a trace, but it does not reduce the initial CPU overhead of event creation.
 type ProviderFilter interface {
 	// build allocates the necessary C structures and returns a descriptor.
-	build() (desc EventFilterDescriptor, cleanup func())
+	build() (desc EventFilterDescriptor, keepAlive any)
 }
 
 // --- Concrete Filter Implementations ---
@@ -39,12 +39,13 @@ func NewEventIDFilter(filterIn bool, ids ...uint16) *EventIDFilter {
 	return &EventIDFilter{IDs: ids, FilterIn: filterIn}
 }
 
-func (f *EventIDFilter) build() (EventFilterDescriptor, func()) {
+func (f *EventIDFilter) build() (EventFilterDescriptor, any) {
 	if len(f.IDs) == 0 || len(f.IDs) > MAX_EVENT_FILTER_EVENT_ID_COUNT {
 		return EventFilterDescriptor{}, nil
 	}
 
-	filterData := AllocEventFilterEventID(f.IDs)
+	// keepAlive holds a reference to the allocated go memory so that uintptr cast survives
+	filterData, keepAlive := AllocEventFilterEventID(f.IDs)
 	if f.FilterIn {
 		filterData.FilterIn = 1
 	}
@@ -53,7 +54,7 @@ func (f *EventIDFilter) build() (EventFilterDescriptor, func()) {
 		Ptr:  uint64(uintptr(unsafe.Pointer(filterData))),
 		Size: uint32(filterData.Size()),
 		Type: EVENT_FILTER_TYPE_EVENT_ID,
-	}, nil
+	}, keepAlive // Pass the cleanup function up to the caller.
 }
 
 // PIDFilter filters events based on the Process ID (PID) of the originating process.
@@ -76,21 +77,24 @@ func NewPIDFilter(pids ...uint32) *PIDFilter {
 	return &PIDFilter{PIDs: pids}
 }
 
-func (f *PIDFilter) build() (EventFilterDescriptor, func()) {
+func (f *PIDFilter) build() (EventFilterDescriptor, any) {
 	const maxPIDs = 8 // MAX_EVENT_FILTER_PID_COUNT
 	if len(f.PIDs) == 0 || len(f.PIDs) > maxPIDs {
 		return EventFilterDescriptor{}, nil
 	}
 
-	// Create a copy to ensure the data is stable during the C call.
+	// Create a copy that is kept alive.
 	pidCopy := make([]uint32, len(f.PIDs))
 	copy(pidCopy, f.PIDs)
 
-	return EventFilterDescriptor{
+	desc := EventFilterDescriptor{
 		Ptr:  uint64(uintptr(unsafe.Pointer(&pidCopy[0]))),
 		Size: uint32(len(pidCopy) * 4),
 		Type: EVENT_FILTER_TYPE_PID,
-	}, nil
+	}
+
+	// Return a pointer to the original slice. This is the simplest and safest object to keep alive.
+	return desc, &pidCopy
 }
 
 // ExecutableNameFilter filters events based on the file name of the originating process.
@@ -107,7 +111,7 @@ func NewExecutableNameFilter(names ...string) *ExecutableNameFilter {
 	return &ExecutableNameFilter{Names: names}
 }
 
-func (f *ExecutableNameFilter) build() (EventFilterDescriptor, func()) {
+func (f *ExecutableNameFilter) build() (EventFilterDescriptor, any) {
 	if len(f.Names) == 0 {
 		return EventFilterDescriptor{}, nil
 	}
@@ -119,9 +123,12 @@ func (f *ExecutableNameFilter) build() (EventFilterDescriptor, func()) {
 		return EventFilterDescriptor{}, nil
 	}
 
-	return EventFilterDescriptor{
+	desc := EventFilterDescriptor{
 		Ptr:  uint64(uintptr(unsafe.Pointer(&utf16Str[0]))),
 		Size: uint32(len(utf16Str) * 2), // size in bytes, including null terminator
 		Type: EVENT_FILTER_TYPE_EXECUTABLE_NAME,
-	}, nil
+	}
+	//cleanup := func() { _ = utf16Str }
+
+	return desc, &utf16Str
 }

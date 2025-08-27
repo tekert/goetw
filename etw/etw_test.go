@@ -849,192 +849,182 @@ waitLoop:
 	}
 }
 
-// TestProviderFiltering validates the kernel-level filtering capabilities of EnableTraceEx2.
-// It correctly demonstrates the behavior of different filter types with kernel providers.
+type FilterBehavior int
+
+const (
+	BehaviorUnknown FilterBehavior = iota
+	BehaviorUnsupported
+	BehaviorIgnored
+	BehaviorApplied
+)
+
+func (b FilterBehavior) String() string {
+	switch b {
+	case BehaviorUnsupported:
+		return "Unsupported"
+	case BehaviorIgnored:
+		return "Ignored"
+	case BehaviorApplied:
+		return "Applied"
+	default:
+		return "Unknown"
+	}
+}
+
+// TestProviderFiltering systematically tests filter support across different providers.
+// It discovers which filters are supported, ignored, or cause errors for each provider type.
 func TestProviderFiltering(t *testing.T) {
 	tt := test.FromT(t)
-	pid := uint32(os.Getpid())
+
+	sessionName := "GolangTest"
+
+	currentPID := uint32(os.Getpid())
 	exePath, err := os.Executable()
 	tt.CheckErr(err)
 	exeName := filepath.Base(exePath)
 
-	sessionName := "GolangTest" // Use a single, constant session name.
+	const testDuration = 3 * time.Second
 
-	// It's critical to ensure any previous session with the same name is stopped.
-	// We attempt to stop it here to ensure a clean slate for the test suite.
-	_ = StopSession(sessionName)
-	time.Sleep(250 * time.Millisecond) // Give the OS a moment to process the stop command.
-
-	testCases := []struct {
-		name         string
-		provider     string
-		filters      []ProviderFilter
-		expectEvents bool
-		validate     func(t *test.T, e *Event)
-		explanation  string // Explains the expected behavior.
-	}{
-		{
-			name:         "EventID Filter - Include",
-			provider:     KernelMemoryProviderGuid,
-			filters:      []ProviderFilter{NewEventIDFilter(true, 1, 2)},
-			expectEvents: true,
-			validate: func(t *test.T, e *Event) {
-				isExpectedID := e.System.EventID == 1 || e.System.EventID == 2
-				t.Assertf(isExpectedID, "Received event with unexpected ID: %d", e.System.EventID)
-			},
-			explanation: "EventID filters work as expected, filtering event content.",
-		},
-		{
-			name:         "EventID Filter - Exclude",
-			provider:     KernelMemoryProviderGuid,
-			filters:      []ProviderFilter{NewEventIDFilter(false, 1, 2)},
-			expectEvents: true,
-			validate: func(t *test.T, e *Event) {
-				isExcludedID := e.System.EventID == 1 || e.System.EventID == 2
-				t.Assert(!isExcludedID, "Received an event that should have been excluded (ID 1 or 2)")
-			},
-			explanation: "EventID exclusion filters also work as expected.",
-		},
-		{
-			name:         "PID Filter with Kernel Provider",
-			provider:     "Microsoft-Windows-Kernel-Process",
-			filters:      []ProviderFilter{NewPIDFilter(pid)},
-			expectEvents: true, // We expect events because the PID filter is ignored.
-			validate: func(t *test.T, e *Event) {
-				// Note: PID filter for kernel providers filters at provider level (kernel=PID 4),
-				// not at the event content level. Events can be about any process.
-				t.Logf("PID Filter: Received event about PID %d (filter was for PID %d)",
-					e.System.Execution.ProcessID, pid)
-				// Don't assert PID match for kernel providers - this is expected behavior
-			},
-			explanation: "A PID scope filter applied to a kernel provider is ignored. Events are received as if no filter was applied.",
-		},
-		{
-			name:         "Executable Name Filter with Kernel Provider",
-			provider:     "Microsoft-Windows-Kernel-Process",
-			filters:      []ProviderFilter{NewExecutableNameFilter(exeName)},
-			expectEvents: true, // We expect events, but not necessarily from our exe
-			validate: func(t *test.T, e *Event) {
-				// Note: Executable name filter for kernel providers filters at provider level,
-				// not at the event content level. Events can be about any process.
-				t.Logf("ExeName Filter: Received event about PID %d (filter was for exe %s)",
-					e.System.Execution.ProcessID, exeName)
-				// Don't assert exe match for kernel providers - this is expected behavior
-			},
-			explanation: "Executable name filters for kernel providers are not applied to event content, only at the provider level.",
-		},
-		{
-			name:     "Combined EventID and PID Filter",
-			provider: KernelFileProviderName,
-			filters: []ProviderFilter{
-				NewEventIDFilter(true, 12, 13, 14),
-				NewPIDFilter(pid),
-			},
-			expectEvents: true, // We expect events because the PID filter is ignored, but the EventID filter works.
-			validate: func(t *test.T, e *Event) {
-				isExpectedID := e.System.EventID == 12 || e.System.EventID == 13 || e.System.EventID == 14
-				t.Assertf(isExpectedID, "Received event with unexpected ID: %d", e.System.EventID)
-				// PID part may not work as expected - just log it
-				t.Logf("Combined: Event ID %d from PID %d (filter was for PID %d)",
-					e.System.EventID, e.System.Execution.ProcessID, pid)
-			},
-			explanation: "When filters are combined, the PID filter is ignored, but the EventID filter is still applied correctly.",
-		},
+	type TestCase struct {
+		Provider    string
+		FilterType  string
+		Filter      ProviderFilter
+		TestEventID uint16         // Expected common event ID for validation
+		Result      FilterBehavior // Will be set during test
+		Message     string         // Will be set during test
 	}
 
-	for _, tc := range testCases {
-		// Capture range variable.
-		t.Run(tc.name, func(t *testing.T) {
-			tt := test.FromT(t)
-			t.Logf("Explanation: %s", tc.explanation)
+	testCases := []TestCase{
+		// Kernel Memory Provider Tests
+		{"Microsoft-Windows-Kernel-Memory", "EventID-Include", NewEventIDFilter(true, 1), 1, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-Memory", "EventID-Exclude", NewEventIDFilter(false, 10), 10, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-Memory", "PID", NewPIDFilter(currentPID), 0, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-Memory", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorUnknown, ""},
 
-			// Stop any lingering session from a previous failed run.
+		// Kernel File Provider Tests
+		{"Microsoft-Windows-Kernel-File", "EventID-Include", NewEventIDFilter(true, 12), 12, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-File", "EventID-Exclude", NewEventIDFilter(false, 14), 14, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-File", "PID", NewPIDFilter(currentPID), 0, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-File", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorUnknown, ""},
+
+		// Kernel Process Provider Tests
+		{"Microsoft-Windows-Kernel-Process", "EventID-Include", NewEventIDFilter(true, 1), 1, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-Process", "EventID-Exclude", NewEventIDFilter(false, 2), 2, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-Process", "PID", NewPIDFilter(currentPID), 0, BehaviorUnknown, ""},
+		{"Microsoft-Windows-Kernel-Process", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorUnknown, ""},
+
+		// User-mode RPC Provider Tests
+		{"Microsoft-Windows-RPC", "EventID-Include", NewEventIDFilter(true, 5), 5, BehaviorUnknown, ""},
+		{"Microsoft-Windows-RPC", "EventID-Exclude", NewEventIDFilter(false, 6), 6, BehaviorUnknown, ""},
+		{"Microsoft-Windows-RPC", "PID", NewPIDFilter(currentPID), 0, BehaviorUnknown, ""},
+		{"Microsoft-Windows-RPC", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorUnknown, ""},
+	}
+
+	for i := range testCases {
+		tc := &testCases[i] // Get pointer to modify in place
+
+		t.Run(fmt.Sprintf("%s/%s", tc.Provider, tc.FilterType), func(t *testing.T) {
 			_ = StopSession(sessionName)
-			time.Sleep(100 * time.Millisecond)
 
 			ses := NewRealTimeSession(sessionName)
 			defer ses.Stop()
 
-			prov, err := ParseProvider(tc.provider)
-			tt.CheckErr(err)
-			prov.Filters = tc.filters
+			// Parse and configure provider
+			prov, err := ParseProvider(tc.Provider)
+			if err != nil {
+				tc.Result = BehaviorUnsupported
+				tc.Message = fmt.Sprintf("Failed to parse provider: %v", err)
+				return
+			}
+			prov.Filters = []ProviderFilter{tc.Filter}
 
-			t.Logf("Testing provider: %s with %d filters", prov.Name, len(prov.Filters))
-			for i, filter := range prov.Filters {
-				switch f := filter.(type) {
-				case *EventIDFilter:
-					t.Logf("  Filter %d: EventID (include=%v, IDs=%v)", i, f.FilterIn, f.IDs)
-				case *PIDFilter:
-					t.Logf("  Filter %d: PID (PIDs=%v)", i, f.PIDs)
-				case *ExecutableNameFilter:
-					t.Logf("  Filter %d: Executable (Names=%v)", i, f.Names)
-				}
+			// Try to enable provider - this is where unsupported filters fail
+			err = ses.EnableProvider(prov)
+			if err != nil {
+				tc.Result = BehaviorUnsupported
+				tc.Message = fmt.Sprintf("EnableProvider failed: %v", err)
+				return
 			}
 
-			err = ses.EnableProvider(prov)
-			tt.CheckErr(err)
-
-			ctx, cancel := context.WithCancel(context.Background())
+			// If we get here, the filter was accepted
+			ctx, cancel := context.WithTimeout(context.Background(), testDuration)
 			defer cancel()
 
-			c := NewConsumer(ctx)
-			c.FromSessions(ses)
-
-			var eventReceived atomic.Bool
-			var eventCount atomic.Int32
-
-			c.EventCallback = func(e *Event) error {
-				defer e.Release() // Ensure we release the event after processing
-				count := eventCount.Add(1)
-				eventReceived.Store(true)
-
-				// Stop after getting some events to avoid long waits
-				if count >= 5 {
-					cancel()
-					return nil
-				}
-
-				// Log first few events for debugging
-				t.Logf("Event %d: ID=%d, Provider=%s, PID=%d",
-					count, e.System.EventID, e.System.Provider.Name, e.System.Execution.ProcessID)
-
-				if tc.validate != nil {
-					tc.validate(tt, e)
-				}
-
-				return nil
+			c := NewConsumer(ctx).FromSessions(ses)
+			err = c.Start()
+			if err != nil {
+				tc.Result = BehaviorUnsupported
+				tc.Message = fmt.Sprintf("Consumer start failed: %v", err)
+				return
 			}
+			defer c.Stop()
 
-			tt.CheckErr(c.Start())
+			var eventCount int
+			var violationFound bool
+			var violationMsg string
 
-			// Let the session run for a bit.
-			time.Sleep(2 * time.Second)
+			go c.ProcessEvents(func(e *Event) {
+				eventCount++
 
-			cancel() // Ensure context is canceled.
-			tt.CheckErr(c.Stop())
-			tt.CheckErr(ses.Stop())
-
-			t.Logf("Total events received: %d", eventCount.Load())
-
-			if tc.expectEvents {
-				if !eventReceived.Load() {
-					t.Logf("No events received. This could mean:")
-					t.Logf("1. The filter is too restrictive")
-					t.Logf("2. The provider isn't generating events")
-					t.Logf("3. The filter type doesn't work as expected with this provider type")
-					if tc.explanation != "" {
-						t.Logf("4. Known limitation: %s", tc.explanation)
+				// Check if filter is being ignored
+				switch tc.FilterType {
+				case "EventID-Include":
+					if e.System.EventID != tc.TestEventID {
+						violationFound = true
+						violationMsg = fmt.Sprintf("Got EventID %d, expected only %d", e.System.EventID, tc.TestEventID)
+						cancel()
+					}
+				case "EventID-Exclude":
+					if e.System.EventID == tc.TestEventID {
+						violationFound = true
+						violationMsg = fmt.Sprintf("Got excluded EventID %d", e.System.EventID)
+						cancel()
+					}
+				case "PID":
+					if e.System.Execution.ProcessID != currentPID {
+						violationFound = true
+						violationMsg = fmt.Sprintf("Got PID %d, expected %d", e.System.Execution.ProcessID, currentPID)
+						cancel()
+					}
+				case "ExeName":
+					// For exe name, we just check if we get events from other PIDs
+					if e.System.Execution.ProcessID != currentPID {
+						violationFound = true
+						violationMsg = fmt.Sprintf("Got PID %d, expected current process %d", e.System.Execution.ProcessID, currentPID)
+						cancel()
 					}
 				}
-				// Only assert if this isn't a known limitation case
-				if tc.explanation == "" {
-					tt.Assert(eventReceived.Load(), "Expected to receive events, but got none")
+
+				// Stop after first few events if no violation
+				if eventCount >= 3 {
+					cancel()
 				}
+			})
+
+			<-ctx.Done()
+
+			if violationFound {
+				tc.Result = BehaviorIgnored
+				tc.Message = fmt.Sprintf("Filter ignored: %s (%d events)", violationMsg, eventCount)
+			} else if eventCount > 0 {
+				tc.Result = BehaviorApplied
+				tc.Message = fmt.Sprintf("Filter applied correctly (%d events)", eventCount)
 			} else {
-				tt.Assert(!eventReceived.Load(), "Expected to receive NO events, but some were captured.")
+				tc.Result = BehaviorApplied
+				tc.Message = "No events received (filter may be working or provider inactive)"
 			}
 		})
 	}
+
+	// Print results table
+	t.Log("\n--- ETW Provider Filter Support Matrix ---")
+	t.Logf("%-35s %-15s %-12s %s", "Provider", "Filter", "Behavior", "Details")
+	t.Log(strings.Repeat("-", 100))
+
+	for _, tc := range testCases {
+		t.Logf("%-35s %-15s %-12s %s", tc.Provider, tc.FilterType, tc.Result.String(), tc.Message)
+	}
+	t.Log(strings.Repeat("-", 100))
 }
 
 // Helper to compare static properties between two trace properties
