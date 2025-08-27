@@ -192,7 +192,7 @@ func EnableProfilingPrivileges() error {
 // Look in https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
 func EnablePrivileges(privName string) error {
 	if err := enablePrivilege(privName); err != nil {
-		fmt.Printf("Warning: Could not enable privilege %s: %v\n", privName, err)
+		return fmt.Errorf("warning: Could not enable privilege %s: %v", privName, err)
 	}
 
 	return nil
