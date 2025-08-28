@@ -65,7 +65,10 @@ func guidToUint(guid string) uint32 {
 }
 
 var (
-	mofClassLookupMap = make(map[uint64]*MofClassDef) // Lookup by packed key
+	// Use a two-level map for MOF class definitions for performance and correctness.
+	// Level 1: Provider GUID -> Level 2: sync.Map
+	// Level 2: Schema Key (Opcode|Version) -> *MofClassDef
+	mofClassLookupMap = sync.Map{}
 	MofClassQueryMap  = make(map[string]*MofClassDef) // Lookup by class name
 
 	mofKernelClassLoaded = false
@@ -118,45 +121,65 @@ type MofClassDef struct {
 	template64  []byte
 }
 
-// MofRegister adds a MOF class definition to the global MofClassQueryMap
-// and mofClassLookupMap maps.
-// The expensive work of building the property template is deferred until the
-// first time the event is actually encountered.
+// MofRegister adds a MOF class definition to the global maps.
+// It now uses the two-level cache structure.
 func MofRegister(class *MofClassDef) {
-	for _, eventType := range class.EventTypes {
-		key := MofPackKey(class.GUID.Data1, class.GUID.Data2, eventType, class.Version)
-		mofClassLookupMap[key] = class
+	// Get or create the second-level cache for this provider GUID.
+	var schemaCache *sync.Map
+	if val, ok := mofClassLookupMap.Load(class.GUID); ok {
+		schemaCache = val.(*sync.Map)
+	} else {
+		newCache := &sync.Map{}
+		actual, _ := mofClassLookupMap.LoadOrStore(class.GUID, newCache)
+		schemaCache = actual.(*sync.Map)
 	}
 
-	// Register for lookup by name
+	for _, eventType := range class.EventTypes {
+		// The second-level key for MOF events is Opcode + Version.
+		schemaKey := uint32(eventType)<<8 | uint32(class.Version)
+		schemaCache.Store(schemaKey, class)
+	}
+
+	// Register for lookup by name.
 	MofClassQueryMap[class.Name] = class
 }
 
-// MofErLookup finds a MOF class definition by its event record
-// A MOF event record is uniquely identified by its provider GUID, event type, and version
+// MofErLookup finds a MOF class definition using the two-level cache.
 func MofErLookup(er *EventRecord) *MofClassDef {
-	key := MofPackKey(er.EventHeader.ProviderId.Data1, // guid first 32 bits
-		er.EventHeader.ProviderId.Data2,        // guid second 16 bits
-		er.EventHeader.EventDescriptor.Opcode,  // EventType 8 bytes
-		er.EventHeader.EventDescriptor.Version) // EventVersion 8 bytes
-
-	class, exists := mofClassLookupMap[key]
-
-	if !exists {
+	// First-level lookup by Provider GUID.
+	val, ok := mofClassLookupMap.Load(er.EventHeader.ProviderId)
+	if !ok {
 		return nil
 	}
-	return class
+	schemaCache := val.(*sync.Map)
+
+	// Second-level lookup by schema key (Opcode + Version).
+	schemaKey := uint32(er.EventHeader.EventDescriptor.Opcode)<<8 |
+		uint32(er.EventHeader.EventDescriptor.Version)
+	classVal, ok := schemaCache.Load(schemaKey)
+	if !ok {
+		return nil
+	}
+
+	return classVal.(*MofClassDef)
 }
 
-// MofLookup finds a MOF class definition by its identifiers
-// A MOF event record is uniquely identified by its provider GUID, event type, and version
+// MofLookup finds a MOF class definition by its identifiers using the two-level cache.
 func MofLookup(guid GUID, eventType uint8, version uint8) *MofClassDef {
-	key := MofPackKey(guid.Data1, guid.Data2, eventType, version)
-	class, exists := mofClassLookupMap[key]
-	if !exists {
+	// First-level lookup
+	val, ok := mofClassLookupMap.Load(guid)
+	if !ok {
 		return nil
 	}
-	return class
+	schemaCache := val.(*sync.Map)
+
+	// Second-level lookup
+	schemaKey := uint32(eventType)<<8 | uint32(version)
+	classVal, ok := schemaCache.Load(schemaKey)
+	if !ok {
+		return nil
+	}
+	return classVal.(*MofClassDef)
 }
 
 // Bit positions for packing/unpacking
