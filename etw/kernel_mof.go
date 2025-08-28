@@ -4,6 +4,7 @@ package etw
 
 import (
 	"fmt"
+	"sync"
 	"unsafe"
 )
 
@@ -94,24 +95,20 @@ type MofClassDef struct {
 	EventTypes []uint8          // List of event types this class handles
 	Properties []MofPropertyDef // Property definitions
 
-	// Pre-calculated data to speed up buildTraceInfoFromMof
-	wmiIDToIndex   map[uint16]uint16
-	totalNamesSize int
+	// --- Caching for buildTraceInfoFromMof ---
+	// buildOnce ensures the property template is built only once.
+	buildOnce sync.Once
+	// propertyInfos contains the pre-built EventPropertyInfo array.
+	propertyInfos []byte
+	// propertyNamesBlock contains the pre-built concatenated property name strings.
+	propertyNamesBlock []byte
 }
 
 // MofRegister adds a MOF class definition to the global MofClassQueryMap
 // and mofClassLookupMap maps.
-// Used to load kernel MOF classes when the package is initialized
+// The expensive work of building the property template is deferred until the
+// first time the event is actually encountered.
 func MofRegister(class *MofClassDef) {
-	// Pre-calculate WMI ID to index mapping and total names size.
-	// This avoids repeated work in the hot path of buildTraceInfoFromMof.
-	class.wmiIDToIndex = make(map[uint16]uint16, len(class.Properties))
-	class.totalNamesSize = 0
-	for i, prop := range class.Properties {
-		class.wmiIDToIndex[prop.ID] = uint16(i)
-		class.totalNamesSize += len(prop.NameW) * 2
-	}
-
 	for _, eventType := range class.EventTypes {
 		key := MofPackKey(class.GUID.Data1, class.GUID.Data2, eventType, class.Version)
 		mofClassLookupMap[key] = class
@@ -212,85 +209,48 @@ const (
 	MismatchOther = 4
 )
 
-// buildTraceInfoFromMof constructs a TRACE_EVENT_INFO structure from a registered MOF class definition.
-// This serves as a fallback when TdhGetEventInformation fails for classic kernel events.
-// It reuses the provided teiBuffer to avoid allocations.
-func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventInfo, err error) {
-	mofClass := MofErLookup(er)
-	if mofClass == nil {
-		return nil,
-			fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d : %v",
-				er.EventHeader.ProviderId.String(),
-				er.EventHeader.EventDescriptor.Opcode,
-				er.EventHeader.EventDescriptor.Version,
-				ErrBuildTraceInfoFromMof)
-	}
-
-	// The layout of our buffer will be:
-	// 1. TRACE_EVENT_INFO struct
-	// 2. Array of EVENT_PROPERTY_INFO structs
-	// 3. Provider Name, Task Name, Opcode Name strings (all null-terminated UTF-16)
-	// 4. All property name strings (all null-terminated UTF-16)
-
+// buildMofPropertyTemplate is called once per MOF class to pre-build the expensive-to-create
+// property information block. It generates a byte slice containing ONLY the EventPropertyInfo
+// array. It also pre-calculates the total size of all property name strings.
+func (mofClass *MofClassDef) buildMofPropertyTemplate(er *EventRecord) {
 	propCount := len(mofClass.Properties)
-	propInfosSize := propCount * int(unsafe.Sizeof(EventPropertyInfo{}))
-
-	// Use pre-converted UTF-16 slices and pre-calculated sizes.
-	providerNameSize := len(utf16MSNT_SystemTrace) * 2
-	taskNameSize := len(mofClass.BaseW) * 2
-	opcodeNameSize := len(mofClass.NameW) * 2
-
-	traceEventInfoBaseSize := int(unsafe.Offsetof(TraceEventInfo{}.EventPropertyInfoArray))
-	requiredSize := traceEventInfoBaseSize + propInfosSize + providerNameSize + taskNameSize + opcodeNameSize + mofClass.totalNamesSize
-
-	// Resize the provided buffer if it's too small.
-	if cap(*teiBuffer) < requiredSize {
-		*teiBuffer = make([]byte, requiredSize)
+	if propCount == 0 {
+		return
 	}
-	*teiBuffer = (*teiBuffer)[:requiredSize]
-	buffer := *teiBuffer // Use a local variable for convenience.
 
-	// 1. Populate the TRACE_EVENT_INFO header.
-	tei = (*TraceEventInfo)(unsafe.Pointer(&buffer[0]))
-	tei.ProviderGUID = *systemTraceControlGuid
-	tei.EventGUID = mofClass.GUID
-	tei.EventDescriptor = er.EventHeader.EventDescriptor
-	tei.DecodingSource = DecodingSourceWbem
-	tei.PropertyCount = uint32(propCount)
-	tei.TopLevelPropertyCount = uint32(propCount) // MOF properties are flat.
+	// --- Pre-calculate sizes and mappings ---
+	propInfosSize := propCount * int(unsafe.Sizeof(EventPropertyInfo{}))
+	wmiIDToIndex := make(map[uint16]uint16, propCount)
+	var totalPropNamesSize int
+	for i, prop := range mofClass.Properties {
+		wmiIDToIndex[prop.ID] = uint16(i)
+		totalPropNamesSize += len(prop.NameW) * 2
+	}
 
-	// 2. Define the starting points for properties and names.
-	propInfoArrayStartOffset := traceEventInfoBaseSize
-	currentNameOffset := propInfoArrayStartOffset + propInfosSize
+	// --- Create and populate the property names block ---
+	// This block concatenates all property name strings into a single byte slice.
+	mofClass.propertyNamesBlock = make([]byte, totalPropNamesSize)
+	currentNameOffset := 0
+	for _, propDef := range mofClass.Properties {
+		nameBytes := unsafe.Slice((*byte)(unsafe.Pointer(&propDef.NameW[0])), len(propDef.NameW)*2)
+		copy(mofClass.propertyNamesBlock[currentNameOffset:], nameBytes)
+		currentNameOffset += len(nameBytes)
+	}
 
-	// 3. Write metadata strings into the buffer and set their offsets in the header.
-	tei.ProviderNameOffset = uint32(currentNameOffset)
-	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&utf16MSNT_SystemTrace[0])), providerNameSize))
-	currentNameOffset += providerNameSize
+	// --- Create and populate the property info block ---
+	mofClass.propertyInfos = make([]byte, propInfosSize)
+	eventProperties := unsafe.Slice((*EventPropertyInfo)(unsafe.Pointer(&mofClass.propertyInfos[0])), propCount)
 
-	tei.TaskNameOffset = uint32(currentNameOffset)
-	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.BaseW[0])), taskNameSize))
-	currentNameOffset += taskNameSize
-
-	tei.OpcodeNameOffset = uint32(currentNameOffset)
-	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.NameW[0])), opcodeNameSize))
-	currentNameOffset += opcodeNameSize
-
-	// 4. Create a slice header that points directly into our teiBuffer, avoiding a separate allocation.
-	propInfoArrayStartPtr := unsafe.Pointer(&buffer[propInfoArrayStartOffset])
-	eventProperties := unsafe.Slice((*EventPropertyInfo)(propInfoArrayStartPtr), propCount)
-
-	// IMPORTANT: Explicitly zero the memory for the property slice, as it's pointing to uninitialized buffer space.
+	// This is the exact logic from the original, working buildTraceInfoFromMof function.
+	// It populates the `eventProperties` slice.
+	// IMPORTANT: Explicitly zero the memory for the property slice.
 	clear(eventProperties)
 
 	for i, propDef := range mofClass.Properties {
-		epi := &eventProperties[i] // Get a pointer to the element in our slice (which is in teiBuffer)
+		epi := &eventProperties[i]
 
-		// Set name and offset. The offset is relative to the start of the buffer.
-		epi.NameOffset = uint32(currentNameOffset)
-		nameBytes := unsafe.Slice((*byte)(unsafe.Pointer(&propDef.NameW[0])), len(propDef.NameW)*2)
-		copy(buffer[currentNameOffset:], nameBytes)
-		currentNameOffset += len(nameBytes)
+		// NOTE: NameOffset is NOT set here. It must be calculated at runtime
+		// relative to the final buffer layout.
 
 		// --- Transform types to mimic TdhGetEventInformation for classic MOF events ---
 		finalInType := propDef.InType
@@ -372,15 +332,105 @@ func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventI
 	// Second pass to resolve dynamic array counts (WmiSizeIs)
 	for i, propDef := range mofClass.Properties {
 		if propDef.SizeFromID != 0 {
-			// Use the pre-calculated map from the MofClassDef.
-			if countPropIndex, ok := mofClass.wmiIDToIndex[uint16(propDef.SizeFromID)]; ok {
+			// Use the locally-calculated map.
+			if countPropIndex, ok := wmiIDToIndex[uint16(propDef.SizeFromID)]; ok {
 				eventProperties[i].Flags |= PropertyParamCount
 				eventProperties[i].SetCountPropertyIndex(countPropIndex)
 			}
 		}
 	}
+}
 
-	// 5. No copy is needed since we modified the teiBuffer directly via the slice.
+// buildTraceInfoFromMof constructs a TRACE_EVENT_INFO structure from a registered MOF class definition.
+// This serves as a fallback when TdhGetEventInformation fails for classic kernel events.
+// It reuses the provided teiBuffer to avoid allocations.
+func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventInfo, err error) {
+	mofClass := MofErLookup(er)
+	if mofClass == nil {
+		return nil,
+			fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d : %v",
+				er.EventHeader.ProviderId.String(),
+				er.EventHeader.EventDescriptor.Opcode,
+				er.EventHeader.EventDescriptor.Version,
+				ErrBuildTraceInfoFromMof)
+	}
+
+	// On the first encounter with this event type, run the expensive template generation.
+	// sync.Once ensures this happens safely and only one time across all goroutines.
+	mofClass.buildOnce.Do(func() {
+		mofClass.buildMofPropertyTemplate(er)
+	})
+
+	// The layout of our buffer will be:
+	// 1. TRACE_EVENT_INFO struct
+	// 2. Array of EVENT_PROPERTY_INFO structs
+	// 3. All strings (Provider, Task, Opcode, then all property names)
+
+	propCount := len(mofClass.Properties)
+	propInfosSize := len(mofClass.propertyInfos)
+	propNamesSize := len(mofClass.propertyNamesBlock)
+
+	// --- Calculate required buffer size ---
+	providerNameSize := len(utf16MSNT_SystemTrace) * 2
+	taskNameSize := len(mofClass.BaseW) * 2
+	opcodeNameSize := len(mofClass.NameW) * 2
+
+	traceEventInfoBaseSize := int(unsafe.Offsetof(TraceEventInfo{}.EventPropertyInfoArray))
+	requiredSize := traceEventInfoBaseSize +
+		propInfosSize +
+		providerNameSize +
+		taskNameSize +
+		opcodeNameSize +
+		propNamesSize
+
+	// Resize the provided buffer if it's too small.
+	if cap(*teiBuffer) < requiredSize {
+		*teiBuffer = make([]byte, requiredSize)
+	}
+	*teiBuffer = (*teiBuffer)[:requiredSize]
+	buffer := *teiBuffer // Use a local variable for convenience.
+
+	// 1. Populate the TRACE_EVENT_INFO header.
+	tei = (*TraceEventInfo)(unsafe.Pointer(&buffer[0]))
+	tei.ProviderGUID = *systemTraceControlGuid
+	tei.EventGUID = mofClass.GUID
+	tei.EventDescriptor = er.EventHeader.EventDescriptor
+	tei.DecodingSource = DecodingSourceWbem
+	tei.PropertyCount = uint32(propCount)
+	tei.TopLevelPropertyCount = uint32(propCount) // MOF properties are flat.
+	tei.Flags = TEMPLATE_EVENT_DATA
+
+	// 2. Copy the pre-built property info block into the correct location.
+	propInfoArrayStartOffset := traceEventInfoBaseSize
+	copy(buffer[propInfoArrayStartOffset:], mofClass.propertyInfos)
+
+	// 3. Define the starting point for all strings, which is right after the property array.
+	currentStringOffset := propInfoArrayStartOffset + propInfosSize
+
+	// 4. Write metadata strings and set their absolute offsets.
+	tei.ProviderNameOffset = uint32(currentStringOffset)
+	copy(buffer[currentStringOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&utf16MSNT_SystemTrace[0])), providerNameSize))
+	currentStringOffset += providerNameSize
+
+	tei.TaskNameOffset = uint32(currentStringOffset)
+	copy(buffer[currentStringOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.BaseW[0])), taskNameSize))
+	currentStringOffset += taskNameSize
+
+	tei.OpcodeNameOffset = uint32(currentStringOffset)
+	copy(buffer[currentStringOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.NameW[0])), opcodeNameSize))
+	currentStringOffset += opcodeNameSize
+
+	// 5. Copy the entire block of pre-built property names. This replaces the slow loop.
+	copy(buffer[currentStringOffset:], mofClass.propertyNamesBlock)
+
+	// 6. Get a slice to the property array we just copied into the buffer.
+	eventProperties := unsafe.Slice((*EventPropertyInfo)(unsafe.Pointer(&buffer[propInfoArrayStartOffset])), propCount)
+
+	// 7. Fix up the NameOffset for each property.
+	for i, propDef := range mofClass.Properties {
+		eventProperties[i].NameOffset = uint32(currentStringOffset)
+		currentStringOffset += len(propDef.NameW) * 2
+	}
 
 	return tei, nil
 }
