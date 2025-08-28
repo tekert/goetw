@@ -69,7 +69,20 @@ var (
 	MofClassQueryMap  = make(map[string]*MofClassDef) // Lookup by class name
 
 	mofKernelClassLoaded = false
+
+	// When true, the template cache inside MofClassDef is bypassed and templates are
+	// regenerated on each call. Useful for debugging template generation logic.
+	// Use `EnableMofTemplateRegeneration(true)` to set.
+	forceMofTemplateRegeneration = false
 )
+
+// EnableMofTemplateRegeneration allows bypassing the sync.Once cache for MOF templates.
+// This is primarily a debugging tool to test changes to the template generation logic
+// without restarting the application. It is not thread-safe and should be set before
+// starting any trace sessions.
+func EnableMofTemplateRegeneration(enable bool) {
+	forceMofTemplateRegeneration = enable
+}
 
 // Represents a MOF property definition
 type MofPropertyDef struct {
@@ -210,14 +223,13 @@ const (
 	MismatchOther = 4
 )
 
-// buildTraceInfoTemplate is called once per pointer-size to build the complete,
-// cached TRACE_EVENT_INFO buffer. It contains the original, correct logic.
-func (mofClass *MofClassDef) buildTraceInfoTemplate(pointerSize uint8) []byte {
+// buildTraceInfoTemplate is called to build the complete, cached TRACE_EVENT_INFO buffer.
+func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	// The layout of our buffer will be:
 	// 1. TRACE_EVENT_INFO struct
 	// 2. Array of EVENT_PROPERTY_INFO structs
-	// 3. Provider Name, Task Name, Opcode Name strings
-	// 4. All property name strings
+	// 3. Provider Name, Task Name, Opcode Name strings (all null-terminated UTF-16)
+	// 4. All property name strings (all null-terminated UTF-16)
 
 	propCount := len(mofClass.Properties)
 	propInfosSize := propCount * int(unsafe.Sizeof(EventPropertyInfo{}))
@@ -234,7 +246,12 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(pointerSize uint8) []byte {
 	opcodeNameSize := len(mofClass.NameW) * 2
 
 	traceEventInfoBaseSize := int(unsafe.Offsetof(TraceEventInfo{}.EventPropertyInfoArray))
-	requiredSize := traceEventInfoBaseSize + propInfosSize + providerNameSize + taskNameSize + opcodeNameSize + totalPropNamesSize
+	requiredSize := traceEventInfoBaseSize +
+		propInfosSize +
+		providerNameSize +
+		taskNameSize +
+		opcodeNameSize +
+		totalPropNamesSize
 
 	// Create the template buffer.
 	buffer := make([]byte, requiredSize)
@@ -243,7 +260,7 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(pointerSize uint8) []byte {
 	tei := (*TraceEventInfo)(unsafe.Pointer(&buffer[0]))
 	tei.ProviderGUID = *systemTraceControlGuid
 	tei.EventGUID = mofClass.GUID
-	// EventDescriptor is patched at runtime from the live event.
+	//tei.EventDescriptor = er.EventHeader.EventDescriptor // EventDescriptor is patched at runtime from the live event.
 	tei.DecodingSource = DecodingSourceWbem
 	tei.PropertyCount = uint32(propCount)
 	tei.TopLevelPropertyCount = uint32(propCount) // MOF properties are flat.
@@ -269,6 +286,8 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(pointerSize uint8) []byte {
 	// 4. Create a slice header that points directly into our buffer.
 	propInfoArrayStartPtr := unsafe.Pointer(&buffer[propInfoArrayStartOffset])
 	eventProperties := unsafe.Slice((*EventPropertyInfo)(propInfoArrayStartPtr), propCount)
+
+	// IMPORTANT: Explicitly zero the memory for the property slice, as it's pointing to uninitialized buffer space.
 	clear(eventProperties)
 
 	// This map is temporary for the build process.
@@ -277,7 +296,7 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(pointerSize uint8) []byte {
 	// 5. First pass: Build the property info array.
 	for i, propDef := range mofClass.Properties {
 		wmiIDToIndex[propDef.ID] = uint16(i)
-		epi := &eventProperties[i]
+		epi := &eventProperties[i] // Get a pointer to the element in our slice (which is in teiBuffer)
 
 		// Set name and offset. The offset is relative to the start of the buffer.
 		epi.NameOffset = uint32(currentNameOffset)
@@ -333,18 +352,18 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(pointerSize uint8) []byte {
 		epi.SetInType(finalInType)
 		epi.SetOutType(finalOutType)
 
-		// Create a fake EventRecord just for getTdhInTypeFixedSize
-		var fakeEventHeader EventHeader
-		if pointerSize == 8 {
-			fakeEventHeader.Flags = EVENT_HEADER_FLAG_64_BIT_HEADER
-		} else {
-			fakeEventHeader.Flags = EVENT_HEADER_FLAG_32_BIT_HEADER
-		}
-		fakeRecord := EventRecord{EventHeader: fakeEventHeader}
+		// // Create a fake EventRecord just for getTdhInTypeFixedSize
+		// var fakeEventHeader EventHeader
+		// if er.PointerSize() == 8 {
+		// 	fakeEventHeader.Flags = EVENT_HEADER_FLAG_64_BIT_HEADER
+		// } else {
+		// 	fakeEventHeader.Flags = EVENT_HEADER_FLAG_32_BIT_HEADER
+		// }
+		// fakeRecord := EventRecord{EventHeader: fakeEventHeader}
 
 		// Set fixed length for scalar types
 		if !propDef.IsArray && propDef.SizeFromID == 0 {
-			if fixedSize := getTdhInTypeFixedSize(propDef.InType, &fakeRecord); fixedSize > 0 {
+			if fixedSize := getTdhInTypeFixedSize(propDef.InType, er); fixedSize > 0 {
 				epi.SetLength(fixedSize)
 				// epi.Flags |= PropertyParamFixedLength // This flag should not be set for implicitly sized MOF types.
 			} else if propDef.InType == TDH_INTYPE_BINARY && propDef.OutType == TDH_OUTTYPE_IPV6 {
@@ -363,7 +382,7 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(pointerSize uint8) []byte {
 			// epi.Flags |= PropertyParamFixedCount
 
 			// The API also sets the Length to the size of a single array element.
-			if elementSize := getTdhInTypeFixedSize(propDef.InType, &fakeRecord); elementSize > 0 {
+			if elementSize := getTdhInTypeFixedSize(propDef.InType, er); elementSize > 0 {
 				epi.SetLength(elementSize)
 			}
 		} else {
@@ -402,17 +421,22 @@ func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventI
 	var template []byte
 	pointerSize := er.PointerSize()
 
-	// Select the correct template (32 or 64-bit) and build it if this is the first time.
-	if pointerSize == 8 {
-		mofClass.buildOnce64.Do(func() {
-			mofClass.template64 = mofClass.buildTraceInfoTemplate(8)
-		})
-		template = mofClass.template64
+	// If regeneration is forced, we bypass the sync.Once logic completely.
+	if forceMofTemplateRegeneration {
+		template = mofClass.buildTraceInfoTemplate(er)
 	} else {
-		mofClass.buildOnce32.Do(func() {
-			mofClass.template32 = mofClass.buildTraceInfoTemplate(4)
-		})
-		template = mofClass.template32
+		// Select the correct template (32 or 64-bit) and build it if this is the first time.
+		if pointerSize == 8 {
+			mofClass.buildOnce64.Do(func() {
+				mofClass.template64 = mofClass.buildTraceInfoTemplate(er)
+			})
+			template = mofClass.template64
+		} else {
+			mofClass.buildOnce32.Do(func() {
+				mofClass.template32 = mofClass.buildTraceInfoTemplate(er)
+			})
+			template = mofClass.template32
+		}
 	}
 
 	// Resize the user's buffer if needed.
