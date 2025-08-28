@@ -27,16 +27,58 @@ var (
 	// This avoids repeatedly converting UTF-16 names to Go strings for common events.
 	propertyNameCache sync.Map
 
+	// traceEventInfoCache stores pre-parsed TRACE_EVENT_INFO structures.
+	// It's a two-level map for performance:
+	// Level 1: Provider GUID -> Level 2: *sync.Map
+	// Level 2: Schema Key (ID/Opcode | Version) -> []byte
+	traceEventInfoCache sync.Map
+
+	// When true, the traceEventInfoCache is bypassed and TdhGetEventInformation
+	// is called for every event. Useful for debugging.
+	// Use `EnableTraceInfoCache(false)` to disable.
+	traceEventInfoCacheEnabled = true
+
 	// cache for metadata on fully parsed events
 	hostname, _ = os.Hostname()
 )
 
-// eventSchemaID is used as a key to cache event metadata like property names.
-type eventSchemaID struct {
-	ProviderGUID GUID
-	EventID      uint16
-	Version      uint8
-	Opcode       uint8
+// EnableTraceInfoCache enables or disables the caching of TRACE_EVENT_INFO data.
+// Disabling the cache forces a call to TdhGetEventInformation for every event,
+// which can be useful for debugging but will impact performance.
+// This function is not thread-safe and should be called before starting any trace sessions.
+func EnableTraceInfoCache(enable bool) {
+	traceEventInfoCacheEnabled = enable
+}
+
+// These EventRecord methods are defined here because they are only needed in etw_helpers.go
+
+// schemaCacheKey generates a unique uint32 key for a given event schema within a provider.
+// This key is used for the second level of the two-level cache.
+// For manifest events, it packs ID and Version.
+// For MOF events, it packs Opcode and Version.
+func (er *EventRecord) schemaCacheKey() uint32 {
+	desc := &er.EventHeader.EventDescriptor
+	if er.IsMof() {
+		// For MOF, Opcode (8 bits) + Version (8 bits) is the unique schema ID.
+		return uint32(desc.Opcode)<<8 | uint32(desc.Version)
+	}
+	// For Manifest, ID (16 bits) + Version (8 bits) is the unique schema ID.
+	return uint32(desc.Id)<<8 | uint32(desc.Version)
+}
+
+// schemaCacheHelper retrieves or creates the first-level cache (a *sync.Map) for a provider's events.
+// Accepts a two-level cache map (like traceEventInfoCache or propertyNameCache)
+func (er *EventRecord) schemaCacheHelper(baseMap *sync.Map) (shemaCache *sync.Map) {
+	if val, ok := baseMap.Load(er.EventHeader.ProviderId); ok {
+		shemaCache = val.(*sync.Map)
+	} else {
+		// This provider has not been seen before. Create its cache.
+		// Use LoadOrStore to handle the race condition of two goroutines seeing it for the first time.
+		newCache := &sync.Map{}
+		actual, _ := baseMap.LoadOrStore(er.EventHeader.ProviderId, newCache)
+		shemaCache = actual.(*sync.Map)
+	}
+	return
 }
 
 // traceStorage holds all the necessary reusable memory for a single trace (goroutine).
@@ -154,10 +196,6 @@ type EventRecordHelper struct {
 	// used internally to reuse the memory allocation.
 	teiBuffer *[]byte
 
-	// Buffer for self-generated TraceEventInfo for MOF fallback.
-	// We need to hold a reference to it to keep the memory alive.
-	mofTeiBuffer []byte
-
 	// Position of the next byte of event data to be consumed.
 	// increments after each call to prepareProperty
 	userDataIt uintptr
@@ -215,8 +253,98 @@ func (e *EventRecordHelper) release() {
 	helperPool.Put(e)
 }
 
-// Creates a new EventRecordHelper that has the EVENT_RECORD and gets a TRACE_EVENT_INFO for that event.
+// newEventRecordHelper creates a new EventRecordHelper and retrieves the TRACE_EVENT_INFO
+// for the given EventRecord. It implements a multi-level caching and fallback strategy:
+// 1. Check a global two stage cache for a pre-parsed TRACE_EVENT_INFO.
+// 2. If cache miss, call TdhGetEventInformation.
+// 3. If the API call succeeds, store the result in the cache.
+// 4. If the API fails for a classic MOF event, attempt to build the info from generated definitions.
+// 5. If the MOF generation succeeds, store that result in the cache.
 func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
+	erh = helperPool.Get().(*EventRecordHelper)
+	storage := er.userContext().storage
+	teiBuffer := &storage.teiBuffer
+
+	// Reset the thread-local storage before processing a new event.
+	storage.reset()
+
+	erh.storage = storage
+	erh.EventRec = er
+
+	// --- Stage 1: Check Cache ---
+	if traceEventInfoCacheEnabled {
+		// 1. First-level lookup by Provider GUID.
+		schemaCache := er.schemaCacheHelper(&traceEventInfoCache)
+
+		// 2. Second-level lookup by schema key (ID/Opcode + Version).
+		schemaKey := er.schemaCacheKey()
+		if cachedTei, found := schemaCache.Load(schemaKey); found {
+			// Cache hit: Use the cached TRACE_EVENT_INFO
+			template := cachedTei.([]byte)
+			// Ensure the thread-local buffer is large enough.
+			if cap(storage.teiBuffer) < len(template) {
+				storage.teiBuffer = make([]byte, len(template))
+			}
+			storage.teiBuffer = storage.teiBuffer[:len(template)]
+			// Copy the cached template into the thread-local buffer.
+			copy(storage.teiBuffer, template)
+			erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
+			// The descriptor is event-specific, so we patch it from the live event record.
+			erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor
+			erh.teiBuffer = &storage.teiBuffer
+			return erh, nil // Cache hit, we are done.
+		}
+	}
+
+	// --- Stage 2: Call TdhGetEventInformation (Cache Miss) ---
+	erh.TraceInfo, err = er.GetEventInformation(teiBuffer)
+	if err != nil {
+		apiErr := fmt.Errorf("%w: %v", ErrGetEventInformation, err)
+
+		// --- Stage 3: Fallback to MOF Generator ---
+		if er.IsMof() {
+			if erh.TraceInfo, err = buildTraceInfoFromMof(er, teiBuffer); err == nil {
+				// MOF generator succeeded. Cache the result.
+				if traceEventInfoCacheEnabled {
+					cloneAndCacheTraceInfo(er.EventHeader.ProviderId, er.schemaCacheKey(), *teiBuffer)
+				}
+				err = nil // Suppress the original API error.
+			} else {
+				err = apiErr // MOF generator also failed; return the original API error.
+			}
+		} else {
+			err = apiErr // Not a MOF event, no fallback possible.
+		}
+	} else {
+		// API call succeeded. Cache the result.
+		if traceEventInfoCacheEnabled {
+			cloneAndCacheTraceInfo(er.EventHeader.ProviderId, er.schemaCacheKey(), *teiBuffer)
+		}
+	}
+
+	erh.teiBuffer = teiBuffer // Keep a reference
+	return erh, err
+}
+
+// cloneAndCacheTraceInfo makes a copy of a TraceEventInfo buffer and stores it in the two-level cache.
+func cloneAndCacheTraceInfo(providerGUID GUID, schemaKey uint32, teiBuffer []byte) {
+	// Get the second-level cache for this provider. It must exist at this point.
+	val, _ := traceEventInfoCache.Load(providerGUID)
+	schemaCache := val.(*sync.Map)
+
+	// Create a copy of the buffer to store in the cache.
+	cachedTei := make([]byte, len(teiBuffer))
+	copy(cachedTei, teiBuffer)
+
+	// Store the copied buffer in the second-level cache.
+	schemaCache.Store(schemaKey, cachedTei)
+}
+
+// newEventRecordHelper_test is a performance testing variant of newEventRecordHelper.
+// It prioritizes the custom buildTraceInfoFromMof function and falls back to the
+// GetEventInformation API only if the custom builder fails. This is the reverse
+// of the production logic and is used to measure the performance of the MOF fallback path.
+func newEventRecordHelper_test(er *EventRecord) (erh *EventRecordHelper, err error) {
 	erh = helperPool.Get().(*EventRecordHelper)
 	storage := er.userContext().storage
 
@@ -225,99 +353,49 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 
 	erh.storage = storage
 	erh.EventRec = er
-	erh.mofTeiBuffer = nil // Reset from previous use
 
-	// Use the teiBuffer from storage for GetEventInformation.
-	// The buffer will be resized by GetEventInformation if needed.
-	if erh.TraceInfo, err = er.GetEventInformation(&storage.teiBuffer); err != nil {
-		apiErr := fmt.Errorf("%w: %v", ErrGetEventInformation, err)
+	// For testing, we prioritize our custom MOF builder.
+	if er.IsMof() {
+		erh.TraceInfo, err = buildTraceInfoFromMof(er, &storage.teiBuffer)
+	} else {
+		// If it's not a classic MOF event, we must use the API.
+		// We set an error to force the fallback path.
+		err = fmt.Errorf("not a MOF event, must use GetEventInformation")
+	}
 
-		// Fallback for MOF events using pre-generated definitions.
-		if er.IsMof() {
-			// Try to build TraceEventInfo from MOF definitions.
-			erh.TraceInfo, err = buildTraceInfoFromMof(er, &storage.teiBuffer)
-			if err == nil {
-				// Success! We built a TraceInfo from our MOF definitions.
-				// Suppress the original API error.
-				err = nil
-				// TODO: count how many times we used the MOF fallback succesfuly
-			} else {
-				// MOF fallback also failed, return original API error.
-				err = apiErr
-			}
+	// If our MOF builder failed (or it wasn't a MOF event), fall back to the API.
+	if err != nil {
+		mofBuilderErr := err // Preserve the builder error for context.
+		if erh.TraceInfo, err = er.GetEventInformation(&storage.teiBuffer); err != nil {
+			// Both the builder and the API failed. The API error is the one to report.
+			err = fmt.Errorf("%w: %v: %v", ErrGetEventInformation, err, mofBuilderErr)
 		} else {
-			// Not a MOF event, no fallback possible.
-			err = apiErr
+			// API succeeded, so we can proceed. Clear the error.
+			err = nil
 		}
+	} else {
+		// // Our MOF builder succeeded.
+		// // DEBUGGING: Compare our result with what the API would have returned.
+		// if isDebug {
+		//     var apiTeiBuffer []byte // Use a separate buffer for the API call to not corrupt our generated one.
+		//     apiTei, apiErr := er.GetEventInformation(&apiTeiBuffer)
+		//     if apiErr == nil && apiTei != nil {
+		//         if compareTraceEventInfo(erh.TraceInfo, apiTei)&MismatchOther != 0 {
+		//             fmt.Println("--- DEBUG: Comparing generated TraceEventInfo with original ---")
+		//             log.Error().Interface("Original EventRecord", er).Msg("DEBUG EventRecord")
+		//             log.Error().Interface("Original EventTraceInfo", apiTei).Msg("DEBUG EventRecord")
+		//             fmt.Println("--- DEBUG: Comparison finished ---")
+		//             fmt.Println()
+		//             er.getUserContext().consumer.ctx.Done() // Stop processing events
+		//             os.Exit(1)
+		//         }
+		//     }
+		// }
 	}
 
 	erh.teiBuffer = &storage.teiBuffer // Keep a reference
-
 	return
 }
-
-// // newEventRecordHelper_test is a performance testing variant of newEventRecordHelper.
-// // It prioritizes the custom buildTraceInfoFromMof function and falls back to the
-// // GetEventInformation API only if the custom builder fails. This is the reverse
-// // of the production logic and is used to measure the performance of the MOF fallback path.
-// func newEventRecordHelper2(er *EventRecord) (erh *EventRecordHelper, err error) {
-// 	erh = helperPool.Get().(*EventRecordHelper)
-// 	storage := er.getUserContext().storage
-
-// 	// Reset the thread-local storage before processing a new event.
-// 	storage.reset()
-
-// 	erh.storage = storage
-// 	erh.EventRec = er
-// 	erh.mofTeiBuffer = nil // Reset from previous use
-
-// 	// For testing, we prioritize our custom MOF builder.
-// 	if er.IsMof() {
-// 		erh.TraceInfo, err = buildTraceInfoFromMof(er, &storage.teiBuffer)
-// 	} else {
-// 		// If it's not a classic MOF event, we must use the API.
-// 		// We set an error to force the fallback path.
-// 		err = fmt.Errorf("not a MOF event, must use GetEventInformation")
-// 	}
-
-// 	// If our MOF builder failed (or it wasn't a MOF event), fall back to the API.
-// 	if err != nil {
-// 		mofBuilderErr := err // Preserve the builder error for context.
-// 		if erh.TraceInfo, err = er.GetEventInformation(&storage.teiBuffer); err != nil {
-// 			// Both the builder and the API failed. The API error is the one to report.
-// 			apiErr := fmt.Errorf("GetEventInformation failed : %s", err)
-// 			conlog.SampledErrorWithErrSig("GetEventInformation", apiErr).
-// 				AnErr("mofBuilderError", mofBuilderErr).
-// 				Interface("eventRecord", erh.EventRec).
-// 				Msg("Failed to get trace event info (builder and API failed)")
-// 			err = &LoggedError{Err: apiErr}
-// 		} else {
-// 			// API succeeded, so we can proceed. Clear the error.
-// 			err = nil
-// 		}
-// 	} else {
-// 		// // Our MOF builder succeeded.
-// 		// // DEBUGGING: Compare our result with what the API would have returned.
-// 		// if isDebug {
-// 		//     var apiTeiBuffer []byte // Use a separate buffer for the API call to not corrupt our generated one.
-// 		//     apiTei, apiErr := er.GetEventInformation(&apiTeiBuffer)
-// 		//     if apiErr == nil && apiTei != nil {
-// 		//         if compareTraceEventInfo(erh.TraceInfo, apiTei)&MismatchOther != 0 {
-// 		//             fmt.Println("--- DEBUG: Comparing generated TraceEventInfo with original ---")
-// 		//             log.Error().Interface("Original EventRecord", er).Msg("DEBUG EventRecord")
-// 		//             log.Error().Interface("Original EventTraceInfo", apiTei).Msg("DEBUG EventRecord")
-// 		//             fmt.Println("--- DEBUG: Comparison finished ---")
-// 		//             fmt.Println()
-// 		//             er.getUserContext().consumer.ctx.Done() // Stop processing events
-// 		//             os.Exit(1)
-// 		//         }
-// 		//     }
-// 		// }
-// 	}
-
-// 	erh.teiBuffer = &storage.teiBuffer // Keep a reference
-// 	return
-// }
 
 // This memory was already reseted when it was released.
 func (e *EventRecordHelper) initialize() {
@@ -489,8 +567,7 @@ func (e *EventRecordHelper) getPropertySize(i uint32) (size uint32, err error) {
 // as its metadata is accessed, caching any scalar integer value. This ensures
 // that when a subsequent property's length or count is calculated, the value
 // it depends on is readily available.
-func (e *EventRecordHelper) cacheIntegerValues(i uint32) {
-	epi := (*e.epiArray)[i]
+func (e *EventRecordHelper) cacheIntegerValues(i uint32, epi *EventPropertyInfo) {
 	// If this property is a scalar integer, remember the value in case it
 	// is needed for a subsequent property's that has the PropertyParamLength flag set.
 	// This is a Single Value property, not a struct and it doesn't have a param count
@@ -534,7 +611,7 @@ func (e *EventRecordHelper) getEpiAt(i uint32) *EventPropertyInfo {
 	if epi == nil {
 		epi = e.TraceInfo.GetEventPropertyInfoAt(i)
 		(*e.epiArray)[i] = epi
-		e.cacheIntegerValues(i)
+		e.cacheIntegerValues(i, epi)
 	}
 	return epi
 }
@@ -860,35 +937,25 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 
 // getCachedPropNames retrieves the property names for the event schema.
 // It uses a cache for each provider event type to avoid repeated UTF-16 to string conversions.
-// This increased events/s performance by ~20% in benchmarks.
 func (e *EventRecordHelper) getCachedPropNames() []string {
-	// Get property names from cache or generate them.
-	key := eventSchemaID{
-		ProviderGUID: e.TraceInfo.ProviderGUID,            // 64 bits
-		EventID:      e.EventID(),                         // 16 bits
-		Version:      e.TraceInfo.EventDescriptor.Version, // 8 bits
-		// Opcode not needed but removing this causes a performance 2% drop. (aligment?) 96 bits vs 88 bits
-		Opcode: e.TraceInfo.EventDescriptor.Opcode,
+	// Use the same two-level cache keying strategy for property names.
+	schemaKey := e.EventRec.schemaCacheKey()
+
+	// 1. First-level lookup for the provider's property name cache.
+	schemaNameCache := e.EventRec.schemaCacheHelper(&propertyNameCache)
+
+	// 2. Second-level lookup for the specific schema's names.
+	if cachedNames, ok := schemaNameCache.Load(schemaKey); ok {
+		return cachedNames.([]string)
 	}
-	var names []string
-	if key.EventID == 0 {
-		conlog.SampledError("evenid-cache-warning").
-			Interface("EventRec", e.EventRec).
-			Uint32("currentCount", e.TraceInfo.PropertyCount).
-			Msg("Computed EventID is 0, skipping property name cache for this event.")
+
+	// Cache miss. Generate all property names for this schema once.
+	names := make([]string, e.TraceInfo.PropertyCount)
+	for i := range names {
+		epi := e.TraceInfo.GetEventPropertyInfoAt(uint32(i))
+		names[i] = FromUTF16AtOffset(e.TraceInfo.pointer(), uintptr(epi.NameOffset))
 	}
-	if cachedNames, ok := propertyNameCache.Load(key); ok && (key.EventID != 0) {
-		names = cachedNames.([]string)
-	} else {
-		// Cache miss. Generate all property names for this schema once.
-		// Note: PropertyCount includes all properties, including those inside structs.
-		names = make([]string, e.TraceInfo.PropertyCount)
-		for i := range names {
-			epi := e.TraceInfo.GetEventPropertyInfoAt(uint32(i))
-			names[i] = FromUTF16AtOffset(e.TraceInfo.pointer(), uintptr(epi.NameOffset))
-		}
-		propertyNameCache.Store(key, names)
-	}
+	schemaNameCache.Store(schemaKey, names)
 	return names
 }
 
@@ -1205,7 +1272,7 @@ func (e *EventRecordHelper) Channel() string {
 }
 
 // EventID returns the event ID of the event record.
-// This is the same as TraceInfo.EventID() but uses the EventRecord.EventID()
+// This is the same as TraceInfo.EventID().
 // For MOF events, this ID is calculated from other data to be unique per event type.
 // For non-MOF events, this is the same as EventRecord.EventDescriptor.Id.
 func (e *EventRecordHelper) EventID() uint16 {
