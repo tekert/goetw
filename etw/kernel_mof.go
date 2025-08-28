@@ -4,6 +4,7 @@ package etw
 
 import (
 	"fmt"
+	"sync"
 	"unsafe"
 )
 
@@ -64,11 +65,27 @@ func guidToUint(guid string) uint32 {
 }
 
 var (
-	mofClassLookupMap = make(map[uint64]*MofClassDef) // Lookup by packed key
+	// Use a two-level map for MOF class definitions for performance and correctness.
+	// Level 1: Provider GUID -> Level 2: sync.Map
+	// Level 2: Schema Key (Opcode|Version) -> *MofClassDef
+	mofClassLookupMap = sync.Map{}
 	MofClassQueryMap  = make(map[string]*MofClassDef) // Lookup by class name
 
 	mofKernelClassLoaded = false
+
+	// When true, the template cache inside MofClassDef is bypassed and templates are
+	// regenerated on each call. Useful for debugging template generation logic.
+	// Use `EnableMofTemplateRegeneration(true)` to set.
+	forceMofTemplateRegeneration = false
 )
+
+// EnableMofTemplateRegeneration allows bypassing the sync.Once cache for MOF templates.
+// This is primarily a debugging tool to test changes to the template generation logic
+// without restarting the application. It is not thread-safe and should be set before
+// starting any trace sessions.
+func EnableMofTemplateRegeneration(enable bool) {
+	forceMofTemplateRegeneration = enable
+}
 
 // Represents a MOF property definition
 type MofPropertyDef struct {
@@ -94,58 +111,75 @@ type MofClassDef struct {
 	EventTypes []uint8          // List of event types this class handles
 	Properties []MofPropertyDef // Property definitions
 
-	// Pre-calculated data to speed up buildTraceInfoFromMof
-	wmiIDToIndex   map[uint16]uint16
-	totalNamesSize int
+	// --- Caching for buildTraceInfoFromMof ---
+	// We cache two complete TRACE_EVENT_INFO templates, one for 32-bit events
+	// and one for 64-bit, as the pointer size affects property lengths.
+	buildOnce32 sync.Once
+	template32  []byte
+
+	buildOnce64 sync.Once
+	template64  []byte
 }
 
-// MofRegister adds a MOF class definition to the global MofClassQueryMap
-// and mofClassLookupMap maps.
-// Used to load kernel MOF classes when the package is initialized
+// MofRegister adds a MOF class definition to the global maps.
+// It now uses the two-level cache structure.
 func MofRegister(class *MofClassDef) {
-	// Pre-calculate WMI ID to index mapping and total names size.
-	// This avoids repeated work in the hot path of buildTraceInfoFromMof.
-	class.wmiIDToIndex = make(map[uint16]uint16, len(class.Properties))
-	class.totalNamesSize = 0
-	for i, prop := range class.Properties {
-		class.wmiIDToIndex[prop.ID] = uint16(i)
-		class.totalNamesSize += len(prop.NameW) * 2
+	// Get or create the second-level cache for this provider GUID.
+	var schemaCache *sync.Map
+	if val, ok := mofClassLookupMap.Load(class.GUID); ok {
+		schemaCache = val.(*sync.Map)
+	} else {
+		newCache := &sync.Map{}
+		actual, _ := mofClassLookupMap.LoadOrStore(class.GUID, newCache)
+		schemaCache = actual.(*sync.Map)
 	}
 
 	for _, eventType := range class.EventTypes {
-		key := MofPackKey(class.GUID.Data1, class.GUID.Data2, eventType, class.Version)
-		mofClassLookupMap[key] = class
+		// The second-level key for MOF events is Opcode + Version.
+		schemaKey := uint32(eventType)<<8 | uint32(class.Version)
+		schemaCache.Store(schemaKey, class)
 	}
 
-	// Register for lookup by name
+	// Register for lookup by name.
 	MofClassQueryMap[class.Name] = class
 }
 
-// MofErLookup finds a MOF class definition by its event record
-// A MOF event record is uniquely identified by its provider GUID, event type, and version
+// MofErLookup finds a MOF class definition using the two-level cache.
 func MofErLookup(er *EventRecord) *MofClassDef {
-	key := MofPackKey(er.EventHeader.ProviderId.Data1, // guid first 32 bits
-		er.EventHeader.ProviderId.Data2,        // guid second 16 bits
-		er.EventHeader.EventDescriptor.Opcode,  // EventType 8 bytes
-		er.EventHeader.EventDescriptor.Version) // EventVersion 8 bytes
-
-	class, exists := mofClassLookupMap[key]
-
-	if !exists {
+	// First-level lookup by Provider GUID.
+	val, ok := mofClassLookupMap.Load(er.EventHeader.ProviderId)
+	if !ok {
 		return nil
 	}
-	return class
+	schemaCache := val.(*sync.Map)
+
+	// Second-level lookup by schema key (Opcode + Version).
+	schemaKey := uint32(er.EventHeader.EventDescriptor.Opcode)<<8 |
+		uint32(er.EventHeader.EventDescriptor.Version)
+	classVal, ok := schemaCache.Load(schemaKey)
+	if !ok {
+		return nil
+	}
+
+	return classVal.(*MofClassDef)
 }
 
-// MofLookup finds a MOF class definition by its identifiers
-// A MOF event record is uniquely identified by its provider GUID, event type, and version
+// MofLookup finds a MOF class definition by its identifiers using the two-level cache.
 func MofLookup(guid GUID, eventType uint8, version uint8) *MofClassDef {
-	key := MofPackKey(guid.Data1, guid.Data2, eventType, version)
-	class, exists := mofClassLookupMap[key]
-	if !exists {
+	// First-level lookup
+	val, ok := mofClassLookupMap.Load(guid)
+	if !ok {
 		return nil
 	}
-	return class
+	schemaCache := val.(*sync.Map)
+
+	// Second-level lookup
+	schemaKey := uint32(eventType)<<8 | uint32(version)
+	classVal, ok := schemaCache.Load(schemaKey)
+	if !ok {
+		return nil
+	}
+	return classVal.(*MofClassDef)
 }
 
 // Bit positions for packing/unpacking
@@ -212,20 +246,8 @@ const (
 	MismatchOther = 4
 )
 
-// buildTraceInfoFromMof constructs a TRACE_EVENT_INFO structure from a registered MOF class definition.
-// This serves as a fallback when TdhGetEventInformation fails for classic kernel events.
-// It reuses the provided teiBuffer to avoid allocations.
-func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventInfo, err error) {
-	mofClass := MofErLookup(er)
-	if mofClass == nil {
-		return nil,
-			fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d : %v",
-				er.EventHeader.ProviderId.String(),
-				er.EventHeader.EventDescriptor.Opcode,
-				er.EventHeader.EventDescriptor.Version,
-				ErrBuildTraceInfoFromMof)
-	}
-
+// buildTraceInfoTemplate is called to build the complete, cached TRACE_EVENT_INFO buffer.
+func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	// The layout of our buffer will be:
 	// 1. TRACE_EVENT_INFO struct
 	// 2. Array of EVENT_PROPERTY_INFO structs
@@ -235,29 +257,37 @@ func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventI
 	propCount := len(mofClass.Properties)
 	propInfosSize := propCount * int(unsafe.Sizeof(EventPropertyInfo{}))
 
+	// Calculate total size of all property name strings.
+	var totalPropNamesSize int
+	for _, prop := range mofClass.Properties {
+		totalPropNamesSize += len(prop.NameW) * 2
+	}
+
 	// Use pre-converted UTF-16 slices and pre-calculated sizes.
 	providerNameSize := len(utf16MSNT_SystemTrace) * 2
 	taskNameSize := len(mofClass.BaseW) * 2
 	opcodeNameSize := len(mofClass.NameW) * 2
 
 	traceEventInfoBaseSize := int(unsafe.Offsetof(TraceEventInfo{}.EventPropertyInfoArray))
-	requiredSize := traceEventInfoBaseSize + propInfosSize + providerNameSize + taskNameSize + opcodeNameSize + mofClass.totalNamesSize
+	requiredSize := traceEventInfoBaseSize +
+		propInfosSize +
+		providerNameSize +
+		taskNameSize +
+		opcodeNameSize +
+		totalPropNamesSize
 
-	// Resize the provided buffer if it's too small.
-	if cap(*teiBuffer) < requiredSize {
-		*teiBuffer = make([]byte, requiredSize)
-	}
-	*teiBuffer = (*teiBuffer)[:requiredSize]
-	buffer := *teiBuffer // Use a local variable for convenience.
+	// Create the template buffer.
+	buffer := make([]byte, requiredSize)
 
-	// 1. Populate the TRACE_EVENT_INFO header.
-	tei = (*TraceEventInfo)(unsafe.Pointer(&buffer[0]))
+	// 1. Populate the TRACE_EVENT_INFO header with static information.
+	tei := (*TraceEventInfo)(unsafe.Pointer(&buffer[0]))
 	tei.ProviderGUID = *systemTraceControlGuid
 	tei.EventGUID = mofClass.GUID
-	tei.EventDescriptor = er.EventHeader.EventDescriptor
+	//tei.EventDescriptor = er.EventHeader.EventDescriptor // EventDescriptor is patched at runtime from the live event.
 	tei.DecodingSource = DecodingSourceWbem
 	tei.PropertyCount = uint32(propCount)
 	tei.TopLevelPropertyCount = uint32(propCount) // MOF properties are flat.
+	tei.Flags = TEMPLATE_EVENT_DATA
 
 	// 2. Define the starting points for properties and names.
 	propInfoArrayStartOffset := traceEventInfoBaseSize
@@ -276,14 +306,19 @@ func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventI
 	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.NameW[0])), opcodeNameSize))
 	currentNameOffset += opcodeNameSize
 
-	// 4. Create a slice header that points directly into our teiBuffer, avoiding a separate allocation.
+	// 4. Create a slice header that points directly into our buffer.
 	propInfoArrayStartPtr := unsafe.Pointer(&buffer[propInfoArrayStartOffset])
 	eventProperties := unsafe.Slice((*EventPropertyInfo)(propInfoArrayStartPtr), propCount)
 
 	// IMPORTANT: Explicitly zero the memory for the property slice, as it's pointing to uninitialized buffer space.
 	clear(eventProperties)
 
+	// This map is temporary for the build process.
+	wmiIDToIndex := make(map[uint16]uint16, propCount)
+
+	// 5. First pass: Build the property info array.
 	for i, propDef := range mofClass.Properties {
+		wmiIDToIndex[propDef.ID] = uint16(i)
 		epi := &eventProperties[i] // Get a pointer to the element in our slice (which is in teiBuffer)
 
 		// Set name and offset. The offset is relative to the start of the buffer.
@@ -340,6 +375,15 @@ func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventI
 		epi.SetInType(finalInType)
 		epi.SetOutType(finalOutType)
 
+		// // Create a fake EventRecord just for getTdhInTypeFixedSize
+		// var fakeEventHeader EventHeader
+		// if er.PointerSize() == 8 {
+		// 	fakeEventHeader.Flags = EVENT_HEADER_FLAG_64_BIT_HEADER
+		// } else {
+		// 	fakeEventHeader.Flags = EVENT_HEADER_FLAG_32_BIT_HEADER
+		// }
+		// fakeRecord := EventRecord{EventHeader: fakeEventHeader}
+
 		// Set fixed length for scalar types
 		if !propDef.IsArray && propDef.SizeFromID == 0 {
 			if fixedSize := getTdhInTypeFixedSize(propDef.InType, er); fixedSize > 0 {
@@ -372,15 +416,67 @@ func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventI
 	// Second pass to resolve dynamic array counts (WmiSizeIs)
 	for i, propDef := range mofClass.Properties {
 		if propDef.SizeFromID != 0 {
-			// Use the pre-calculated map from the MofClassDef.
-			if countPropIndex, ok := mofClass.wmiIDToIndex[uint16(propDef.SizeFromID)]; ok {
+			// Use the locally-calculated map.
+			if countPropIndex, ok := wmiIDToIndex[uint16(propDef.SizeFromID)]; ok {
 				eventProperties[i].Flags |= PropertyParamCount
 				eventProperties[i].SetCountPropertyIndex(countPropIndex)
 			}
 		}
 	}
 
-	// 5. No copy is needed since we modified the teiBuffer directly via the slice.
+	return buffer
+}
+
+// buildTraceInfoFromMof constructs a TRACE_EVENT_INFO structure from a registered MOF class definition.
+// This serves as a fallback when TdhGetEventInformation fails for classic kernel events.
+// It reuses the provided teiBuffer to avoid allocations.
+func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventInfo, err error) {
+	mofClass := MofErLookup(er)
+	if mofClass == nil {
+		return nil,
+			fmt.Errorf("MOF class definition not found for event with GUID %s, Opcode %d, Version %d : %v",
+				er.EventHeader.ProviderId.String(),
+				er.EventHeader.EventDescriptor.Opcode,
+				er.EventHeader.EventDescriptor.Version,
+				ErrBuildTraceInfoFromMof)
+	}
+
+	var template []byte
+	pointerSize := er.PointerSize()
+
+	// If regeneration is forced, we bypass the sync.Once logic completely.
+	if forceMofTemplateRegeneration {
+		template = mofClass.buildTraceInfoTemplate(er)
+	} else {
+		// Select the correct template (32 or 64-bit) and build it if this is the first time.
+		if pointerSize == 8 {
+			mofClass.buildOnce64.Do(func() {
+				mofClass.template64 = mofClass.buildTraceInfoTemplate(er)
+			})
+			template = mofClass.template64
+		} else {
+			mofClass.buildOnce32.Do(func() {
+				mofClass.template32 = mofClass.buildTraceInfoTemplate(er)
+			})
+			template = mofClass.template32
+		}
+	}
+
+	// Resize the user's buffer if needed.
+	if cap(*teiBuffer) < len(template) {
+		*teiBuffer = make([]byte, len(template))
+	}
+	*teiBuffer = (*teiBuffer)[:len(template)]
+
+	// Perform a single, fast copy of the entire pre-built template.
+	copy(*teiBuffer, template)
+
+	// Get a pointer to the TraceEventInfo struct at the start of the user's buffer.
+	tei = (*TraceEventInfo)(unsafe.Pointer(&(*teiBuffer)[0]))
+
+	// Patch the live EventDescriptor from the incoming event record.
+	// This is the only part that needs to be updated at runtime.
+	tei.EventDescriptor = er.EventHeader.EventDescriptor
 
 	return tei, nil
 }
