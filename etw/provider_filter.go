@@ -54,7 +54,7 @@ func (f *EventIDFilter) build() (EventFilterDescriptor, any) {
 		Ptr:  uint64(uintptr(unsafe.Pointer(filterData))),
 		Size: uint32(filterData.Size()),
 		Type: EVENT_FILTER_TYPE_EVENT_ID,
-	}, keepAlive // Pass the cleanup function up to the caller.
+	}, keepAlive // Pass the keeapalive pointer up to the caller.
 }
 
 // PIDFilter filters events based on the Process ID (PID) of the originating process.

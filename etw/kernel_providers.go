@@ -2,13 +2,11 @@
 
 package etw
 
-import "strings"
-
 // KernelNtFlag defines a bitmask for enabling a specific group of legacy kernel events.
 // These flags are used with NewKernelRealTimeSession to configure the "NT Kernel Logger".
 type KernelNtFlag uint32
 
-// NT Kernel Logger flags (old)
+// NT Kernel Logger flags (legacy, Windows 10 and below)
 const (
 	NtKernelLogger = "NT Kernel Logger"
 	//  0x9e814aad, 0x3204, 0x11d2, 0x9a, 0x82, 0x00, 0x60, 0x08, 0xa8, 0x69, 0x39
@@ -163,78 +161,69 @@ func (p KernelNtFlag) All() KernelNtFlag {
 		CSwitch | Dispatcher | UdpIp
 }
 
+// KernelNtGUID is a GUID for a Windows NT Kernel provider. (legacy) Win10 an below
 type KernelNtGUID *GUID
 
 var (
 	// https://learn.microsoft.com/en-us/windows/win32/etw/msnt-systemtrace
 	MSNTSystemTraceGuid KernelNtGUID = MustParseGUID("{9e814aad-3204-11d2-9a82-006008a86939}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/fileio
-	FileIoGuid KernelNtGUID = MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}")
+	FileIoKernelGuid KernelNtGUID = MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/diskio
-	DiskIoGuid KernelNtGUID = MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}")
+	DiskIoKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/alpc
-	ALPCGuid KernelNtGUID = MustParseGUID("{45d8cccd-539f-4b72-a8b7-5c683142609a}")
+	ALPCKernelGuid KernelNtGUID = MustParseGUID("{45d8cccd-539f-4b72-a8b7-5c683142609a}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/image
-	ImageLoadGuid KernelNtGUID = MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}")
+	ImageLoadKernelGuid KernelNtGUID = MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/pagefault-v2
-	PageFaultGuid KernelNtGUID = MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}")
+	PageFaultKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/registry
-	RegistryGuid KernelNtGUID = MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}")
+	RegistryKernelGuid KernelNtGUID = MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/tcpip
-	TcpIpGuid KernelNtGUID = MustParseGUID("{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}")
+	TcpIpKernelGuid KernelNtGUID = MustParseGUID("{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/udpip
-	UdpIpGuid KernelNtGUID = MustParseGUID("{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}")
+	UdpIpKernelGuid KernelNtGUID = MustParseGUID("{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/thread
-	ThreadGuid KernelNtGUID = MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}")
+	ThreadKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://learn.microsoft.com/en-us/windows/win32/etw/systemconfig
-	SystemConfigGuid KernelNtGUID = MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}")
+	SystemConfigKernelGuid KernelNtGUID = MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}")
 	// https://learn.microsoft.com/en-us/windows/win32/etw/hwconfig
-	HwConfigGuid KernelNtGUID = MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}")
+	HwConfigKernelGuid KernelNtGUID = MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/splitio
-	SplitIoGuid KernelNtGUID = MustParseGUID("{d837ca92-12b9-44a5-ad6a-3a65b3578aa8}")
+	SplitIoKernelGuid KernelNtGUID = MustParseGUID("{d837ca92-12b9-44a5-ad6a-3a65b3578aa8}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/process
-	ProcessGuid KernelNtGUID = MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}")
+	ProcessKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/dbgprint
-	DbgPrintGuid KernelNtGUID = MustParseGUID("{13976d09-a327-438c-950b-7f03192815c7}")
+	DbgPrintKernelGuid KernelNtGUID = MustParseGUID("{13976d09-a327-438c-950b-7f03192815c7}")
 	// https://learn.microsoft.com/en-us/windows/win32/etw/isr
-	InterruptGuid KernelNtGUID = MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}")
+	InterruptKernelGuid KernelNtGUID = MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/process
-	DPCGuid KernelNtGUID = MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}")
+	DPCKernelGuid KernelNtGUID = MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/process
-	ProfileGuid KernelNtGUID = MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}")
+	ProfileKernelGuid KernelNtGUID = MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/process
-	SyscallGuid KernelNtGUID = MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}")
+	SyscallKernelGuid KernelNtGUID = MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/process
-	ProcessCountersGuid KernelNtGUID = MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}")
+	ProcessCountersKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/driver
-	DriverGuid KernelNtGUID = MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}")
+	DriverKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/fileio-name
-	DiskFileIoGuid KernelNtGUID = MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}")
+	DiskFileIoKernelGuid KernelNtGUID = MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/fileio
-	FileIoInitGuid KernelNtGUID = MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}")
+	FileIoInitKernelGuid KernelNtGUID = MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/fileio
-	FileIoVAmapGuid KernelNtGUID = MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}")
+	FileIoVAmapKernelGuid KernelNtGUID = MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/pagefault-v2
-	MemoryPageFaultGuid KernelNtGUID = MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}")
+	MemoryPageFaultKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/pagefault-v2
-	MemoryHardFaultGuid KernelNtGUID = MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}")
+	MemoryHardFaultKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/pagefault-v2
-	VirtualAllocGuid KernelNtGUID = MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}")
+	VirtualAllocKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/cswitch
-	CSwitchGuid KernelNtGUID = MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}")
+	CSwitchKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}")
 	// https://docs.microsoft.com/en-us/windows/win32/etw/dispatcher
-	DispatcherGuid KernelNtGUID = MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}")
+	DispatcherKernelGuid KernelNtGUID = MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}")
 )
-
-// TODO: Delete these in 0.8
-// Deprecated: Use the KernelFlag constants (e.g., etw.Process, etw.Thread) with
-// NewKernelRealTimeSession instead. This struct will be removed in a future version.
-type ProviderKernel struct {
-	Name   string
-	Kernel bool
-	GUID   string
-	Flags  uint32
-}
 
 // https://learn.microsoft.com/en-us/windows/win32/etw/nt-kernel-logger-constants
 var (
@@ -248,235 +237,6 @@ var (
 		Data2: 0x3204,
 		Data3: 0x11d2,
 		Data4: [8]byte{0x9a, 0x82, 0x00, 0x60, 0x08, 0xa8, 0x69, 0x39},
-	}
-
-	// Most of these are Legacy events, using MOF.
-	// Some providers for the kernel are very old and not parse well, like NetworkTCPIP, use the manifest providers
-	// or the new SystemProvider on Windows 10 SDK build 20348 or later
-	//
-	// But they are still useful for some cases. like obtaining context switches.
-	//
-	// Deprecated: Use the KernelFlag constants (e.g., etw.Process, etw.Thread) with
-	// NewKernelRealTimeSession instead. This slice will be removed in a future version.
-	KernelProviders = []ProviderKernel{
-
-		// Some comments where taken from https://github.com/microsoft/perfview/blob/main/src/TraceEvent/Parsers/KernelTraceEventParser.cs
-
-		// Logs Advanced Local Procedure call events.
-		// https://docs.microsoft.com/en-us/windows/win32/etw/alpc
-		{Name: "ALPC",
-			Kernel: true,
-			GUID:   "{45d8cccd-539f-4b72-a8b7-5c683142609a}",
-			Flags:  EVENT_TRACE_FLAG_ALPC},
-
-		//{Name: "ApplicationVerifier", Kernel: true, GUID: "{78d14f17-0105-46d7-bfff-6fbea2f3f358}"},
-
-		// Logs debug output messages from kernel-mode components using DbgPrint/DbgPrintEx
-		{Name: "DbgPrint",
-			Kernel: true,
-			GUID:   "{13976d09-a327-438c-950b-7f03192815c7}",
-			Flags:  EVENT_TRACE_FLAG_DBGPRINT},
-
-		// Loads the completion of Physical disk activity.
-		// https://docs.microsoft.com/en-us/windows/win32/etw/diskio
-		{Name: "DiskIo",
-			Kernel: true,
-			GUID:   "{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_DISK_IO},
-
-		// Logs the initialization of disk IO operations.
-		// Generally not TOO volumous (typically less than 1K per second)
-		// (Stacks associated with this)
-		{Name: "DiskIoInit",
-			Kernel: true,
-			GUID:   "{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_DISK_IO_INIT},
-
-		// Logs the completion of disk IO operations.
-		// More info on https://learn.microsoft.com/en-us/windows/win32/etw/diskio
-		// Driver* events.
-		{Name: "Driver",
-			Kernel: true,
-			GUID:   "{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_DRIVER},
-
-		//{Name: "DiskPerf", Kernel: true, GUID: "{bdd865d1-d7c1-11d0-a501-00a0c9062910}"},
-		//{Name: "DriverVerifier", Kernel: true, GUID: "{d56ca431-61bf-4904-a621-00e0381e4dde"},
-		//{Name: "EventLog", Kernel: true, GUID: "{b16f9f5e-b3da-4027-9318-adf2b79df73b}"},
-
-		// Unlike other NT Kernel Logger events, the kernel session automatically generates hardware configuration events;
-		//  you do not enable these events when starting the NT Kernel Logger session.
-		// More info on https://learn.microsoft.com/en-us/windows/win32/etw/hwconfig
-		// More info on https://learn.microsoft.com/en-us/windows/win32/etw/systemconfig
-		// Use flag EVENT_TRACE_FLAG_NO_SYSCONFIG to disable Windows Kernel/SystemConfig/* rundown events
-		{Name: "EventTraceConfig",
-			Kernel: true,
-			GUID:   "{01853a65-418f-4f36-aefc-dc0f1d2fd235}"}, // No Flags, auto added by the kernel session
-
-		// log file FileOperationEnd (has status code) when they complete (even ones that do not actually
-		// cause Disk I/O).  (Vista+ only)
-		// Generally not TOO volumous (typically less than 1K per second) (No stacks associated with these)
-		// https://docs.microsoft.com/en-us/windows/win32/etw/fileio
-		{Name: "FileIo",
-			Kernel: true,
-			GUID:   "{90cbdc39-4a3e-11d1-84f4-0000f80464e3}",
-			Flags:  EVENT_TRACE_FLAG_FILE_IO},
-
-		// Logs the mapping of file IDs to actual (kernel) file names.
-		// Rundown event with opcode 36 (EventType)
-		// https://learn.microsoft.com/en-us/windows/win32/etw/fileio-name
-		// FileObject is used to correlate with other FileIo events that reference the same file
-		// FileKey persists across system reboots and can be used to track the same file over time
-		{Name: "DiskFileIo",
-			Kernel: true,
-			GUID:   "{90cbdc39-4a3e-11d1-84f4-0000f80464e3}",
-			Flags:  EVENT_TRACE_FLAG_DISK_FILE_IO | EVENT_TRACE_FLAG_FILE_IO},
-
-		// log the start of the File I/O operation as well as the end. (Vista+ only)
-		// Generally not TOO volumous (typically less than 1K per second)
-		{Name: "FileIoInit",
-			Kernel: true,
-			GUID:   "{90cbdc39-4a3e-11d1-84f4-0000f80464e3}",
-			Flags:  EVENT_TRACE_FLAG_FILE_IO_INIT},
-
-		// Enables the map and unmap (excluding image files) event type)
-		// Log mapping of files into memory (Win8 and above Only)
-		// Generally low volume.
-		{Name: "FileIoVAmap",
-			Kernel: true,
-			GUID:   "{90cbdc39-4a3e-11d1-84f4-0000f80464e3}",
-			Flags:  EVENT_TRACE_FLAG_VAMAP},
-
-		//{Name: "GenericMessage", Kernel: true, GUID: "{8d40301f-ab4a-11d2-9a93-00805f85d7c6}"},
-		//{Name: "GlobalLogger", Kernel: true, GUID: "{e8908abc-aa84-11d2-9a93-00805f85d7c6}"},
-		//{Name: "HardFault", Kernel: true, GUID: "{3d6fa8d2-fe05-11d0-9dda-00c04fd7ba7c}"},
-
-		// Logs native modules loads (LoadLibrary), and unloads (FreeLibrary).
-		// https://docs.microsoft.com/en-us/windows/win32/etw/image
-		{Name: "ImageLoad",
-			Kernel: true,
-			GUID:   "{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}",
-			Flags:  EVENT_TRACE_FLAG_IMAGE_LOAD},
-
-		//{Name: "MsSystemInformation", Kernel: true, GUID: "{98a2b9d7-94dd-496a-847e-67a5557a59f2}"},
-
-		// Logs all page faults (hard or soft)
-		// Can be pretty volumous (> 1K per second)
-		// https://docs.microsoft.com/en-us/windows/win32/etw/pagefault-v2
-		{Name: "MemoryPageFault",
-			Kernel: true,
-			GUID:   "{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_MEMORY_PAGE_FAULTS},
-
-		// Logs all page faults that must fetch the data from the disk (hard faults)
-		{Name: "MemoryHardFault",
-			Kernel: true,
-			GUID:   "{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_MEMORY_HARD_FAULTS},
-
-		// Log Virtual Alloc calls and VirtualFree.   (Vista+ Only)
-		// Generally not TOO volumous (typically less than 1K per second)
-		{Name: "VirtualAlloc",
-			Kernel: true,
-			GUID:   "{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_VIRTUAL_ALLOC},
-
-		// Device Driver logging (Vista+ only)
-		// https://docs.microsoft.com/en-us/windows/win32/etw/process
-		{Name: "DPC",
-			Kernel: true,
-			GUID:   "{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}",
-			Flags:  EVENT_TRACE_FLAG_DPC},
-
-		// log hardware interrupts. (Vista+ only)
-		// https://learn.microsoft.com/es-es/windows/win32/etw/isr
-		{Name: "Interrupt",
-			Kernel: true,
-			GUID:   "{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}",
-			Flags:  EVENT_TRACE_FLAG_INTERRUPT},
-
-		// Sampled based profiling (every msec)
-		// (expect 1K events per proc per second)
-		// requieres special privileges.
-		{Name: "Profile",
-			Kernel: true,
-			GUID:   "{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}",
-			Flags:  EVENT_TRACE_FLAG_PROFILE},
-
-		// log calls to the OS (Vista+ only)
-		// This is VERY volumous (can be > 100K events per second)
-		{Name: "Syscall",
-			Kernel: true,
-			GUID:   "{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}",
-			Flags:  EVENT_TRACE_FLAG_SYSTEMCALL},
-
-		// Logs process starts and stops.
-		// https://docs.microsoft.com/en-us/windows/win32/etw/process
-		{Name: "Process",
-			Kernel: true,
-			GUID:   "{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_PROCESS},
-
-		// Logs process performance counters (CPU, IO, etc).
-		// https://docs.microsoft.com/en-us/windows/win32/etw/process
-		{Name: "ProcessCounters",
-			Kernel: true,
-			GUID:   "{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_PROCESS_COUNTERS},
-
-		// Logs activity to the windows registry.
-		// Can be pretty volumous (> 1K per second)
-		// https://docs.microsoft.com/en-us/windows/win32/etw/registry
-		{Name: "Registry",
-			Kernel: true,
-			GUID:   "{ae53722e-c863-11d2-8659-00c04fa321a1}",
-			Flags:  EVENT_TRACE_FLAG_REGISTRY},
-
-		// Disk I/O that was split (eg because of mirroring requirements) (Vista+ only)
-		// https://docs.microsoft.com/en-us/windows/win32/etw/splitio
-		{Name: "SplitIo",
-			Kernel: true,
-			GUID:   "{d837ca92-12b9-44a5-ad6a-3a65b3578aa8}",
-			Flags:  EVENT_TRACE_FLAG_SPLIT_IO},
-
-		// Logs TCP/IP network send and receive events.
-		// https://docs.microsoft.com/en-us/windows/win32/etw/tcpip
-		{Name: "TcpIp",
-			Kernel: true,
-			GUID:   "{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}",
-			Flags:  EVENT_TRACE_FLAG_NETWORK_TCPIP},
-		//{Name: "ThermalZone", Kernel: true, GUID: "{a1bc18c0-a7c8-11d1-bf3c-00a0c9062910}"},
-
-		// Logs thread starts and stops.
-		// https://docs.microsoft.com/en-us/windows/win32/etw/thread
-		{Name: "Thread",
-			Kernel: true,
-			GUID:   "{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_THREAD},
-
-		// Logs thread context switches. (use with ReadyThread to get full context switches)
-		// (can be > 10K events per second)
-		{Name: "CSwitch",
-			Kernel: true,
-			GUID:   "{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_CSWITCH},
-
-		// Thread Dispatcher (ReadyThread) (Vista+ only)
-		// (can be > 10K events per second)
-		{Name: "Dispatcher",
-			Kernel: true,
-			GUID:   "{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}",
-			Flags:  EVENT_TRACE_FLAG_DISPATCHER},
-
-		//{Name: "TraceError", Kernel: true, GUID: "{398191dc-2da7-11d3-8b98-00805f85d7c6}"},
-
-		// https://docs.microsoft.com/en-us/windows/win32/etw/udpip
-		{Name: "UdpIp",
-			Kernel: true,
-			GUID:   "{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}",
-			Flags:  EVENT_TRACE_FLAG_NETWORK_TCPIP},
-
-		//{Name: "WmiEventLogger", Kernel: true, GUID: "{44608a51-1851-4456-98b2-b300e931ee41}"}
 	}
 )
 
@@ -502,38 +262,6 @@ var (
 	SystemSyscallProviderGuid    = MustParseGUID("{e4310a25-0b1f-4e6d-8c5d-6a7b5b0d5c3d}")
 	SystemTimerProviderGuid      = MustParseGUID("{6a399ae0-4e0b-4d6d-8c5d-6a7b5b0d5c3d}")
 )
-
-// TODO: port this to new interface with KernelFlag constants
-// GetKernelProviderFlags returns the flags for the given kernel provider names or GUIDs.
-// It is case insensitive.
-//
-// Deprecated: Use the KernelFlag constants (e.g., etw.Process, etw.Thread) with
-// NewKernelRealTimeSession instead. This function will be removed in a future version.
-func GetKernelProviderFlags(terms ...string) (flags uint32) {
-	for _, t := range terms {
-		for _, pd := range KernelProviders {
-			if strings.EqualFold(t, pd.Name) || t == pd.GUID {
-				flags |= pd.Flags
-			}
-		}
-
-	}
-	return
-}
-
-// TODO: port this to new interface with KernelFlag constants
-// IsKernelProvider checks if this is a system event trace provider.
-//
-// Deprecated: This function is no longer needed with the new KernelFlag constants.
-// It will be removed in a future version.
-func IsKernelProvider(term string) bool {
-	for _, pd := range KernelProviders {
-		if strings.EqualFold(term, pd.Name) || term == pd.GUID {
-			return true
-		}
-	}
-	return false
-}
 
 // v10.0.20348 evntrace.h
 //

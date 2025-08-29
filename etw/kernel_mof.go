@@ -235,17 +235,6 @@ func getTdhInTypeFixedSize(inType TdhInType, er *EventRecord) uint16 {
 	}
 }
 
-const (
-	// MismatchNone indicates no differences were found.
-	MismatchNone = 0
-	// MismatchClassName indicates a difference in TaskName or OpcodeName.
-	MismatchClassName = 1
-	// MismatchOutTypeStringNull indicates a specific, often benign, difference where one OutType is STRING and the other is NULL.
-	MismatchOutTypeStringNull = 2
-	// MismatchOther indicates any other difference in headers or properties.
-	MismatchOther = 4
-)
-
 // buildTraceInfoTemplate is called to build the complete, cached TRACE_EVENT_INFO buffer.
 func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	// The layout of our buffer will be:

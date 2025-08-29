@@ -123,13 +123,12 @@ func NewPagedRealTimeSession(name string) (s *RealTimeSession) {
 //
 // Some MOF are not documented on the microsoft site, for example: Process_V4_TypeGroup1 etc..
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa364083(v=vs.85).aspx
-// TODO: use KernelFlag as type for flags in v0.8
-func NewKernelRealTimeSession(flags ...uint32) (p *RealTimeSession) {
+func NewKernelRealTimeSession(flags ...KernelNtFlag) (p *RealTimeSession) {
 	p = NewRealTimeSession(NtKernelLogger)
 	// guid must be set for Kernel Session
 	p.traceProps.Wnode.Guid = *systemTraceControlGuid
 	for _, flag := range flags {
-		p.traceProps.EnableFlags |= flag
+		p.traceProps.EnableFlags |= uint32(flag)
 	}
 	return
 }
