@@ -56,7 +56,7 @@ func EnableTraceInfoCache(enable bool) {
 // This key is used for the second level of the two-level cache.
 // For manifest events, it packs ID and Version.
 // For MOF events, it packs Opcode and Version.
-func (er *EventRecord) schemaCacheKey() uint32 {
+func (er *EventRecord) schemaCacheKey_old() uint32 {
 	desc := &er.EventHeader.EventDescriptor
 	if er.IsMof() {
 		// For MOF, Opcode (8 bits) + Version (8 bits) is the unique schema ID.
@@ -64,6 +64,25 @@ func (er *EventRecord) schemaCacheKey() uint32 {
 	}
 	// For Manifest, ID (16 bits) + Version (8 bits) is the unique schema ID.
 	return uint32(desc.Id)<<8 | uint32(desc.Version)
+}
+
+// For all events, it packs the entire EventDescriptor into a uint64.
+// It's as fast a just hashing ID/Version, and it works for both Manifest and MOF events.
+// It also has the benefit of making the entire TraceInfo static (so caching dont requiere copies).
+func (er *EventRecord) schemaCacheKey() uint64 {
+	desc := &er.EventHeader.EventDescriptor
+	// For Manifest and MOF, the entire descriptor defines the unique schema.
+	// This single, robust key works for both types.
+	// Pack fields into a uint64:
+	// | 16 bits | 8 bits | 8 bits | 8 bits | 8 bits  | 16 bits |
+	// | Task    | Opcode | Level  | Channel| Version | ID      |
+	key := uint64(desc.Id)
+	key |= uint64(desc.Version) << 16
+	key |= uint64(desc.Channel) << 24
+	key |= uint64(desc.Level) << 32
+	key |= uint64(desc.Opcode) << 40
+	key |= uint64(desc.Task) << 48
+	return key
 }
 
 // schemaCacheHelper retrieves or creates the first-level cache (a *sync.Map) for a provider's events.
@@ -172,7 +191,7 @@ func (ts *traceStorage) reset() {
 
 type EventRecordHelper struct {
 	EventRec  *EventRecord
-	TraceInfo *TraceEventInfo
+	TraceInfo *TraceEventInfo // Dont modify the fields, it points to cached schemas.
 
 	// Important: use pointers to slices if using pools to avoid corruption
 	// when storing EventRecordHelpers in a global pool.
@@ -276,22 +295,32 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 		// 1. First-level lookup by Provider GUID.
 		schemaCache := er.schemaCacheHelper(&traceEventInfoCache)
 
-		// 2. Second-level lookup by schema key (ID/Opcode + Version).
+		// 2. Second-level lookup by schema key.
 		schemaKey := er.schemaCacheKey()
 		if cachedTei, found := schemaCache.Load(schemaKey); found {
-			// Cache hit: Use the cached TRACE_EVENT_INFO
+			// This commented block of code is if we need to copy the buffer to a local one. (3% performance hit)
+			/*
+				// Cache hit: Use the cached TRACE_EVENT_INFO
+				template := cachedTei.([]byte)
+				// Ensure the thread-local buffer is large enough.
+				if cap(storage.teiBuffer) < len(template) {
+					storage.teiBuffer = make([]byte, len(template))
+				}
+				storage.teiBuffer = storage.teiBuffer[:len(template)]
+				// Copy the cached template into the thread-local buffer.
+				copy(storage.teiBuffer, template)
+				erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
+				//erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // not needed if using full uint64 key
+				erh.teiBuffer = &storage.teiBuffer
+				return erh, nil // Cache hit, we are done.
+			*/
+			// Cache hit: The template is immutable. Point directly to it. No copy needed.
 			template := cachedTei.([]byte)
-			// Ensure the thread-local buffer is large enough.
-			if cap(storage.teiBuffer) < len(template) {
-				storage.teiBuffer = make([]byte, len(template))
-			}
-			storage.teiBuffer = storage.teiBuffer[:len(template)]
-			// Copy the cached template into the thread-local buffer.
-			copy(storage.teiBuffer, template)
-			erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
-			// The descriptor is event-specific, so we patch it from the live event record.
-			erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor
-			erh.teiBuffer = &storage.teiBuffer
+			erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&template[0]))
+
+			// The buffer is the globally cached one, not the thread-local one.
+			// Setting this to nil indicates it's not locally owned.
+			erh.teiBuffer = nil
 			return erh, nil // Cache hit, we are done.
 		}
 	}
@@ -327,7 +356,7 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 }
 
 // cloneAndCacheTraceInfo makes a copy of a TraceEventInfo buffer and stores it in the two-level cache.
-func cloneAndCacheTraceInfo(providerGUID GUID, schemaKey uint32, teiBuffer []byte) {
+func cloneAndCacheTraceInfo(providerGUID GUID, schemaKey uint64, teiBuffer []byte) {
 	// Get the second-level cache for this provider. It must exist at this point.
 	val, _ := traceEventInfoCache.Load(providerGUID)
 	schemaCache := val.(*sync.Map)
@@ -449,37 +478,6 @@ func (e *EventRecordHelper) newProperty() *Property {
 	storage.propIdx++
 	p.reset() // Ensure the property is clean before use.
 	return p
-}
-
-// For when there is no trace information available
-func (e *EventRecordHelper) setEventMetadataNoTrace(event *Event) {
-	if e.EventRec.IsMof() && e.TraceInfo == nil {
-		eventDescriptor := e.EventRec.EventHeader.EventDescriptor
-
-		event.System.EventID = e.EventRec.EventID()
-		event.System.Version = eventDescriptor.Version
-
-		event.System.Provider.Guid = nullGUID
-		event.System.Level.Value = eventDescriptor.Level
-		event.System.Opcode.Value = eventDescriptor.Opcode // eventType
-		event.System.Keywords.Mask = eventDescriptor.Keyword
-		event.System.Task.Value = uint8(eventDescriptor.Task)
-
-		var eventType string
-		if c := MofErLookup(e.EventRec); c != nil {
-			eventType = c.Name
-			// if t, ok := MofClassMapping[e.EventRec.EventHeader.ProviderId.Data1]; ok {
-			// 	event.System.EventType = t.Name
-		} else {
-			eventType = "UnknownClass"
-		}
-
-		event.System.EventType = eventType
-		event.System.EventGuid = e.EventRec.EventHeader.ProviderId
-		event.System.Correlation.ActivityID = nullGUIDStr
-		event.System.Correlation.RelatedActivityID = nullGUIDStr
-
-	}
 }
 
 func (e *EventRecordHelper) setEventMetadata(event *Event) {
@@ -886,7 +884,9 @@ func (e *EventRecordHelper) prepareStruct(i uint32, epi *EventPropertyInfo, arra
 }
 
 // prepareSimpleArray handles properties that are arrays of simple types (not structs).
-func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo, arrayCount uint16, names []string) error {
+func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
+	arrayCount uint16, names []string) error {
+
 	arrayName := names[i]
 
 	// Special case for MOF string arrays, which are common in classic kernel events.
@@ -1231,7 +1231,9 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 	return
 }
 
-func (e *EventRecordHelper) formatStructs(structs []map[string]*Property, name string) ([]map[string]string, error) {
+func (e *EventRecordHelper) formatStructs(structs []map[string]*Property,
+	name string) ([]map[string]string, error) {
+
 	// NOTE: this is only used when parsing to json event, using reusable memory maybe it's not ideal.
 	result := make([]map[string]string, 0, len(structs))
 	var err error
@@ -1397,7 +1399,8 @@ func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 		for _, propStruct := range *e.StructSingle {
 			for field, prop := range propStruct {
 				if _, err = prop.FormatToString(); err != nil {
-					return fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsingTdh, StructurePropertyName, field, err)
+					return fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsingTdh,
+						StructurePropertyName, field, err)
 				}
 			}
 		}

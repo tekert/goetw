@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -25,6 +26,11 @@ const (
 	KernelFileProviderName   = "Microsoft-Windows-Kernel-File"
 	// sessions
 	EventlogSecuritySession = "Eventlog-Security" // Need special permissions
+)
+
+const (
+	// finite resource
+	testSessioName = "TestingGoEtw"
 )
 
 func init() {
@@ -55,7 +61,7 @@ func TestProducerConsumer(t *testing.T) {
 	tt := test.FromT(t)
 
 	// Producer part
-	ses := NewRealTimeSession("GolangTest")
+	ses := NewRealTimeSession(testSessioName)
 	defer ses.Stop()
 
 	prov, err = ParseProvider(KernelFileProviderName + ":0xff:12,13,14,15,16")
@@ -120,7 +126,7 @@ func TestKernelSession(t *testing.T) {
 	tt := test.FromT(t)
 	eventCount := 0
 
-	traceFlags := []uint32{
+	traceFlags := []KernelNtFlag{
 		// Trace process creation / termination
 		//EVENT_TRACE_FLAG_PROCESS,
 		// Trace image loading
@@ -190,7 +196,7 @@ func TestEventMapInfo(t *testing.T) {
 	tt := test.FromT(t)
 	eventCount := 0
 
-	prod := NewRealTimeSession("GolangTest")
+	prod := NewRealTimeSession(testSessioName)
 
 	mapInfoChannels := []string{
 		"Microsoft-Windows-ProcessStateManager",
@@ -298,7 +304,7 @@ func TestLostEvents(t *testing.T) {
 	tt := test.FromT(t)
 
 	// Producer part
-	ses := NewRealTimeSession("GolangTest")
+	ses := NewRealTimeSession(testSessioName)
 	// small buffer size on purpose to trigger event loss
 	ses.traceProps.BufferSize = 1
 
@@ -311,13 +317,13 @@ func TestLostEvents(t *testing.T) {
 	tt.CheckErr(ses.Start())
 
 	// ! TESTING
-	// Set acces for the Eventlog-Security trace (admin is not enough)
-	const SecurityLogReadFlags2 = TRACELOG_ACCESS_REALTIME |
-		TRACELOG_REGISTER_GUIDS |
-		WMIGUID_QUERY |
-		WMIGUID_NOTIFICATION
-	securityLogGuid := MustParseGUID("54849625-5478-4994-a5ba-3e3b0328c30d")
-	tt.CheckErr(AddProviderAccess(securityLogGuid, "", SecurityLogReadFlags2))
+	// // Set acces for the Eventlog-Security trace (admin is not enough)
+	// const SecurityLogReadFlags2 = TRACELOG_ACCESS_REALTIME |
+	// 	TRACELOG_REGISTER_GUIDS |
+	// 	WMIGUID_QUERY |
+	// 	WMIGUID_NOTIFICATION
+	// securityLogGuid := MustParseGUID("54849625-5478-4994-a5ba-3e3b0328c30d")
+	// tt.CheckErr(AddProviderAccess(securityLogGuid, "", SecurityLogReadFlags2))
 	// EventAccessControl(
 	// 	securityLogGuid,
 	// 	uint32(EventSecuritySetSACL), // Use SET instead of ADD
@@ -344,7 +350,7 @@ func TestLostEvents(t *testing.T) {
 
 	// Periodically check for lost events until they are detected or timeout.
 	checkForLostEvents := func() bool {
-		traceInfo, ok := c.GetTrace("GolangTest")
+		traceInfo, ok := c.GetTrace(testSessioName)
 		if !ok {
 			return false
 		}
@@ -377,12 +383,13 @@ loop:
 		}
 	}
 
+	// Get traceInfo reference before closing consumer
+	traceInfo, ok := c.GetTrace(testSessioName)
+	tt.Assert(ok, "TraceInfo not found")
+
 	tt.CheckErr(c.Stop())
 	t.Logf("Events received: %d", cnt)
 	t.Logf("Events lost: %d", c.LostEvents.Load())
-
-	traceInfo, ok := c.GetTrace("GolangTest")
-	tt.Assert(ok, "TraceInfo not found")
 
 	// 1. Check stats from the consumer's perspective (counting RTLostEvent events).
 	// This is the most direct way to see lost events as they are reported to the consumer.
@@ -420,7 +427,7 @@ func TestConsumerCallbacks(t *testing.T) {
 	tt := test.FromT(t)
 
 	// Producer part
-	ses := NewRealTimeSession("GolangTest")
+	ses := NewRealTimeSession(testSessioName)
 
 	prov, err = ParseProvider(KernelFileProviderName + ":0xff:12,13,14,15,16")
 	tt.CheckErr(err)
@@ -871,173 +878,6 @@ func (b FilterBehavior) String() string {
 	}
 }
 
-// TestProviderFiltering systematically tests filter support across different providers.
-// It discovers which filters are supported, ignored, or cause errors for each provider type.
-func TestProviderFiltering(t *testing.T) {
-	tt := test.FromT(t)
-
-	sessionName := "GolangTest"
-
-	currentPID := uint32(os.Getpid())
-	exePath, err := os.Executable()
-	tt.CheckErr(err)
-	exeName := filepath.Base(exePath)
-
-	const testDuration = 3 * time.Second
-
-	type TestCase struct {
-		Provider    string
-		FilterType  string
-		Filter      ProviderFilter
-		TestEventID uint16         // Expected common event ID for validation
-		Result      FilterBehavior // Expected behavior
-		Message     string         // Will be set during test
-	}
-
-	testCases := []TestCase{
-		// Kernel Memory Provider Tests
-		{"Microsoft-Windows-Kernel-Memory", "EventID-Include", NewEventIDFilter(true, 1), 1, BehaviorApplied, ""},
-		{"Microsoft-Windows-Kernel-Memory", "EventID-Exclude", NewEventIDFilter(false, 10), 10, BehaviorApplied, ""},
-		{"Microsoft-Windows-Kernel-Memory", "PID", NewPIDFilter(currentPID), 0, BehaviorIgnored, ""},
-		{"Microsoft-Windows-Kernel-Memory", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorIgnored, ""},
-
-		// Kernel File Provider Tests
-		{"Microsoft-Windows-Kernel-File", "EventID-Include", NewEventIDFilter(true, 12), 12, BehaviorApplied, ""},
-		{"Microsoft-Windows-Kernel-File", "EventID-Exclude", NewEventIDFilter(false, 14), 14, BehaviorApplied, ""},
-		{"Microsoft-Windows-Kernel-File", "PID", NewPIDFilter(currentPID), 0, BehaviorIgnored, ""},
-		{"Microsoft-Windows-Kernel-File", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorIgnored, ""},
-
-		// Kernel Process Provider Tests
-		{"Microsoft-Windows-Kernel-Process", "EventID-Include", NewEventIDFilter(true, 1), 1, BehaviorApplied, ""},
-		{"Microsoft-Windows-Kernel-Process", "EventID-Exclude", NewEventIDFilter(false, 2), 2, BehaviorApplied, ""},
-		{"Microsoft-Windows-Kernel-Process", "PID", NewPIDFilter(currentPID), 0, BehaviorIgnored, ""},
-		{"Microsoft-Windows-Kernel-Process", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorIgnored, ""},
-
-		// User-mode RPC Provider Tests
-		{"Microsoft-Windows-RPC", "EventID-Include", NewEventIDFilter(true, 5), 5, BehaviorApplied, ""},
-		{"Microsoft-Windows-RPC", "EventID-Exclude", NewEventIDFilter(false, 6), 6, BehaviorApplied, ""},
-		{"Microsoft-Windows-RPC", "PID", NewPIDFilter(currentPID), 0, BehaviorApplied, ""},
-		{"Microsoft-Windows-RPC", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorApplied, ""},
-	}
-
-	for i := range testCases {
-		tc := &testCases[i] // Get pointer to modify in place
-
-		t.Run(fmt.Sprintf("%s/%s", tc.Provider, tc.FilterType), func(t *testing.T) {
-			_ = StopSession(sessionName)
-
-			ses := NewRealTimeSession(sessionName)
-			defer ses.Stop()
-
-			// Parse and configure provider
-			prov, err := ParseProvider(tc.Provider)
-			if err != nil {
-				tc.Message = fmt.Sprintf("Failed to parse provider: %v", err)
-				tt.Assert(tc.Result == BehaviorUnsupported, tc.Message)
-				return
-			}
-			prov.Filters = []ProviderFilter{tc.Filter}
-
-			// Try to enable provider - this is where unsupported filters fail
-			err = ses.EnableProvider(prov)
-			if err != nil {
-				tc.Message = fmt.Sprintf("EnableProvider failed: %v", err)
-				tt.Assert(tc.Result == BehaviorUnsupported, tc.Message)
-				return
-			}
-
-			// If we get here, the filter was accepted
-			ctx, cancel := context.WithTimeout(context.Background(), testDuration)
-			defer cancel()
-
-			c := NewConsumer(ctx).FromSessions(ses)
-			err = c.Start()
-			if err != nil {
-				tc.Message = fmt.Sprintf("Consumer start failed: %v", err)
-				tt.Assert(tc.Result == BehaviorUnsupported, tc.Message)
-				return
-			}
-			defer c.Stop()
-
-			var eventCount int
-			var violationFound bool
-			var violationMsg string
-
-			go c.ProcessEvents(func(e *Event) {
-				eventCount++
-
-				// Check if filter is being ignored
-				switch tc.FilterType {
-				case "EventID-Include":
-					if e.System.EventID != tc.TestEventID {
-						violationFound = true
-						violationMsg = fmt.Sprintf("Got EventID %d, expected only %d", e.System.EventID, tc.TestEventID)
-						cancel()
-					}
-				case "EventID-Exclude":
-					if e.System.EventID == tc.TestEventID {
-						violationFound = true
-						violationMsg = fmt.Sprintf("Got excluded EventID %d", e.System.EventID)
-						cancel()
-					}
-				case "PID":
-					if e.System.Execution.ProcessID != currentPID {
-						violationFound = true
-						violationMsg = fmt.Sprintf("Got PID %d, expected %d", e.System.Execution.ProcessID, currentPID)
-						cancel()
-					}
-				case "ExeName":
-					// For exe name, we just check if we get events from other PIDs
-					if e.System.Execution.ProcessID != currentPID {
-						violationFound = true
-						violationMsg = fmt.Sprintf("Got PID %d, expected current process %d", e.System.Execution.ProcessID, currentPID)
-						cancel()
-					}
-				}
-
-				// Stop after first few events if no violation
-				if eventCount >= 30 {
-					cancel()
-				}
-			})
-
-			<-ctx.Done()
-
-			// Determine actual behavior and compare with expected
-			var actualBehavior FilterBehavior
-			var message string
-
-			if violationFound {
-				actualBehavior = BehaviorIgnored
-				message = fmt.Sprintf("Filter ignored: %s (%d events)", violationMsg, eventCount)
-			} else if eventCount > 0 {
-				actualBehavior = BehaviorApplied
-				message = fmt.Sprintf("Filter applied correctly (%d events)", eventCount)
-			} else {
-				actualBehavior = BehaviorApplied
-				message = "No events received (filter may be working or provider inactive)"
-			}
-
-			// Update test case with results
-			tc.Message = message
-
-			// ENFORCE EXPECTED BEHAVIOR - This will make the test fail if behavior doesn't match
-			tt.Assert(actualBehavior == tc.Result,
-				fmt.Sprintf("Expected %s but got %s. %s", tc.Result.String(), actualBehavior.String(), message))
-		})
-	}
-
-	// Print results table
-	t.Log("\n--- ETW Provider Filter Support Matrix ---")
-	t.Logf("%-35s %-15s %-12s %s", "Provider", "Filter", "Behavior", "Details")
-	t.Log(strings.Repeat("-", 100))
-
-	for _, tc := range testCases {
-		t.Logf("%-35s %-15s %-12s %s", tc.Provider, tc.FilterType, tc.Result.String(), tc.Message)
-	}
-	t.Log(strings.Repeat("-", 100))
-}
-
 // Helper to compare static properties between two trace properties
 func assertStaticPropsEqual(t *test.T, expected, actual *EventTraceProperties2Wrapper, contextMsg string) {
 	t.Assertf(actual.BufferSize == expected.BufferSize,
@@ -1093,7 +933,7 @@ func assertRuntimeStatsEqual(t *test.T, expected, actual *EventTraceProperties2W
 // statistics are updated correctly.
 func TestQueryTraceMethods(t *testing.T) {
 	tt := test.FromT(t)
-	loggerName := "TestingGoEtw"
+	loggerName := testSessioName
 	//loggerNameW, err := syscall.UTF16PtrFromString(loggerName)
 	//tt.CheckErr(err)
 
@@ -1182,7 +1022,7 @@ func TestQueryTraceMethods(t *testing.T) {
 
 // TestConsumerTrace_QueryTraceFail validates that calling QueryTrace on a standalone
 // ConsumerTrace object that is not associated with a running session correctly fails.
-func TestConsumerTrace_QueryTraceFail(t *testing.T) {
+func TestConsumerQueryTraceFail(t *testing.T) {
 	tt := test.FromT(t)
 	_ = tt
 
@@ -1200,7 +1040,7 @@ func TestConsumerTrace_QueryTraceFail(t *testing.T) {
 // correctly includes the requested extended data in the event record.
 func TestEnableProperties(t *testing.T) {
 	tt := test.FromT(t)
-	sessionName := "GolangETW"
+	sessionName := testSessioName
 
 	_ = StopSession(sessionName)
 	time.Sleep(250 * time.Millisecond)
@@ -1240,8 +1080,7 @@ func TestEnableProperties(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	c := NewConsumer(ctx)
-	c.FromSessions(ses)
+	c := NewConsumer(ctx).FromSessions(ses)
 
 	c.EventPreparedCallback = func(erh *EventRecordHelper) error {
 		if !seenStartKey.Load() {
@@ -1299,4 +1138,287 @@ func TestEnableProperties(t *testing.T) {
 	tt.Assert(seenSID.Load(), "Did not see SID in any event")
 	tt.Assert(seenEventKey.Load(), "Did not see EventKey in any event")
 	tt.Assert(seenStackTrace.Load(), "Did not see StackTrace in any event")
+}
+
+// TestManifestCache validates the library's TraceEventInfo caching, specifically checking
+// that the cache correctly handles multiple sessions enabling the same provider with
+// different keywords.
+func TestManifestCache(t *testing.T) {
+	// NOTE: Dont test MOF providers, they can be cached from generated mof shecmas wich have more lax enforcement
+
+	// --- Setup: Two sessions, multiple providers, with mirrored but different keyword sets ---
+	providersToTest := map[string][2]uint64{
+		"Microsoft-Windows-Kernel-Process": {0x10, 0x20},   // Process vs Thread
+		"Microsoft-Windows-Kernel-File":    {0x100, 0x200}, // Read vs Write
+		"Microsoft-Windows-Kernel-Memory":  {0x100, 0x200}, // Page Fault vs Hard Fault
+	}
+
+	session1 := NewRealTimeSession(testSessioName)
+	defer session1.Stop()
+	session2 := NewRealTimeSession("GolangTest2")
+	defer session2.Stop()
+
+	for name, keywords := range providersToTest {
+		provider, err := ParseProvider(name)
+		if err != nil {
+			t.Fatalf("Failed to parse provider %s: %v", name, err)
+		}
+
+		// Enable provider on session 1 with the first keyword.
+		provider1 := provider
+		provider1.MatchAnyKeyword = keywords[0]
+		if err := session1.EnableProvider(provider1); err != nil {
+			t.Logf("Failed to enable %s on session 1: %v", name, err)
+		}
+
+		// Enable provider on session 2 with the second keyword.
+		provider2 := provider
+		provider2.MatchAnyKeyword = keywords[1]
+		if err := session2.EnableProvider(provider2); err != nil {
+			t.Logf("Failed to enable %s on session 2: %v", name, err)
+		}
+	}
+
+	if err := session1.Start(); err != nil {
+		t.Fatalf("Failed to start session 1: %v", err)
+	}
+	if err := session2.Start(); err != nil {
+		t.Fatalf("Failed to start session 2: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
+	go func() {
+		<-sigCh
+		cancel()
+	}()
+
+	// Consume from both sessions simultaneously.
+	consumer := NewConsumer(ctx).FromSessions(session1, session2)
+
+	var eventsCompared, compareMismatches atomic.Uint64
+
+	consumer.EventRecordHelperCallback = func(erh *EventRecordHelper) error {
+		erh.Skip()
+		if erh.TraceInfo == nil || erh.EventRec.IsMof() {
+			return nil
+		}
+		eventsCompared.Add(1)
+
+		var originalTeiBuffer []byte
+		originalTei, err := erh.EventRec.GetEventInformation(&originalTeiBuffer)
+		if err != nil {
+			return nil
+		}
+
+		// We perform a deep comparison of the cached TraceInfo struct
+		// against a freshly retrieved one from the API.
+		mismatchMask := compareTraceInfo(erh.TraceInfo, originalTei, t, false)
+		if mismatchMask != MismatchNone {
+			compareMismatches.Add(1)
+			t.Errorf("CRITICAL: Manifest event cache mismatch for event (Provider: %s, ID: %d). This indicates a flaw in the caching logic.",
+				originalTei.ProviderName(), originalTei.EventID())
+			// The compareTraceInfo function already logs detailed mismatch info.
+			cancel()
+		}
+		return nil
+	}
+	consumer.EventPreparedCallback = nil
+	consumer.EventCallback = nil
+
+	if err := consumer.Start(); err != nil {
+		t.Fatalf("Failed to start consumer: %v", err)
+	}
+	defer consumer.Stop()
+
+	t.Log("Starting manifest cache validation for 10 seconds...")
+	<-ctx.Done()
+
+	t.Log("Finished event collection.")
+	t.Logf("--- Manifest Cache Validation Report ---")
+	t.Logf("  Manifest Events Compared: %d", eventsCompared.Load())
+	t.Logf("  Blob Mismatches (Cache):  %d", compareMismatches.Load())
+	t.Logf("-------------------------------------------")
+
+	if compareMismatches.Load() > 0 {
+		t.Fatal("Test failed due to critical mismatches in manifest cache.")
+	}
+}
+
+// Mismatch constants for compareTraceEventInfo bitmask.
+const (
+	MismatchNone      = 0
+	MismatchClassName = 1 << 0 // TaskName or OpcodeName
+	MismatchOutType   = 1 << 1 // Specific OutType differences allowed for MOF
+	MismatchLength    = 1 << 2 // Specific Length differences allowed for MOF
+	MismatchFlags     = 1 << 3 // Specific Flags differences allowed for MOF
+	MismatchOther     = 1 << 4 // Any other (critical) difference
+)
+
+// compareTraceInfo is a shared helper to compare a generated TEI with an original from the API.
+// It returns a bitmask of mismatch types and logs detailed debug info if corresponding flags are set.
+func compareTraceInfo(generated, original *TraceEventInfo, t *testing.T, isMof bool) int {
+	t.Helper()
+	mismatchMask := MismatchNone
+	eventName := fmt.Sprintf("Event '%s' (Provider: %s, Opcode: %d)", original.TaskName(), original.ProviderName(), original.EventDescriptor.Opcode)
+
+	// Helper for logging mismatches.
+	logMismatch := func(field string, gen, org interface{}) {
+		mismatchMask |= MismatchOther
+		t.Logf("CRITICAL MISMATCH: %s for %s\n  - Have: %v\n  - Want: %v", field, eventName, gen, org)
+	}
+
+	// --- Header Comparison ---
+	if generated.ProviderGUID != original.ProviderGUID {
+		logMismatch("ProviderGUID", generated.ProviderGUID, original.ProviderGUID)
+	}
+	if generated.EventGUID != original.EventGUID {
+		logMismatch("EventGUID", generated.EventGUID, original.EventGUID)
+	}
+	if generated.EventDescriptor != original.EventDescriptor {
+		logMismatch("EventDescriptor", fmt.Sprintf("%+v", generated.EventDescriptor), fmt.Sprintf("%+v", original.EventDescriptor))
+	}
+	if generated.DecodingSource != original.DecodingSource {
+		logMismatch("DecodingSource", generated.DecodingSource, original.DecodingSource)
+	}
+	if generated.PropertyCount != original.PropertyCount {
+		logMismatch("PropertyCount", generated.PropertyCount, original.PropertyCount)
+		return mismatchMask // Stop property comparison if counts differ.
+	}
+	if generated.TopLevelPropertyCount != original.TopLevelPropertyCount {
+		logMismatch("TopLevelPropertyCount", generated.TopLevelPropertyCount, original.TopLevelPropertyCount)
+	}
+	if generated.Flags != original.Flags {
+		if isMof {
+			mismatchMask |= MismatchFlags
+			if *mofDebugFlags {
+				t.Logf("DEBUG: Flags mismatch for MOF %s\n  - Have: %d\n  - Want: %d", eventName, generated.Flags, original.Flags)
+			}
+		} else {
+			logMismatch("Flags", generated.Flags, original.Flags)
+		}
+	}
+
+	// --- String & Union Comparison ---
+	if generated.ProviderName() != original.ProviderName() {
+		logMismatch("ProviderName", generated.ProviderName(), original.ProviderName())
+	}
+	if generated.LevelName() != original.LevelName() {
+		logMismatch("LevelName", generated.LevelName(), original.LevelName())
+	}
+	if generated.ChannelName() != original.ChannelName() {
+		logMismatch("ChannelName", generated.ChannelName(), original.ChannelName())
+	}
+	if generated.EventMessage() != original.EventMessage() {
+		logMismatch("EventMessage", generated.EventMessage(), original.EventMessage())
+	}
+	if generated.ProviderMessage() != original.ProviderMessage() {
+		logMismatch("ProviderMessage", generated.ProviderMessage(), original.ProviderMessage())
+	}
+	if generated.TaskName() != original.TaskName() || generated.OpcodeName() != original.OpcodeName() {
+		if isMof {
+			mismatchMask |= MismatchClassName
+			if *mofDebugClassName {
+				t.Logf("DEBUG: ClassName mismatch for MOF %s\n  - TaskName: Have: '%s', Want: '%s'\n  - OpcodeName: Have: '%s', Want: '%s'",
+					eventName, generated.TaskName(), original.TaskName(), generated.OpcodeName(), original.OpcodeName())
+			}
+		} else {
+			logMismatch("Task/OpcodeName", generated.TaskName()+"/"+generated.OpcodeName(), original.TaskName()+"/"+original.OpcodeName())
+		}
+	}
+	if generated.EventName() != original.EventName() {
+		logMismatch("EventName", generated.EventName(), original.EventName())
+	}
+	if generated.ActivityIDName() != original.ActivityIDName() {
+		logMismatch("ActivityIDName", generated.ActivityIDName(), original.ActivityIDName())
+	}
+	if generated.EventAttributes() != original.EventAttributes() {
+		logMismatch("EventAttributes", generated.EventAttributes(), original.EventAttributes())
+	}
+	if generated.RelatedActivityIDName() != original.RelatedActivityIDName() {
+		logMismatch("RelatedActivityIDName", generated.RelatedActivityIDName(), original.RelatedActivityIDName())
+	}
+
+	// --- Property Array Comparison ---
+	for i := uint32(0); i < original.PropertyCount; i++ {
+		genEpi := generated.GetEventPropertyInfoAt(i)
+		orgEpi := original.GetEventPropertyInfoAt(i)
+		propName := original.stringAt(uintptr(orgEpi.NameOffset))
+		propContext := fmt.Sprintf("Prop[%d:%s] in %s", i, propName, eventName)
+
+		logPropMismatch := func(field string, gen, org interface{}) {
+			mismatchMask |= MismatchOther
+			t.Logf("CRITICAL MISMATCH: %s for %s\n  - Have: %v\n  - Want: %v", field, propContext, gen, org)
+		}
+
+		if generated.stringAt(uintptr(genEpi.NameOffset)) != propName {
+			logPropMismatch("Name", generated.stringAt(uintptr(genEpi.NameOffset)), propName)
+		}
+		if genEpi.Flags != orgEpi.Flags {
+			if isMof {
+				mismatchMask |= MismatchFlags
+				if *mofDebugFlags {
+					t.Logf("DEBUG: Prop Flags mismatch for %s\n  - Have: %#x\n  - Want: %#x", propContext, genEpi.Flags, orgEpi.Flags)
+				}
+			} else {
+				logPropMismatch("Flags", fmt.Sprintf("%#x", genEpi.Flags), fmt.Sprintf("%#x", orgEpi.Flags))
+			}
+		}
+
+		// Compare unions based on flags
+		if (orgEpi.Flags & PropertyStruct) != 0 {
+			if genEpi.StructStartIndex() != orgEpi.StructStartIndex() || genEpi.NumOfStructMembers() != orgEpi.NumOfStructMembers() {
+				logPropMismatch("StructInfo",
+					fmt.Sprintf("{Start: %d, Members: %d}", genEpi.StructStartIndex(), genEpi.NumOfStructMembers()),
+					fmt.Sprintf("{Start: %d, Members: %d}", orgEpi.StructStartIndex(), orgEpi.NumOfStructMembers()))
+			}
+		} else {
+			if genEpi.InType() != orgEpi.InType() {
+				isPointerSizeMismatch := isMof &&
+					((genEpi.InType() == TDH_INTYPE_POINTER && orgEpi.InType() == TDH_INTYPE_SIZET) ||
+						(genEpi.InType() == TDH_INTYPE_SIZET && orgEpi.InType() == TDH_INTYPE_POINTER))
+				if !isPointerSizeMismatch {
+					logPropMismatch("InType", genEpi.InType(), orgEpi.InType())
+				}
+			}
+			if genEpi.OutType() != orgEpi.OutType() {
+				isStringNullMismatch := isMof &&
+					((genEpi.OutType() == TDH_OUTTYPE_STRING && orgEpi.OutType() == TDH_OUTTYPE_NULL) ||
+						(genEpi.OutType() == TDH_OUTTYPE_NULL && orgEpi.OutType() == TDH_OUTTYPE_STRING))
+				if !isStringNullMismatch {
+					if isMof {
+						mismatchMask |= MismatchOutType
+						if *mofDebugOutType {
+							t.Logf("DEBUG: OutType mismatch for %s\n  - Have: %s\n  - Want: %s", propContext, genEpi.OutType(), orgEpi.OutType())
+						}
+					} else {
+						logPropMismatch("OutType", genEpi.OutType(), orgEpi.OutType())
+					}
+				}
+			}
+			if generated.stringAt(uintptr(genEpi.MapNameOffset())) != original.stringAt(uintptr(orgEpi.MapNameOffset())) {
+				logPropMismatch("MapName", generated.stringAt(uintptr(genEpi.MapNameOffset())), original.stringAt(uintptr(orgEpi.MapNameOffset())))
+			}
+		}
+
+		if genEpi.CountUnion != orgEpi.CountUnion {
+			logPropMismatch("CountUnion", genEpi.CountUnion, orgEpi.CountUnion)
+		}
+		if genEpi.LengthUnion != orgEpi.LengthUnion {
+			if isMof && (orgEpi.Flags&PropertyParamLength) == 0 {
+				mismatchMask |= MismatchLength
+				if *mofDebugLength {
+					t.Logf("DEBUG: Length mismatch for %s\n  - Have: %d\n  - Want: %d", propContext, genEpi.Length(), orgEpi.Length())
+				}
+			} else if !isMof {
+				logPropMismatch("LengthUnion", genEpi.LengthUnion, orgEpi.LengthUnion)
+			}
+		}
+		if genEpi.ResTagUnion != orgEpi.ResTagUnion {
+			logPropMismatch("ResTagUnion", genEpi.ResTagUnion, orgEpi.ResTagUnion)
+		}
+	}
+	return mismatchMask
 }
