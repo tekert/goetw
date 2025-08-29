@@ -87,6 +87,9 @@ type Consumer struct {
 	closed bool
 
 	tmu    sync.RWMutex // Protect trace updates
+
+	// Holds references to consumer currently active traces.
+	// safe to hold a reference to ConsumerTrace after closing the consumer.
 	traces sync.Map     // map[string]*ConsumerTrace
 
 	lastError atomic.Value // stores error

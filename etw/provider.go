@@ -30,7 +30,11 @@ type ProviderMap map[string]*Provider
 // Provider represents an ETW event provider, identified by its name and GUID,
 // and includes the necessary options for enabling it in a trace session.
 type Provider struct {
+
+	// The provider's unique identifier (GUID). Must be specified.
 	GUID GUID
+
+	// Friendly name of the provider. (not used for enabling, just informational)
 	Name string
 
 	// The logging level specified. Standard logging levels are:
