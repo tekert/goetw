@@ -139,8 +139,11 @@ import (
 func main() {
     // The NT Kernel Logger is a special session. Kernel event groups are enabled
     // at session creation by passing flags.
-    // TODO: this changed in v0.8, reflect that.
-    s := etw.NewKernelRealTimeSession(etw.Process | etw.Thead)
+    kernelFlags := KernelNtFlag(
+		EVENT_TRACE_FLAG_DISK_FILE_IO |
+		EVENT_TRACE_FLAG_FILE_IO |
+		EVENT_TRACE_FLAG_CSWITCH)
+    s := etw.NewKernelRealTimeSession(kernelFlags)
     defer s.Stop()
 
     // For kernel sessions, we must explicitly start the session.

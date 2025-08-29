@@ -64,9 +64,9 @@ sampler := logsampler.NewEventDrivenSampler(config, myReporter)
 defer sampler.Close() // Ensures a final summary is flushed on exit.
 ````
 
-### 2. `DeduplicatingSampler` (Legacy)
+### 2. `DeduplicatingSampler` (uses goroutine for reports)
 
-**Deprecated:** This sampler uses a background goroutine. Use `EventDrivenSampler` for a goroutine-free alternative.
+**NOTE:** This sampler uses a background goroutine. Use `EventDrivenSampler` for a goroutine-free alternative.
 
 This sampler has the same exponential backoff logic as `EventDrivenSampler` but uses a background goroutine and a `time.Ticker` to periodically scan for and report summaries of inactive keys. While effective, it introduces a hidden background task that the user must manage by calling `Close()`.
 
