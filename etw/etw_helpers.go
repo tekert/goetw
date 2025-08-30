@@ -52,24 +52,64 @@ func EnableTraceInfoCache(enable bool) {
 
 // These EventRecord methods are defined here because they are only needed in etw_helpers.go
 
+//lint:ignore U1000 option
+type schemaKeyType32 uint32
+
+//lint:ignore U1000 option
+type schemaKeyType64 uint64
+
+//lint:ignore U1000 option
+type schemaKeyType struct {
+	high uint64
+	low  uint64
+}
+
 // schemaCacheKey generates a unique uint32 key for a given event schema within a provider.
 // This key is used for the second level of the two-level cache.
 // For manifest events, it packs ID and Version.
 // For MOF events, it packs Opcode and Version.
-func (er *EventRecord) schemaCacheKey_old() uint32 {
+// This requieres copying the cached schema for very event to patch the EventDescriptor.
+func (er *EventRecord) schemaCacheKey32() schemaKeyType32 {
 	desc := &er.EventHeader.EventDescriptor
 	if er.IsMof() {
 		// For MOF, Opcode (8 bits) + Version (8 bits) is the unique schema ID.
-		return uint32(desc.Opcode)<<8 | uint32(desc.Version)
+		return schemaKeyType32(uint32(desc.Opcode)<<8 | uint32(desc.Version))
 	}
 	// For Manifest, ID (16 bits) + Version (8 bits) is the unique schema ID.
-	return uint32(desc.Id)<<8 | uint32(desc.Version)
+	return schemaKeyType32(uint32(desc.Id)<<8 | uint32(desc.Version))
 }
 
-// For all events, it packs the entire EventDescriptor into a uint64.
-// It's as fast a just hashing ID/Version, and it works for both Manifest and MOF events.
-// It also has the benefit of making the entire TraceInfo static (so caching dont requiere copies).
-func (er *EventRecord) schemaCacheKey() uint64 {
+// schemaCacheKey packs the entire EventDescriptor into a schemaKeyType..
+// it works for both Manifest and MOF events.
+//
+// It also has the benefit of making the entire TraceInfo static
+// (so schema caching don't requiere patching EventDescriptor).
+//
+// It's 40ns for 128bit key vs 20ns for 64/32bit key but this saves copying the cached schema to patch the EventDescriptor.
+func (er *EventRecord) schemaCacheKey() schemaKeyType {
+	desc := &er.EventHeader.EventDescriptor
+	// For Manifest and MOF, the entire descriptor defines the unique schema.
+	// This single, robust key works for both types.
+	// Pack fields into a uint64:
+	// | 16 bits | 8 bits | 8 bits | 8 bits | 8 bits  | 16 bits |
+	// | Task    | Opcode | Level  | Channel| Version | ID      |
+	low := uint64(desc.Id)            // needed for manifest
+	low |= uint64(desc.Version) << 16 // neded for manifest
+	low |= uint64(desc.Channel) << 24
+	low |= uint64(desc.Level) << 32  // needed for mof?
+	low |= uint64(desc.Opcode) << 40 // needed for mof
+	low |= uint64(desc.Task) << 48
+	high := desc.Keyword // needed for mof
+
+	return schemaKeyType{high: high, low: low}
+}
+
+// schemaCacheKey64 generates a unique uint64 key for a given event schema within a provider.
+// This key is used for the second level of the two-level cache.
+// It's as fast a the 32bit key and works for both Manifest and MOF events.
+// This requieres copying the cached schema for very event to patch the EventDescriptor.
+// because the keyword field is not used and it makes the key not unique for MOF events.
+func (er *EventRecord) schemaCacheKey64() schemaKeyType64 {
 	desc := &er.EventHeader.EventDescriptor
 	// For Manifest and MOF, the entire descriptor defines the unique schema.
 	// This single, robust key works for both types.
@@ -82,7 +122,7 @@ func (er *EventRecord) schemaCacheKey() uint64 {
 	key |= uint64(desc.Level) << 32
 	key |= uint64(desc.Opcode) << 40
 	key |= uint64(desc.Task) << 48
-	return key
+	return schemaKeyType64(key)
 }
 
 // schemaCacheHelper retrieves or creates the first-level cache (a *sync.Map) for a provider's events.
@@ -190,8 +230,15 @@ func (ts *traceStorage) reset() {
 }
 
 type EventRecordHelper struct {
-	EventRec  *EventRecord
-	TraceInfo *TraceEventInfo // Dont modify the fields, it points to cached schemas.
+	EventRec *EventRecord
+	// TraceInfo points to a TRACE_EVENT_INFO structure that describes the event's schema.
+	//
+	// IMPORTANT: This pointer often references a globally cached, shared, and immutable
+	// memory buffer to maximize performance. DO NOT MODIFY the contents of the struct
+	// pointed to by TraceInfo. Modifying it will corrupt the cache and lead to
+	// unpredictable behavior and race conditions across different goroutines.
+	// Treat it as strictly read-only.
+	TraceInfo *TraceEventInfo
 
 	// Important: use pointers to slices if using pools to avoid corruption
 	// when storing EventRecordHelpers in a global pool.
@@ -289,6 +336,7 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 
 	erh.storage = storage
 	erh.EventRec = er
+	var schemaKey schemaKeyType64 // Currently using the 64bit key (its safer to copy the cached schema)
 
 	// --- Stage 1: Check Cache ---
 	if traceEventInfoCacheEnabled {
@@ -296,10 +344,11 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 		schemaCache := er.schemaCacheHelper(&traceEventInfoCache)
 
 		// 2. Second-level lookup by schema key.
-		schemaKey := er.schemaCacheKey()
+		schemaKey = er.schemaCacheKey64()
 		if cachedTei, found := schemaCache.Load(schemaKey); found {
-			// This commented block of code is if we need to copy the buffer to a local one. (3% performance hit)
-			/*
+			// This commented block of code is if we need to copy the buffer to a local one. (2,1% performance hit)
+			// NOTE: use er.schemaCacheKey32() or er.schemaCacheKey64() if using this block
+			if true {
 				// Cache hit: Use the cached TRACE_EVENT_INFO
 				template := cachedTei.([]byte)
 				// Ensure the thread-local buffer is large enough.
@@ -310,17 +359,18 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 				// Copy the cached template into the thread-local buffer.
 				copy(storage.teiBuffer, template)
 				erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
-				//erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // not needed if using full uint64 key
+				erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // important: patch EventDescriptor
 				erh.teiBuffer = &storage.teiBuffer
-				return erh, nil // Cache hit, we are done.
-			*/
-			// Cache hit: The template is immutable. Point directly to it. No copy needed.
-			template := cachedTei.([]byte)
-			erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&template[0]))
+			} else { // NOTE: use er.schemaCacheKey() if using this block
 
-			// The buffer is the globally cached one, not the thread-local one.
-			// Setting this to nil indicates it's not locally owned.
-			erh.teiBuffer = nil
+				// Cache hit: The template is immutable. Point directly to it. No copy needed.
+				template := cachedTei.([]byte)
+				erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&template[0]))
+
+				// The buffer is the globally cached one, not the thread-local one.
+				// Setting this to nil indicates it's not locally owned.
+				erh.teiBuffer = nil
+			}
 			return erh, nil // Cache hit, we are done.
 		}
 	}
@@ -335,7 +385,7 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 			if erh.TraceInfo, err = buildTraceInfoFromMof(er, teiBuffer); err == nil {
 				// MOF generator succeeded. Cache the result.
 				if traceEventInfoCacheEnabled {
-					cloneAndCacheTraceInfo(er.EventHeader.ProviderId, er.schemaCacheKey(), *teiBuffer)
+					cloneAndCacheTraceInfo(er.EventHeader.ProviderId, schemaKey, *teiBuffer)
 				}
 				err = nil // Suppress the original API error.
 			} else {
@@ -347,7 +397,7 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	} else {
 		// API call succeeded. Cache the result.
 		if traceEventInfoCacheEnabled {
-			cloneAndCacheTraceInfo(er.EventHeader.ProviderId, er.schemaCacheKey(), *teiBuffer)
+			cloneAndCacheTraceInfo(er.EventHeader.ProviderId, schemaKey, *teiBuffer)
 		}
 	}
 
@@ -356,12 +406,13 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 }
 
 // cloneAndCacheTraceInfo makes a copy of a TraceEventInfo buffer and stores it in the two-level cache.
-func cloneAndCacheTraceInfo(providerGUID GUID, schemaKey uint64, teiBuffer []byte) {
+func cloneAndCacheTraceInfo(providerGUID GUID, schemaKey schemaKeyType64, teiBuffer []byte) {
 	// Get the second-level cache for this provider. It must exist at this point.
 	val, _ := traceEventInfoCache.Load(providerGUID)
 	schemaCache := val.(*sync.Map)
 
 	// Create a copy of the buffer to store in the cache.
+	// this done 1 time per shema so performance is not critical.
 	cachedTei := make([]byte, len(teiBuffer))
 	copy(cachedTei, teiBuffer)
 
