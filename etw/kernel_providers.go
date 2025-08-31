@@ -192,10 +192,16 @@ var KernelProviders = []KernelProviderInfo{
 var kernelProviderMap = make(map[string]KernelNtFlag)
 
 func init() {
-	for _, p := range KernelProviders {
-		kernelProviderMap[p.Name] = p.Flags
-		kernelProviderMap[p.GUID.String()] = p.Flags
-	}
+    for _, p := range KernelProviders {
+        kernelProviderMap[p.Name] = p.Flags
+        guidStr := p.GUID.String()
+        // If a GUID is shared, combine its flags with a bitwise OR.
+        if existingFlags, ok := kernelProviderMap[guidStr]; ok {
+            kernelProviderMap[guidStr] = existingFlags | p.Flags
+        } else {
+            kernelProviderMap[guidStr] = p.Flags
+        }
+    }
 }
 
 // IsKernelProvider checks if a given provider name or GUID string corresponds to a known legacy kernel provider.
