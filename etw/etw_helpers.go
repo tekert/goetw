@@ -4,6 +4,7 @@ package etw
 
 import (
 	"bytes" // also slow but not used much here.
+	"errors"
 	"fmt"
 
 	"math"
@@ -15,6 +16,19 @@ import (
 
 const (
 	StructurePropertyName = "Structures"
+)
+
+// Sentinel errors for property parsing.
+var (
+	// ErrInvalidPropertyIndex is returned when a property's length or count
+	// refers to an invalid or future property index.
+	ErrInvalidPropertyIndex = errors.New("invalid property index for length/count lookup")
+	// ErrGetIntegerNoScalar is returned when a property that is not a scalar integer
+	// is incorrectly used as a length or count for another property.
+	ErrGetIntegerNoScalar = errors.New("property used for length/count is not a scalar integer")
+	// ErrGetIntegerNoData is returned when there is not enough data in the event
+	// to parse a value that is referenced by another property.
+	ErrGetIntegerNoData = errors.New("insufficient data for on-demand integer parsing")
 )
 
 // Global Memory Pools
@@ -59,7 +73,7 @@ type schemaKeyType32 uint32
 type schemaKeyType64 uint64
 
 //lint:ignore U1000 option
-type schemaKeyType struct {
+type schemaKeyType128 struct {
 	high uint64
 	low  uint64
 }
@@ -79,14 +93,14 @@ func (er *EventRecord) schemaCacheKey32() schemaKeyType32 {
 	return schemaKeyType32(uint32(desc.Id)<<8 | uint32(desc.Version))
 }
 
-// schemaCacheKey packs the entire EventDescriptor into a schemaKeyType..
+// schemaCacheKey128 packs the entire EventDescriptor into a schemaKeyType..
 // it works for both Manifest and MOF events.
 //
 // It also has the benefit of making the entire TraceInfo static
 // (so schema caching don't requiere patching EventDescriptor).
 //
 // It's 40ns for 128bit key vs 20ns for 64/32bit key but this saves copying the cached schema to patch the EventDescriptor.
-func (er *EventRecord) schemaCacheKey() schemaKeyType {
+func (er *EventRecord) schemaCacheKey128() schemaKeyType128 {
 	desc := &er.EventHeader.EventDescriptor
 	// For Manifest and MOF, the entire descriptor defines the unique schema.
 	// This single, robust key works for both types.
@@ -101,7 +115,7 @@ func (er *EventRecord) schemaCacheKey() schemaKeyType {
 	low |= uint64(desc.Task) << 48
 	high := desc.Keyword // needed for mof
 
-	return schemaKeyType{high: high, low: low}
+	return schemaKeyType128{high: high, low: low}
 }
 
 // schemaCacheKey64 generates a unique uint64 key for a given event schema within a provider.
@@ -149,7 +163,7 @@ type traceStorage struct {
 	structArrays    map[string][]map[string]*Property // For arrays of structs
 	structSingle    []map[string]*Property            // For non-array structs
 	selectedProps   map[string]bool                   // Properties selected for parsing
-	integerValues   []uint16                          // For caching integer values used in property lengths/counts
+	propertyOffsets []uintptr                         // Cache property offsets for on-demand parsing.
 	epiArray        []*EventPropertyInfo              // For caching EventPropertyInfo
 	teiBuffer       []byte                            // For GetEventInformation()
 
@@ -170,7 +184,7 @@ func newTraceStorage() *traceStorage {
 		structArrays:    make(map[string][]map[string]*Property, 4),
 		structSingle:    make([]map[string]*Property, 0, 4),
 		selectedProps:   make(map[string]bool, 16),
-		integerValues:   make([]uint16, 0, 64),
+		propertyOffsets: make([]uintptr, 0, 64),
 		epiArray:        make([]*EventPropertyInfo, 0, 64),
 		teiBuffer:       make([]byte, 8192), // Initial size for GetEventInformation()
 
@@ -219,8 +233,10 @@ func (ts *traceStorage) reset() {
 	// 6. Clear selected properties map.
 	clear(ts.selectedProps)
 
-	// 7. Reset integer values slice.
-	ts.integerValues = ts.integerValues[:0]
+	// 7. The propertyOffsets slice does not need to be reset. It is re-sliced to the
+	// correct size in initialize() and its contents are overwritten for each event,
+	// making a reset here redundant.
+	//ts.propertyOffsets = ts.propertyOffsets[:0]
 
 	// 8. Reset epi array slice, clearing pointers to prevent stale data.
 	clear(ts.epiArray)
@@ -255,8 +271,8 @@ type EventRecordHelper struct {
 
 	// Stored property values for resolving array lengths
 	// both are filled when an index is queried
-	integerValues *[]uint16
-	epiArray      *[]*EventPropertyInfo
+	propertyOffsets *[]uintptr
+	epiArray        *[]*EventPropertyInfo
 
 	// Buffer that contains the memory for TraceEventInfo.
 	// used internally to reuse the memory allocation.
@@ -279,14 +295,17 @@ type EventRecordHelper struct {
 	timestamp int64
 }
 
+// remainingUserDataLength returns the number of bytes remaining in the event's user data
 func (e *EventRecordHelper) remainingUserDataLength() uint16 {
 	return uint16(e.userDataEnd - e.userDataIt)
 }
 
+// userContext retrieves the thread local traceContext associated with the EventRecord.
 func (e *EventRecordHelper) userContext() (c *traceContext) {
 	return e.EventRec.userContext()
 }
 
+// addPropError increments the error counter for property parsing errors in the traceContext.
 func (e *EventRecordHelper) addPropError() {
 	c := e.userContext()
 	if c != nil && c.trace != nil {
@@ -329,14 +348,18 @@ func (e *EventRecordHelper) release() {
 func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	erh = helperPool.Get().(*EventRecordHelper)
 	storage := er.userContext().storage
-	teiBuffer := &storage.teiBuffer
 
 	// Reset the thread-local storage before processing a new event.
 	storage.reset()
 
 	erh.storage = storage
 	erh.EventRec = er
-	var schemaKey schemaKeyType64 // Currently using the 64bit key (its safer to copy the cached schema)
+	erh.teiBuffer = &storage.teiBuffer // Keep a reference before calling internal funcs
+
+	// TraceEventInfo EventDescriptor is the only dynamic field.
+	// With 64bit key we dont cover the full EventDescritor so we have to get the schema copy it and patch it.
+	// With 128bit key we can use the cached schema directly.
+	var schemaKey schemaKeyType64
 
 	// --- Stage 1: Check Cache ---
 	if traceEventInfoCacheEnabled {
@@ -346,11 +369,12 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 		// 2. Second-level lookup by schema key.
 		schemaKey = er.schemaCacheKey64()
 		if cachedTei, found := schemaCache.Load(schemaKey); found {
+			// Cache hit: Use the cached TRACE_EVENT_INFO
+			template := cachedTei.([]byte)
+
 			// This commented block of code is if we need to copy the buffer to a local one. (2,1% performance hit)
 			// NOTE: use er.schemaCacheKey32() or er.schemaCacheKey64() if using this block
 			if true {
-				// Cache hit: Use the cached TRACE_EVENT_INFO
-				template := cachedTei.([]byte)
 				// Ensure the thread-local buffer is large enough.
 				if cap(storage.teiBuffer) < len(template) {
 					storage.teiBuffer = make([]byte, len(template))
@@ -359,12 +383,10 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 				// Copy the cached template into the thread-local buffer.
 				copy(storage.teiBuffer, template)
 				erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
-				erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // important: patch EventDescriptor
-				erh.teiBuffer = &storage.teiBuffer
+				erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // Important: patch EventDescriptor
 			} else { // NOTE: use er.schemaCacheKey() if using this block
 
-				// Cache hit: The template is immutable. Point directly to it. No copy needed.
-				template := cachedTei.([]byte)
+				// The template is immutable. Point directly to it. No copy needed.
 				erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&template[0]))
 
 				// The buffer is the globally cached one, not the thread-local one.
@@ -376,16 +398,18 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	}
 
 	// --- Stage 2: Call TdhGetEventInformation (Cache Miss) ---
-	erh.TraceInfo, err = er.GetEventInformation(teiBuffer)
+	// Use the already-set erh.teiBuffer.
+	erh.TraceInfo, err = er.GetEventInformation(erh.teiBuffer)
 	if err != nil {
 		apiErr := fmt.Errorf("%w: %v", ErrGetEventInformation, err)
 
 		// --- Stage 3: Fallback to MOF Generator ---
 		if er.IsMof() {
-			if erh.TraceInfo, err = buildTraceInfoFromMof(er, teiBuffer); err == nil {
+			// Use the already-set erh.teiBuffer.
+			if erh.TraceInfo, err = buildTraceInfoFromMof(er, erh.teiBuffer); err == nil {
 				// MOF generator succeeded. Cache the result.
 				if traceEventInfoCacheEnabled {
-					cloneAndCacheTraceInfo(er.EventHeader.ProviderId, schemaKey, *teiBuffer)
+					erh.cloneAndCacheTraceInfo(schemaKey)
 				}
 				err = nil // Suppress the original API error.
 			} else {
@@ -397,26 +421,28 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	} else {
 		// API call succeeded. Cache the result.
 		if traceEventInfoCacheEnabled {
-			cloneAndCacheTraceInfo(er.EventHeader.ProviderId, schemaKey, *teiBuffer)
+			erh.cloneAndCacheTraceInfo(schemaKey)
 		}
 	}
 
-	erh.teiBuffer = teiBuffer // Keep a reference
 	return erh, err
 }
 
 // cloneAndCacheTraceInfo makes a copy of a TraceEventInfo buffer and stores it in the two-level cache.
-func cloneAndCacheTraceInfo(providerGUID GUID, schemaKey schemaKeyType64, teiBuffer []byte) {
+// It uses the state of the EventRecordHelper (TraceInfo, EventRec, etc.) to perform the caching.
+func (e *EventRecordHelper) cloneAndCacheTraceInfo(schemaKey schemaKeyType64) {
+	providerGUID := e.EventRec.EventHeader.ProviderId
+
 	// Get the second-level cache for this provider. It must exist at this point.
 	val, _ := traceEventInfoCache.Load(providerGUID)
 	schemaCache := val.(*sync.Map)
 
 	// Create a copy of the buffer to store in the cache.
-	// this done 1 time per shema so performance is not critical.
-	cachedTei := make([]byte, len(teiBuffer))
-	copy(cachedTei, teiBuffer)
+	// This is done only once per schema, so performance is not critical.
+	cachedTei := make([]byte, len(*e.teiBuffer))
+	copy(cachedTei, *e.teiBuffer)
 
-	// Store the copied buffer in the second-level cache.
+	// Store the new info struct in the second-level cache.
 	schemaCache.Store(schemaKey, cachedTei)
 }
 
@@ -497,12 +523,12 @@ func (e *EventRecordHelper) initialize() {
 	}
 
 	maxPropCount := int(e.TraceInfo.PropertyCount)
-	// Get and resize integer values
-	if cap(storage.integerValues) < maxPropCount {
-		storage.integerValues = make([]uint16, maxPropCount)
+	// Get and resize property offsets
+	if cap(storage.propertyOffsets) < maxPropCount {
+		storage.propertyOffsets = make([]uintptr, maxPropCount)
 	}
-	e.integerValues = &storage.integerValues
-	*e.integerValues = (*e.integerValues)[:maxPropCount]
+	e.propertyOffsets = &storage.propertyOffsets
+	*e.propertyOffsets = (*e.propertyOffsets)[:maxPropCount]
 
 	// Get and resize epi array
 	if cap(storage.epiArray) < maxPropCount {
@@ -611,46 +637,88 @@ func (e *EventRecordHelper) getPropertySize(i uint32) (size uint32, err error) {
 	return
 }
 
-// cacheIntegerValues helps when a property length or array count needs to be
-// calculated using a previous property's value. It is called for each property
-// as its metadata is accessed, caching any scalar integer value. This ensures
-// that when a subsequent property's length or count is calculated, the value
-// it depends on is readily available.
-func (e *EventRecordHelper) cacheIntegerValues(i uint32, epi *EventPropertyInfo) {
-	// If this property is a scalar integer, remember the value in case it
-	// is needed for a subsequent property's that has the PropertyParamLength flag set.
-	// This is a Single Value property, not a struct and it doesn't have a param count
-	// Basically: if !isStruct && !hasParamCount && isSingleValue
-	if (epi.Flags&(PropertyStruct|PropertyParamCount)) == 0 &&
-		epi.Count() == 1 {
-		userdr := e.remainingUserDataLength()
+// getIntegerValueAt helps when a property length or array count needs to be
+// calculated using a previous property's value. It parses the value on-demand
+// using the pre-cached property offset.
+func (e *EventRecordHelper) getIntegerValueAt(i uint32) (uint16, error) {
+	// Get the data pointer from our offset cache. This is an absolute pointer.
+	dataPtr := (*e.propertyOffsets)[i]
+	// Fetch the schema for the property at the target index 'i'.
+	epi := e.getEpiAt(i)
 
-		// integerValues is used sequentially, so we can reuse it without reseting
-		switch inType := TdhInType(epi.InType()); inType {
-		case TDH_INTYPE_INT8,
-			TDH_INTYPE_UINT8:
-			if (userdr) >= 1 {
-				(*e.integerValues)[i] = uint16(*(*uint8)(unsafe.Pointer(e.userDataIt)))
+	// The property must be a scalar integer to be used for length/count.
+	if (epi.Flags&(PropertyStruct|PropertyParamCount)) != 0 || epi.Count() != 1 {
+		return 0, ErrGetIntegerNoScalar
+	}
+
+	// Check remaining data from the property's own start point for safety.
+	remaining := e.userDataEnd - dataPtr
+
+	switch inType := TdhInType(epi.InType()); inType {
+	case TDH_INTYPE_INT8,
+		TDH_INTYPE_UINT8:
+		if remaining >= 1 {
+			return uint16(*(*uint8)(unsafe.Pointer(dataPtr))), nil
+		}
+	case TDH_INTYPE_INT16,
+		TDH_INTYPE_UINT16:
+		if remaining >= 2 {
+			return *(*uint16)(unsafe.Pointer(dataPtr)), nil
+		}
+	case TDH_INTYPE_INT32,
+		TDH_INTYPE_UINT32,
+		TDH_INTYPE_HEXINT32:
+		if remaining >= 4 {
+			val := *(*uint32)(unsafe.Pointer(dataPtr))
+			if val > 0xffff { // Lengths are uint16, so cap at max.
+				return 0xffff, nil
 			}
-		case TDH_INTYPE_INT16,
-			TDH_INTYPE_UINT16:
-			if (userdr) >= 2 {
-				(*e.integerValues)[i] = *(*uint16)(unsafe.Pointer(e.userDataIt))
-			}
-		case TDH_INTYPE_INT32,
-			TDH_INTYPE_UINT32,
-			TDH_INTYPE_HEXINT32:
-			if (userdr) >= 4 {
-				val := *(*uint32)(unsafe.Pointer(e.userDataIt))
-				if val > 0xffff {
-					(*e.integerValues)[i] = 0xffff
-				} else {
-					(*e.integerValues)[i] = uint16(val)
-				}
-			}
+			return uint16(val), nil
 		}
 	}
+	return 0, ErrGetIntegerNoData
 }
+
+// // cacheIntegerValues helps when a property length or array count needs to be
+// // calculated using a previous property's value. It is called for each property
+// // as its metadata is accessed, caching any scalar integer value. This ensures
+// // that when a subsequent property's length or count is calculated, the value
+// // it depends on is readily available.
+// func (e *EventRecordHelper) cacheIntegerValues(i uint32, epi *EventPropertyInfo) {
+// 	// If this property is a scalar integer, remember the value in case it
+// 	// is needed for a subsequent property's that has the PropertyParamLength flag set.
+// 	// This is a Single Value property, not a struct and it doesn't have a param count
+// 	// Basically: if !isStruct && !hasParamCount && isSingleValue
+// 	if (epi.Flags&(PropertyStruct|PropertyParamCount)) == 0 &&
+// 		epi.Count() == 1 {
+// 		userdr := e.remainingUserDataLength()
+
+// 		// integerValues is used sequentially, so we can reuse it without reseting
+// 		switch inType := TdhInType(epi.InType()); inType {
+// 		case TDH_INTYPE_INT8,
+// 			TDH_INTYPE_UINT8:
+// 			if (userdr) >= 1 {
+// 				(*e.integerValues)[i] = uint16(*(*uint8)(unsafe.Pointer(e.userDataIt)))
+// 			}
+// 		case TDH_INTYPE_INT16,
+// 			TDH_INTYPE_UINT16:
+// 			if (userdr) >= 2 {
+// 				(*e.integerValues)[i] = *(*uint16)(unsafe.Pointer(e.userDataIt))
+// 			}
+// 		case TDH_INTYPE_INT32,
+// 			TDH_INTYPE_UINT32,
+// 			TDH_INTYPE_HEXINT32:
+// 			if (userdr) >= 4 {
+// 				val := *(*uint32)(unsafe.Pointer(e.userDataIt))
+// 				if val > 0xffff {
+// 					(*e.integerValues)[i] = 0xffff
+// 				} else {
+// 					(*e.integerValues)[i] = uint16(val)
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 // Gets the EventPropertyInfo at index i, caching it for future use.
 // also caches the data if it's an integer property if any other property needs it for length.
@@ -660,7 +728,6 @@ func (e *EventRecordHelper) getEpiAt(i uint32) *EventPropertyInfo {
 	if epi == nil {
 		epi = e.TraceInfo.GetEventPropertyInfoAt(i)
 		(*e.epiArray)[i] = epi
-		e.cacheIntegerValues(i, epi)
 	}
 	return epi
 }
@@ -669,13 +736,19 @@ func (e *EventRecordHelper) getEpiAt(i uint32) *EventPropertyInfo {
 func (e *EventRecordHelper) getPropertyLength(i uint32) (propLength uint16, sizeBytes uint32, err error) {
 	var epi = e.getEpiAt(i)
 
-	// We recorded the values of all previous integer properties just
-	// in case we need to determine the property length or count.
-	// integerValues will have our length or count number.
+	// We keep track of the property offset for on-demand parsing of integer values.
 	switch {
 	case (epi.Flags & PropertyParamLength) != 0:
-		// Length from another property
-		propLength = (*e.integerValues)[epi.LengthPropertyIndex()]
+		// Length from another property.
+		index := uint32(epi.LengthPropertyIndex())
+		// For safety, ensure the index points to a property we've already processed.
+		if index >= i {
+			return 0, 0, ErrInvalidPropertyIndex
+		}
+		propLength, err = e.getIntegerValueAt(index)
+		if err != nil {
+			return 0, 0, err
+		}
 
 	case (epi.Flags & PropertyParamFixedLength) != 0:
 		// Fixed length specified in manifest
@@ -861,6 +934,10 @@ func (e *EventRecordHelper) getPropertyLength(i uint32) (propLength uint16, size
 func (e *EventRecordHelper) prepareProperty(i uint32, name string) (p *Property, err error) {
 	p = e.newProperty()
 
+	// Store the offset of this property so we can parse it later if needed.
+	// We store the absolute pointer, which is safe within the callback context.
+	(*e.propertyOffsets)[i] = e.userDataIt
+
 	p.evtPropInfo = e.getEpiAt(i)
 	p.erh = e
 	p.name = name
@@ -868,6 +945,7 @@ func (e *EventRecordHelper) prepareProperty(i uint32, name string) (p *Property,
 	p.userDataRemaining = e.remainingUserDataLength()
 	p.length, p.sizeBytes, err = e.getPropertyLength(i)
 	if err != nil {
+		e.addPropError()
 		return
 	}
 
@@ -879,10 +957,19 @@ func (e *EventRecordHelper) prepareProperty(i uint32, name string) (p *Property,
 }
 
 // getArrayInfo determines if a property is an array and returns its count.
-func (e *EventRecordHelper) getArrayInfo(epi *EventPropertyInfo) (count uint16, isArray bool) {
+func (e *EventRecordHelper) getArrayInfo(i uint32, epi *EventPropertyInfo) (count uint16, isArray bool, err error) {
 	if (epi.Flags & PropertyParamCount) != 0 {
-		// Look up the value of a previous property
-		count = (*e.integerValues)[epi.CountPropertyIndex()]
+		// Look up the value of a previous property.
+		index := uint32(epi.CountPropertyIndex())
+		// For safety, ensure the index points to a property we've already processed.
+		if index >= i {
+			return 0, false, ErrInvalidPropertyIndex
+		}
+
+		count, err = e.getIntegerValueAt(index)
+		if err != nil {
+			return 0, false, err
+		}
 	} else {
 		count = epi.Count()
 	}
@@ -912,7 +999,6 @@ func (e *EventRecordHelper) prepareStruct(i uint32, epi *EventPropertyInfo, arra
 
 		for j := startIndex; j < lastMember; j++ {
 			if p, err = e.prepareProperty(uint32(j), names[j]); err != nil {
-				e.addPropError()
 				// On error, return the map to the pool.
 				// No need to release individual properties due to block pooling.
 				clear(propStruct)
@@ -965,7 +1051,6 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	var err error
 	for range arrayCount {
 		if p, err = e.prepareProperty(i, names[i]); err != nil {
-			e.addPropError()
 			// On error, return the slice to the pool.
 			// No need to release individual properties due to block pooling.
 			clear(*array)
@@ -989,8 +1074,10 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 // getCachedPropNames retrieves the property names for the event schema.
 // It uses a cache for each provider event type to avoid repeated UTF-16 to string conversions.
 func (e *EventRecordHelper) getCachedPropNames() []string {
-	// Use the same two-level cache keying strategy for property names.
-	schemaKey := e.EventRec.schemaCacheKey()
+	// Use the full 128-bit event descriptor as the key. This is the safest approach
+	// to ensure schema uniqueness, especially for MOF events where the Keyword can
+	// be significant in differentiating schemas.
+	schemaKey := e.EventRec.schemaCacheKey128()
 
 	// 1. First-level lookup for the provider's property name cache.
 	schemaNameCache := e.EventRec.schemaCacheHelper(&propertyNameCache)
@@ -1055,7 +1142,11 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 			continue // This is not a fatal error, we can continue processing.
 		}
 
-		arrayCount, isArray := e.getArrayInfo(epi)
+		arrayCount, isArray, err := e.getArrayInfo(i, epi)
+		if err != nil {
+			e.addPropError()
+			return err
+		}
 
 		if (epi.Flags & PropertyStruct) != 0 {
 			// Property is a struct or an array of structs.
@@ -1071,7 +1162,6 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 			// Property is a single, non-array, non-struct value.
 			var p *Property
 			if p, err = e.prepareProperty(i, names[i]); err != nil {
-				e.addPropError()
 				return err
 			}
 			e.Properties[p.name] = p
