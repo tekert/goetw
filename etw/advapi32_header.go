@@ -1346,6 +1346,7 @@ func (e *EventRecord) Timestamp() time.Time {
 
 // TimestampFromProp converts a raw timestamp value from an event property (like WmiTime)
 // into an absolute time.Time, using the session's clock type and conversion settings.
+// This requieres the trace session to be running.
 func (e *EventRecord) TimestampFromProp(propTimestamp int64) time.Time {
 	// userContext() will not be nil if The Consumer is running and processing events.
 	filetime := e.userContext().trace.fromRawTimestamp(propTimestamp)
