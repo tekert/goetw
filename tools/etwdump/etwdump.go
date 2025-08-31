@@ -174,7 +174,7 @@ func main() {
 		outfile             string
 		autologger          string
 		cregex              *regexp.Regexp
-		kernelTraceFlags    uint32
+		kernelTraceFlags    etw.KernelNtFlag
 
 		producers []*etw.RealTimeSession
 

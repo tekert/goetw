@@ -151,6 +151,79 @@ const (
 	NoSysConfig KernelNtFlag = EVENT_TRACE_FLAG_NO_SYSCONFIG
 )
 
+// KernelProviderInfo holds information about a legacy NT Kernel Logger provider.
+type KernelProviderInfo struct {
+	Name  string
+	Flags KernelNtFlag
+	GUID  *GUID
+}
+
+// KernelProviders lists the well-known legacy NT Kernel Logger providers.
+var KernelProviders = []KernelProviderInfo{
+	{"ALPC", ALPC, ALPCKernelGuid},
+	{"DbgPrint", DbgPrint, DbgPrintKernelGuid},
+	{"DiskIo", DiskIo, DiskIoKernelGuid},
+	{"DiskIoInit", DiskIoInit, DiskIoKernelGuid},
+	{"Driver", Driver, DriverKernelGuid},
+	{"FileIo", FileIo, FileIoKernelGuid},
+	{"DiskFileIo", DiskFileIo, DiskFileIoKernelGuid},
+	{"FileIoInit", FileIoInit, FileIoInitKernelGuid},
+	{"FileIoVAmap", FileIoVAmap, FileIoVAmapKernelGuid},
+	{"ImageLoad", ImageLoad, ImageLoadKernelGuid},
+	{"MemoryPageFault", MemoryPageFault, MemoryPageFaultKernelGuid},
+	{"MemoryHardFault", MemoryHardFault, MemoryHardFaultKernelGuid},
+	{"VirtualAlloc", VirtualAlloc, VirtualAllocKernelGuid},
+	{"DPC", DPC, DPCKernelGuid},
+	{"Interrupt", Interrupt, InterruptKernelGuid},
+	{"Profile", Profile, ProfileKernelGuid},
+	{"Syscall", Syscall, SyscallKernelGuid},
+	{"Process", Process, ProcessKernelGuid},
+	{"ProcessCounters", ProcessCounters, ProcessCountersKernelGuid},
+	{"Registry", Registry, RegistryKernelGuid},
+	{"SplitIo", SplitIo, SplitIoKernelGuid},
+	{"TcpIp", TcpIp, TcpIpKernelGuid},
+	{"Thread", Thread, ThreadKernelGuid},
+	{"CSwitch", CSwitch, CSwitchKernelGuid},
+	{"Dispatcher", Dispatcher, DispatcherKernelGuid},
+	{"UdpIp", UdpIp, UdpIpKernelGuid},
+	{"NoSysConfig", NoSysConfig, SystemConfigKernelGuid},
+}
+
+var kernelProviderMap = make(map[string]KernelNtFlag)
+
+func init() {
+	for _, p := range KernelProviders {
+		kernelProviderMap[p.Name] = p.Flags
+		kernelProviderMap[p.GUID.String()] = p.Flags
+	}
+}
+
+// IsKernelProvider checks if a given provider name or GUID string corresponds to a known legacy kernel provider.
+func IsKernelProvider(nameOrGUID string) bool {
+	_, ok := kernelProviderMap[nameOrGUID]
+	if !ok {
+		if g, err := ParseGUID(nameOrGUID); err == nil {
+			_, ok = kernelProviderMap[g.String()]
+		}
+	}
+	return ok
+}
+
+// GetKernelProviderFlags returns the combined KernelNtFlag for one or more legacy kernel provider names or GUIDs.
+func GetKernelProviderFlags(providers ...string) KernelNtFlag {
+	var flags KernelNtFlag
+	for _, p := range providers {
+		if f, ok := kernelProviderMap[p]; ok {
+			flags |= f
+		} else if g, err := ParseGUID(p); err == nil {
+			if f, ok := kernelProviderMap[g.String()]; ok {
+				flags |= f
+			}
+		}
+	}
+	return flags
+}
+
 // All returns a combination of all kernel flags, suitable for a comprehensive trace.
 // It excludes the high-volume Profile flag by default.
 func (p KernelNtFlag) All() KernelNtFlag {
