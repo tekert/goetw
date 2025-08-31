@@ -245,7 +245,7 @@ func (c *mockClock) Advance(d time.Duration) {
 
 func newTestEventDrivenSampler(config sampler.BackoffConfig,
 	reporter sampler.SummaryReporter) (*sampler.EventDrivenSampler, *mockClock) {
-		
+
 	s := sampler.NewEventDrivenSampler(config, reporter)
 	clock := &mockClock{currentTime: time.Now()}
 	s.SetClock(clock)
@@ -284,7 +284,7 @@ func TestEventDrivenSampler(t *testing.T) {
 		clock.Advance(60 * time.Millisecond)
 
 		// Force cleanupInterval number of operations to ensure cleanup happens
-		for i := 0; i < 65; i++ {
+		for i := range 65 {
 			secondKey := fmt.Sprintf("trigger-key-%d", i)
 			s.ShouldLog(secondKey, nil)
 		}
