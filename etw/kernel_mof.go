@@ -246,16 +246,16 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	propCount := len(mofClass.Properties)
 	propInfosSize := propCount * int(unsafe.Sizeof(EventPropertyInfo{}))
 
+	// Use pre-converted UTF-16 slices and pre-calculated sizes.
+	providerNameSize := len(utf16MSNT_SystemTrace) * 2
+	taskNameSize := len(mofClass.BaseW) * 2
+	opcodeNameSize := len(mofClass.NameW) * 2
+
 	// Calculate total size of all property name strings.
 	var totalPropNamesSize int
 	for _, prop := range mofClass.Properties {
 		totalPropNamesSize += len(prop.NameW) * 2
 	}
-
-	// Use pre-converted UTF-16 slices and pre-calculated sizes.
-	providerNameSize := len(utf16MSNT_SystemTrace) * 2
-	taskNameSize := len(mofClass.BaseW) * 2
-	opcodeNameSize := len(mofClass.NameW) * 2
 
 	traceEventInfoBaseSize := int(unsafe.Offsetof(TraceEventInfo{}.EventPropertyInfoArray))
 	requiredSize := traceEventInfoBaseSize +
@@ -299,7 +299,8 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	propInfoArrayStartPtr := unsafe.Pointer(&buffer[propInfoArrayStartOffset])
 	eventProperties := unsafe.Slice((*EventPropertyInfo)(propInfoArrayStartPtr), propCount)
 
-	// IMPORTANT: Explicitly zero the memory for the property slice, as it's pointing to uninitialized buffer space.
+	// Explicitly zero the memory for the property slice, as it's pointing to uninitialized buffer space.
+	// In reality this is not needed but since where are manually populating all fields, it's safer to start with a clean slate.
 	clear(eventProperties)
 
 	// This map is temporary for the build process.
@@ -363,15 +364,6 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 		// Set types
 		epi.SetInType(finalInType)
 		epi.SetOutType(finalOutType)
-
-		// // Create a fake EventRecord just for getTdhInTypeFixedSize
-		// var fakeEventHeader EventHeader
-		// if er.PointerSize() == 8 {
-		// 	fakeEventHeader.Flags = EVENT_HEADER_FLAG_64_BIT_HEADER
-		// } else {
-		// 	fakeEventHeader.Flags = EVENT_HEADER_FLAG_32_BIT_HEADER
-		// }
-		// fakeRecord := EventRecord{EventHeader: fakeEventHeader}
 
 		// Set fixed length for scalar types
 		if !propDef.IsArray && propDef.SizeFromID == 0 {
@@ -458,12 +450,14 @@ func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventI
 	*teiBuffer = (*teiBuffer)[:len(template)]
 
 	// Perform a single, fast copy of the entire pre-built template.
+	// This is important if we later cache the (*TraceEventInfo)teiBuffer for reuse
+	// (so we don't cache the data from the template itself)
 	copy(*teiBuffer, template)
 
 	// Get a pointer to the TraceEventInfo struct at the start of the user's buffer.
 	tei = (*TraceEventInfo)(unsafe.Pointer(&(*teiBuffer)[0]))
 
-	// Patch the live EventDescriptor from the incoming event record.
+	// Important: Patch the live EventDescriptor from the incoming event record.
 	// This is the only part that needs to be updated at runtime.
 	tei.EventDescriptor = er.EventHeader.EventDescriptor
 
