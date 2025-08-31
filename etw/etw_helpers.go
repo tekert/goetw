@@ -282,10 +282,32 @@ type EventRecordHelper struct {
 	// Important: use pointers to slices if using pools to avoid corruption
 	// when storing EventRecordHelpers in a global pool.
 
-	Properties      map[string]*Property
+	// Properties stores simple, scalar properties of the event.
+	// - Structure: A map where the key is the property name (e.g., "ProcessId")
+	//   and the value is a `*Property` object holding its raw data.
+	// - Final JSON Example: "ProcessId": "1234"
+	Properties map[string]*Property
+	// ArrayProperties stores arrays of simple, scalar types.
+	// - Structure: A map where the key is the array's name (e.g., "SIDs") and
+	//   the value is a pointer to a slice of `*Property` objects, each
+	//   representing an element in the array.
+	// - Final JSON Example: "SIDs": ["S-1-5-18", "S-1-5-19"]
 	ArrayProperties map[string]*[]*Property
-	StructArrays    map[string][]map[string]*Property // For arrays of structs
-	StructSingle    *[]map[string]*Property           // For non-array structs
+	// StructArrays stores arrays of complex structures.
+	// - Structure: A map where the key is the array's name (e.g., "Adapters").
+	//   The value is a slice of maps. Each map in the slice represents one
+	//   struct instance, with its keys being the struct's field names
+	//   (e.g., "IPAddress") and values being the corresponding `*Property` objects.
+	// - Final JSON Example: "Adapters": [{"IPAddress": "1.2.3.4"}, {"IPAddress": "5.6.7.8"}]
+	StructArrays map[string][]map[string]*Property
+	// StructSingle stores top-level properties that are structs but are NOT arrays.
+	// Since these structs don't have a single collective name, they are grouped
+	// into a slice(array) and published under a special key in the final event.
+	// - Structure: A slice of maps, where each map represents a single struct
+	//   instance, similar to an element in `StructArrays`.
+	// - Final JSON Example: "Structures": [{"FieldA": "Val1"}, {"FieldB": "Val2"}]
+	//   (Note: These are published under the special "Structures" key).
+	StructSingle *[]map[string]*Property
 
 	// Flags control event processing behavior, e.g., skipping or dropping events.
 	Flags struct {
