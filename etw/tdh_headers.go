@@ -404,6 +404,16 @@ func (t *TraceEventInfo) LevelName() string {
 	return t.cleanStringAt(uintptr(t.LevelNameOffset))
 }
 
+// RealProviderID returns the GUID of the real provider that wrote this event
+//
+// For MOF events returns EventGUID if present, otherwise ProviderGUID.
+func (t *TraceEventInfo) RealProviderID() *GUID {
+	if t.EventGUID != nullGUID {
+		return &t.EventGUID
+	}
+	return &t.ProviderGUID
+}
+
 /*
 Meaning of this field depends on DecodingSource.
   - XMLFile: The offset to the name of the associated task.
