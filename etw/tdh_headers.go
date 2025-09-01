@@ -377,6 +377,9 @@ func (t *TraceEventInfo) cleanStringAt(offset uintptr) string {
 	return ""
 }
 
+// EventID returns the event ID of the event record.
+// For MOF events, this ID is unique derived from provider id and opcode.
+// For non-MOF events, this is the EventRecord.EventDescriptor.Id.
 func (t *TraceEventInfo) EventID() uint16 {
 	if t.IsXML() {
 		return t.EventDescriptor.Id
