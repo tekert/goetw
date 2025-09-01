@@ -75,11 +75,19 @@ func (p *Property) MarshalJSON() ([]byte, error) {
 // Sets all fields of the struct to zero/empty values.
 // This is called by the helper before a property is reused.
 func (p *Property) reset() {
-	*p = Property{}
+	//*p = Property{}
+	// This is a performance optimization. Instead of zeroing the entire struct
+	// with `*p = Property{}`, we only reset the fields that are critical
+	// for correctness when reusing a Property object from the pool.
+	//
+	// - `value` must be cleared so `FormatToString` knows to parse the property.
+	// - `pValue` must be cleared to ensure `Parseable()` returns false initially.
+	//   `prepareProperty` will set it to a non-zero value for parseable properties.
+	//
+	// All other fields are guaranteed to be overwritten in `prepareProperty`.
+	p.value = ""
+	p.pValue = 0
 }
-
-// release is no longer called on individual properties.
-// The EventRecordHelper releases the entire block of properties at once.
 
 func (p *Property) Parseable() bool {
 	return p.erh != nil && p.evtPropInfo != nil && p.pValue > 0

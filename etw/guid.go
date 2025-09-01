@@ -35,10 +35,10 @@ var (
 //
 // Reference: https://learn.microsoft.com/en-us/windows/win32/api/guiddef/ns-guiddef-guid
 type GUID struct {
-	Data1 uint32    // First 32 bits of the GUID
-	Data2 uint16    // Next 16 bits of the GUID
-	Data3 uint16    // Next 16 bits of the GUID
-	Data4 [8]byte   // Final 64 bits of the GUID as 8 bytes
+	Data1 uint32  // First 32 bits of the GUID
+	Data2 uint16  // Next 16 bits of the GUID
+	Data3 uint16  // Next 16 bits of the GUID
+	Data4 [8]byte // Final 64 bits of the GUID as 8 bytes
 }
 
 // IsZero checks if GUID is all zeros
@@ -193,11 +193,49 @@ func ParseGUID(guid string) (g *GUID, err error) {
 	return
 }
 
-func (g GUID) MarshalJSON() ([]byte, error) {
+func (g GUID) MarshalJSON_old() ([]byte, error) {
 	s := g.StringU()
 	buf := make([]byte, 0, len(s)+2) // +2 for quotes
 	buf = append(buf, '"')
 	buf = append(buf, s...)
 	buf = append(buf, '"')
 	return buf, nil
+}
+
+func (g GUID) MarshalJSON() ([]byte, error) {
+	// This implementation is a specialized version of StringU() that writes
+	// directly into a byte slice with JSON quotes, avoiding the intermediate
+	// string allocation and copy. This is a significant performance optimization.
+	var b [40]byte
+	b[0] = '"'
+	b[39] = '"'
+	b[1] = '{'
+	b[38] = '}'
+
+	// Avoid slice allocations for data parts
+	var d1 [4]byte
+	d1[0] = byte(g.Data1 >> 24)
+	d1[1] = byte(g.Data1 >> 16)
+	d1[2] = byte(g.Data1 >> 8)
+	d1[3] = byte(g.Data1)
+
+	var d2 [2]byte
+	d2[0] = byte(g.Data2 >> 8)
+	d2[1] = byte(g.Data2)
+
+	var d3 [2]byte
+	d3[0] = byte(g.Data3 >> 8)
+	d3[1] = byte(g.Data3)
+
+	hexf.EncodeU(b[2:10], d1[:])
+	b[10] = '-'
+	hexf.EncodeU(b[11:15], d2[:])
+	b[15] = '-'
+	hexf.EncodeU(b[16:20], d3[:])
+	b[20] = '-'
+	hexf.EncodeU(b[21:25], g.Data4[:2])
+	b[25] = '-'
+	hexf.EncodeU(b[26:38], g.Data4[2:])
+
+	return b[:], nil
 }

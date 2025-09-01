@@ -3,6 +3,7 @@ package hexf
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -281,6 +282,79 @@ func TestNumEncodePrefix(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAppendUint(t *testing.T) {
+	tests := []struct {
+		name     string
+		fn       func(dst []byte) []byte
+		expected string
+	}{
+		{"Uint64_Zero", func(dst []byte) []byte { return AppendUint64(dst, 0) }, "PREFIX0000000000000000"},
+		{"Uint64_Mid", func(dst []byte) []byte { return AppendUint64(dst, 0x12345) }, "PREFIX0000000000012345"},
+		{"Uint64_Max", func(dst []byte) []byte { return AppendUint64(dst, 0xFFFFFFFFFFFFFFFF) }, "PREFIXFFFFFFFFFFFFFFFF"},
+		{"Uint32_Zero", func(dst []byte) []byte { return AppendUint32(dst, 0) }, "PREFIX00000000"},
+		{"Uint32_Mid", func(dst []byte) []byte { return AppendUint32(dst, 0x1234) }, "PREFIX00001234"},
+		{"Uint32_Max", func(dst []byte) []byte { return AppendUint32(dst, 0xFFFFFFFF) }, "PREFIXFFFFFFFF"},
+		{"Uint16_Zero", func(dst []byte) []byte { return AppendUint16(dst, 0) }, "PREFIX0000"},
+		{"Uint16_Mid", func(dst []byte) []byte { return AppendUint16(dst, 0x12) }, "PREFIX0012"},
+		{"Uint16_Max", func(dst []byte) []byte { return AppendUint16(dst, 0xFFFF) }, "PREFIXFFFF"},
+		{"Uint8_Zero", func(dst []byte) []byte { return AppendUint8(dst, 0) }, "PREFIX00"},
+		{"Uint8_Mid", func(dst []byte) []byte { return AppendUint8(dst, 0x1) }, "PREFIX01"},
+		{"Uint8_Max", func(dst []byte) []byte { return AppendUint8(dst, 0xFF) }, "PREFIXFF"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Start with a non-empty buffer to test appending.
+			buf := []byte("PREFIX")
+			result := tt.fn(buf)
+			if string(result) != tt.expected {
+				t.Errorf("Append failed: got %s, want %s", string(result), tt.expected)
+			}
+		})
+	}
+}
+
+func BenchmarkMarshalKeywords(b *testing.B) {
+	k := struct {
+		Mask uint64
+		Name []string
+	}{
+		Mask: 0x123456789,
+		Name: []string{"one", "two", "three"},
+	}
+
+	b.Run("hexf_NUm64p_Alloc", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			maskString := NUm64p(k.Mask, false)
+			size := 26 + len(maskString) + 20 // Rough size
+			buf := make([]byte, 0, size)
+			buf = append(buf, `{"Mask":"`...)
+			buf = append(buf, maskString...)
+			buf = append(buf, `","Name":["one","two","three"]}`...)
+		}
+	})
+
+	b.Run("strconv_AppendUint_NoPad", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			size := 26 + 18 + 20 // Rough size
+			buf := make([]byte, 0, size)
+			buf = append(buf, `{"Mask":"0x`...)
+			buf = strconv.AppendUint(buf, k.Mask, 16)
+			buf = append(buf, `","Name":["one","two","three"]}`...)
+		}
+	})
+
+	b.Run("hexf_AppendUint64_Padded", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			size := 26 + 18 + 20 // Rough size
+			buf := make([]byte, 0, size)
+			buf = append(buf, `{"Mask":"0x`...)
+			buf = AppendUint64(buf, k.Mask)
+			buf = append(buf, `","Name":["one","two","three"]}`...)
+		}
+	})
 }
 
 func BenchmarkEncodeCompare(b *testing.B) {

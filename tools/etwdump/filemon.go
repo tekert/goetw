@@ -177,8 +177,8 @@ func filemonPreparedCB(h *etw.EventRecordHelper) (err error) {
 			break
 		}
 
-		h.SetProperty("TargetFileName", f.name)
-		h.SetProperty("Image", getImageName(h.EventRec.EventHeader.ProcessId))
+		h.SetCustomProperty("TargetFileName", f.name)
+		h.SetCustomProperty("Image", getImageName(h.EventRec.EventHeader.ProcessId))
 		// output event will only show filename
 		h.SelectFields("TargetFileName", "Image")
 		f.flags.read = (h.EventID() == 15)

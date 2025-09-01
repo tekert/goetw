@@ -171,6 +171,59 @@ func EncodeToStringUPrefixTrim(src []byte) string {
 }
 
 //
+// Append to buffer
+//
+
+// AppendUint64 appends the hexadecimal representation of a uint64 to a byte slice,
+// zero-padded to 16 characters (8 bytes). This version is optimized to process
+// one byte (two hex chars) per loop iteration.
+func AppendUint64(dst []byte, n uint64) []byte {
+	var b [16]byte
+	for i := 15; i >= 1; i -= 2 {
+		val := byte(n)
+		b[i-1] = hextableUpper[val>>4]
+		b[i] = hextableUpper[val&0x0F]
+		n >>= 8
+	}
+	return append(dst, b[:]...)
+}
+
+// AppendUint32 appends the hexadecimal representation of a uint32 to a byte slice,
+// zero-padded to 8 characters (4 bytes).
+func AppendUint32(dst []byte, n uint32) []byte {
+	var b [8]byte
+	for i := 7; i >= 1; i -= 2 {
+		val := byte(n)
+		b[i-1] = hextableUpper[val>>4]
+		b[i] = hextableUpper[val&0x0F]
+		n >>= 8
+	}
+	return append(dst, b[:]...)
+}
+
+// AppendUint16 appends the hexadecimal representation of a uint16 to a byte slice,
+// zero-padded to 4 characters (2 bytes).
+func AppendUint16(dst []byte, n uint16) []byte {
+	var b [4]byte
+	val := byte(n >> 8)
+	b[0] = hextableUpper[val>>4]
+	b[1] = hextableUpper[val&0x0F]
+	val = byte(n)
+	b[2] = hextableUpper[val>>4]
+	b[3] = hextableUpper[val&0x0F]
+	return append(dst, b[:]...)
+}
+
+// AppendUint8 appends the hexadecimal representation of a uint8 to a byte slice,
+// zero-padded to 2 characters (1 byte).
+func AppendUint8(dst []byte, n uint8) []byte {
+	var b [2]byte // 1 byte * 2 hex chars/byte
+	b[0] = hextableUpper[n>>4]
+	b[1] = hextableUpper[n&0xF]
+	return append(dst, b[:]...)
+}
+
+//
 // Numbers
 //
 

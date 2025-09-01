@@ -236,7 +236,7 @@ func TestEventMapInfo(t *testing.T) {
 
 		erh.Skip()
 
-		for _, p := range erh.Properties {
+		for _, p := range erh.PropertiesCustom {
 			// calling those two method just to test they don't cause memory corruption
 			p.evtPropInfo.Count()
 			p.evtPropInfo.CountPropertyIndex()
@@ -534,7 +534,7 @@ func TestConsumerCallbacks(t *testing.T) {
 				break
 			}
 
-			h.SetProperty("FileName", f.name)
+			h.SetCustomProperty("FileName", f.name)
 			f.flags.read = (h.EventID() == 15)
 			f.flags.write = (h.EventID() == 16)
 

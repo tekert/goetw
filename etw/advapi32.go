@@ -102,6 +102,7 @@ func ProcessTrace(handleArray *syscall.Handle,
 	handleCount uint32,
 	startTime *FileTime,
 	endTime *FileTime) error {
+	//r1, _, _ := syscall.SyscallN(processTrace.Addr(),
 	r1, _, _ := processTrace.Call(
 		uintptr(unsafe.Pointer(handleArray)),
 		uintptr(handleCount),
