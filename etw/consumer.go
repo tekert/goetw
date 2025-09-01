@@ -85,6 +85,7 @@ type Consumer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	closed bool
+	started bool // True if the consumer has been started.
 
 	tmu    sync.RWMutex // Protect trace updates
 
@@ -173,7 +174,7 @@ func (e *EventTraceLogfile) getContext() *traceContext {
 // NewConsumer creates a new Consumer to consume ETW
 func NewConsumer(ctx context.Context) (c *Consumer) {
 	c = &Consumer{
-		Events: NewEventBuffer(),
+		Events:                NewEventBuffer(),
 	}
 
 	c.ctx, c.cancel = context.WithCancel(ctx)
@@ -183,6 +184,19 @@ func NewConsumer(ctx context.Context) (c *Consumer) {
 	c.EventCallback = c.DefaultEventCallback
 
 	return c
+}
+
+// SetTraceInfoCache enables or disables the caching of the TRACE_EVENT_INFO schema buffer.
+// Disabling this forces a call to TdhGetEventInformation for every event, which is
+// useful for debugging but will impact performance.
+//
+// This function is not thread-safe and must be called before the consumer is started.
+func (c *Consumer) SetTraceInfoCache(enable bool) error {
+	if c.started { // TODO: and (not closed) when we do that a consumer can be reused?
+		return errors.New("cannot change trace info cache setting after consumer has started")
+	}
+	globalTraceEventInfoCacheEnabled = enable
+	return nil
 }
 
 // gets or creates a new one if it doesn't exist
@@ -774,6 +788,7 @@ func (c *Consumer) DefaultEventCallback(event *Event) error {
 // Start starts the consumer, for each real time trace opened starts ProcessTrace in new goroutine
 // Also opens any trace session not already opened for consumption.
 func (c *Consumer) Start() (err error) {
+	c.started = true
 	// opening all traces that are not opened first,
 	c.traces.Range(func(key, value any) bool {
 		name := key.(string)
