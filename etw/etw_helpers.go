@@ -39,16 +39,16 @@ var (
 	// tdhBufferPool is used if using thd fallback for string conversion.
 	tdhBufferPool = sync.Pool{New: func() any { s := make([]uint16, 128); return &s }}
 
-	// schemaCache stores all schema-related information for an event.
+	// globalSchemaCache stores all schema-related information for an event.
 	// It's a two-level map for performance:
 	// Level 1: Provider GUID -> Level 2: *sync.Map
 	// Level 2: Schema Key (uint64) -> *schemaCacheEntry
-	schemaCache sync.Map
+	globalSchemaCache sync.Map
 
-	// traceEventInfoCacheEnabled controls whether the schema cache is used.
+	// globalTraceEventInfoCacheEnabled controls whether the schema cache is used.
 	// Disabling it forces a call to TdhGetEventInformation for every event, which is
 	// useful for debugging but has a significant performance impact.
-	traceEventInfoCacheEnabled = true
+	globalTraceEventInfoCacheEnabled = true
 
 	// cache for metadata on fully parsed events
 	hostname, _ = os.Hostname()
@@ -76,14 +76,6 @@ func (sce *schemaCacheEntry) GetPropertyNames(traceInfo *TraceEventInfo) []strin
 		sce.propertyNames = names
 	})
 	return sce.propertyNames
-}
-
-// EnableTraceInfoCache enables or disables the caching of TRACE_EVENT_INFO data.
-// Disabling the cache forces a call to TdhGetEventInformation for every event,
-// which can be useful for debugging but will impact performance.
-// This function is not thread-safe and should be called before starting any trace sessions.
-func EnableTraceInfoCache(enable bool) {
-	traceEventInfoCacheEnabled = enable
 }
 
 // These EventRecord methods are defined here because they are only needed in etw_helpers.go
@@ -160,16 +152,16 @@ func (er *EventRecord) schemaCacheKey64() schemaKeyType64 {
 	return schemaKeyType64(key)
 }
 
-// schemaCacheHelper retrieves or creates the provider-specific cache (the second level of the two-level map).
+// getOrSetProviderCache retrieves or creates the provider-specific cache (the second level of the two-level map).
 // This is a thread-safe way to ensure the nested map is initialized only once per provider.
-func (er *EventRecord) schemaCacheHelper(baseMap *sync.Map) (shemaCache *sync.Map) {
-	if val, ok := baseMap.Load(er.EventHeader.ProviderId); ok {
+func (er *EventRecord) getOrSetProviderCache() (shemaCache *sync.Map) {
+	if val, ok := globalSchemaCache.Load(er.EventHeader.ProviderId); ok {
 		shemaCache = val.(*sync.Map)
 	} else {
 		// This provider has not been seen before. Create its cache.
 		// Use LoadOrStore to handle the race condition of two goroutines seeing it for the first time.
 		newCache := &sync.Map{}
-		actual, _ := baseMap.LoadOrStore(er.EventHeader.ProviderId, newCache)
+		actual, _ := globalSchemaCache.LoadOrStore(er.EventHeader.ProviderId, newCache)
 		shemaCache = actual.(*sync.Map)
 	}
 	return
@@ -383,13 +375,8 @@ func (e *EventRecordHelper) release() {
 }
 
 // newEventRecordHelper creates a new EventRecordHelper and retrieves the TRACE_EVENT_INFO
-// for the given EventRecord. It implements a multi-level caching and fallback strategy:
-// 1. Check a global two stage cache for a pre-parsed TRACE_EVENT_INFO.
-// 2. If cache miss, call TdhGetEventInformation.
-// 3. If the API call succeeds, store the result in the cache.
-// 4. If the API fails for a classic MOF event, attempt to build the info from generated definitions.
-// 5. If the MOF generation succeeds, store that result in the cache.
-func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
+// for the given EventRecord. It implements a multi-level caching and fallback strategy.
+func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) { // mi version
 	erh = helperPool.Get().(*EventRecordHelper)
 	storage := er.userContext().storage
 
@@ -400,139 +387,78 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	erh.EventRec = er
 	erh.teiBuffer = &storage.teiBuffer // Keep a reference before calling internal funcs
 
-	// TraceEventInfo EventDescriptor is the only dynamic field.
-	// With 64bit key we dont cover the full EventDescritor so we have to get the schema copy it and patch it.
-	// With 128bit key we can use the cached schema directly.
-	var schemaKey schemaKeyType64
+	providerCache := er.getOrSetProviderCache()
+	schemaKey := er.schemaCacheKey64()
 
 	// --- Stage 1: Check Cache ---
-	if traceEventInfoCacheEnabled {
-		// 1. First-level lookup by Provider GUID.
-		providerCache := er.schemaCacheHelper(&schemaCache)
-
-		// 2. Second-level lookup by schema key.
-		schemaKey = er.schemaCacheKey64()
+	if globalTraceEventInfoCacheEnabled {
 		if cachedEntry, found := providerCache.Load(schemaKey); found {
 			// Cache hit: Use the cached TRACE_EVENT_INFO.
 			entry := cachedEntry.(*schemaCacheEntry)
-			template := entry.teiBuffer
-
-			// This commented block of code is if we need to copy the buffer to a local one. (2,1% performance hit)
-			// NOTE: use er.schemaCacheKey32() or er.schemaCacheKey64() if using this block
-			if true {
-				// Ensure the thread-local buffer is large enough.
-				if cap(storage.teiBuffer) < len(template) {
-					storage.teiBuffer = make([]byte, len(template))
+			// A valid cache hit requires a non-nil buffer. A nil buffer means it's a
+			// "shell" entry created when caching was previously disabled.
+			if entry.teiBuffer != nil {
+				template := entry.teiBuffer
+				// This commented block of code is if we need to copy the buffer to a local one. (2,1% performance hit)
+				// NOTE: use er.schemaCacheKey32() or er.schemaCacheKey64() if using this block
+				if true {
+					// Ensure the thread-local buffer is large enough.
+					if cap(storage.teiBuffer) < len(template) {
+						storage.teiBuffer = make([]byte, len(template))
+					}
+					storage.teiBuffer = storage.teiBuffer[:len(template)]
+					// Copy the cached template into the thread-local buffer.
+					copy(storage.teiBuffer, template)
+					erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
+					erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // Important: patch EventDescriptor
+				} else {
+					// NOTE: use er.schemaCacheKey128() if using this block
+					// The template is immutable. Point directly to it. No copy needed.
+					erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&template[0]))
+					// The buffer is the globally cached one, not the thread-local one.
+					// Setting this to nil indicates it's not locally owned.
+					erh.teiBuffer = nil
 				}
-				storage.teiBuffer = storage.teiBuffer[:len(template)]
-				// Copy the cached template into the thread-local buffer.
-				copy(storage.teiBuffer, template)
-				erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
-				erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // Important: patch EventDescriptor
-			} else { // NOTE: use er.schemaCacheKey128() if using this block
-
-				// The template is immutable. Point directly to it. No copy needed.
-				erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&template[0]))
-
-				// The buffer is the globally cached one, not the thread-local one.
-				// Setting this to nil indicates it's not locally owned.
-				erh.teiBuffer = nil
+				return erh, nil // Cache hit, we are done.
 			}
-			return erh, nil // Cache hit, we are done.
 		}
 	}
 
-	// --- Stage 2: Call TdhGetEventInformation (Cache Miss) ---
-	// Use the already-set erh.teiBuffer.
+	// --- Stage 2: Call TdhGetEventInformation (Cache Miss or Cache Disabled) ---
 	erh.TraceInfo, err = er.GetEventInformation(erh.teiBuffer)
 	if err != nil {
 		apiErr := fmt.Errorf("%w: %v", ErrGetEventInformation, err)
-
-		// --- Stage 3: Fallback to MOF Generator ---
+		// Fallback to MOF Generator
 		if er.IsMof() {
-			// Use the already-set erh.teiBuffer.
 			if erh.TraceInfo, err = buildTraceInfoFromMof(er, erh.teiBuffer); err == nil {
-				// MOF generator succeeded. Cache the result.
-				if traceEventInfoCacheEnabled {
-					erh.cloneAndCacheTraceInfo(schemaKey)
-				}
-				err = nil // Suppress the original API error.
+				err = nil //  MOF generator succeeded. Suppress the original API error.
 			} else {
 				err = apiErr // MOF generator also failed; return the original API error.
 			}
 		} else {
 			err = apiErr // Not a MOF event, no fallback possible.
 		}
-	} else {
-		// API call succeeded. Cache the result.
-		if traceEventInfoCacheEnabled {
-			erh.cloneAndCacheTraceInfo(schemaKey)
-		}
 	}
+
+	// If we failed to get TraceInfo, we can't proceed to caching.
+	if err != nil {
+		return erh, err
+	}
+
+	// --- Stage 3: Update Cache ---
+	//  We always create an entry to support property name caching.
+	// It will be a "shell" (with a nil teiBuffer) if TEI caching is disabled.
+	newEntry := &schemaCacheEntry{}
+	if globalTraceEventInfoCacheEnabled {
+		// If caching is enabled, make a copy of the buffer to store.
+		newEntry.teiBuffer = make([]byte, len(*erh.teiBuffer))
+		copy(newEntry.teiBuffer, *erh.teiBuffer)
+	}
+	// Store the new entry, overwriting any previous (e.g., shell) entry.
+	// The small race of overwriting is acceptable for the performance gain.
+	providerCache.Store(schemaKey, newEntry)
 
 	return erh, err
-}
-
-// cloneAndCacheTraceInfo makes a copy of a TraceEventInfo buffer and stores it in the unified schema cache.
-// This is called on a cache miss after the schema has been successfully retrieved or generated.
-func (e *EventRecordHelper) cloneAndCacheTraceInfo(schemaKey schemaKeyType64) {
-	providerGUID := e.EventRec.EventHeader.ProviderId
-
-	// Get the second-level cache for this provider. It must exist at this point.
-	val, _ := schemaCache.Load(providerGUID)
-	providerCache := val.(*sync.Map)
-
-	// Create a copy of the buffer to store in the cache.
-	// This is done only once per schema, so performance is not critical.
-	cachedTei := make([]byte, len(*e.teiBuffer))
-	copy(cachedTei, *e.teiBuffer)
-
-	// Create the new cache entry. Property names will be parsed on-demand later.
-	entry := &schemaCacheEntry{
-		teiBuffer: cachedTei,
-	}
-
-	// Store the new info struct in the second-level cache.
-	providerCache.Store(schemaKey, entry)
-}
-
-// newEventRecordHelper_test is a performance testing variant of newEventRecordHelper.
-// It prioritizes the custom buildTraceInfoFromMof function and falls back to the
-// GetEventInformation API only if the custom builder fails. This is the reverse
-// of the production logic and is used to measure the performance of the MOF fallback path.
-func newEventRecordHelper_test(er *EventRecord) (erh *EventRecordHelper, err error) {
-	erh = helperPool.Get().(*EventRecordHelper)
-	storage := er.userContext().storage
-
-	// Reset the thread-local storage before processing a new event.
-	storage.reset()
-
-	erh.storage = storage
-	erh.EventRec = er
-
-	// For testing, we prioritize our custom MOF builder.
-	if er.IsMof() {
-		erh.TraceInfo, err = buildTraceInfoFromMof(er, &storage.teiBuffer)
-	} else {
-		// If it's not a classic MOF event, we must use the API.
-		// We set an error to force the fallback path.
-		err = fmt.Errorf("not a MOF event, must use GetEventInformation")
-	}
-
-	// If our MOF builder failed (or it wasn't a MOF event), fall back to the API.
-	if err != nil {
-		mofBuilderErr := err // Preserve the builder error for context.
-		if erh.TraceInfo, err = er.GetEventInformation(&storage.teiBuffer); err != nil {
-			// Both the builder and the API failed. The API error is the one to report.
-			err = fmt.Errorf("%w: %v: %v", ErrGetEventInformation, err, mofBuilderErr)
-		} else {
-			// API succeeded, so we can proceed. Clear the error.
-			err = nil
-		}
-	}
-
-	erh.teiBuffer = &storage.teiBuffer // Keep a reference
-	return
 }
 
 // This memory was already reseted when it was released.
@@ -1105,21 +1031,21 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 // getCachedPropNames retrieves the property names for the event schema.
 // It uses a cache for each provider event type to avoid repeated UTF-16 to string conversions.
 func (e *EventRecordHelper) getCachedPropNames() []string {
-	// The schema MUST be in the cache at this point, because newEventRecordHelper
-	// ensures it's populated on both cache hits and misses.
+	// The schema MUST be in the cache at this point.
+	// newEventRecordHelper ensures it's populated on both cache hits and misses.
 
-	// 1. First-level lookup for the provider's cache.
-	providerCache, _ := schemaCache.Load(e.EventRec.EventHeader.ProviderId)
+	// 1. First-level lookup. Already exists.
+	providerCache, _ := globalSchemaCache.Load(e.EventRec.EventHeader.ProviderId)
 
-	// 2. Second-level lookup for the specific schema's entry.
+	// 2. Second-level lookup. Already exists.
 	// We use the same 64-bit key that was used to cache the TRACE_EVENT_INFO.
 	schemaKey := e.EventRec.schemaCacheKey64()
 	cachedEntry, _ := providerCache.(*sync.Map).Load(schemaKey)
 
 	entry := cachedEntry.(*schemaCacheEntry)
 
-	// GetPropertyNames will lazily parse the names on the first call and return
-	// the cached slice on subsequent calls.
+	// GetPropertyNames will lazily parse the names on the first call (guarded by sync.Once)
+	// and return the cached slice on subsequent calls.
 	return entry.GetPropertyNames(e.TraceInfo)
 }
 
@@ -1508,6 +1434,11 @@ func (e *EventRecordHelper) GetPropertyFloat(name string) (float64, error) {
 func (e *EventRecordHelper) SetProperty(name, value string) *Property {
 	if p, ok := e.Properties[name]; ok {
 		p.value = value
+        // Make it unparseable so this synthetic value is always used,
+        // even if the new value is an empty string. This prevents `FormatToString`
+        // from re-parsing the original data. By setting pValue to 0, the
+        // Parseable() method will return false.
+        p.pValue = 0
 		return p
 	}
 
