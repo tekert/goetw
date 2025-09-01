@@ -272,8 +272,9 @@ New notes for myself2
 (Actually deleted by microsoft... using wayback machine)
 - [Instrumenting Your Code with ETW](https://learn.microsoft.com/en-us/windows-hardware/test/weg/instrumenting-your-code-with-etw)
 
-- [Core OS Events in Windows, Part 1](https://learn.microsoft.com/en-us/archive/msdn-magazine/2009/september/core-os-events-in-windows-7-part-1)
-- [Core OS Events in Windows, Part 2](https://learn.microsoft.com/en-us/archive/msdn-magazine/2009/october/core-instrumentation-events-in-windows-7-part-2)
+- [ETW performance tunning (2007)](https://learn.microsoft.com/en-us/archive/msdn-magazine/2007/april/event-tracing-improve-debugging-and-performance-tuning-with-etw)
+- [Core OS Events in Windows, Part 1 (2009)](https://learn.microsoft.com/en-us/archive/msdn-magazine/2009/september/core-os-events-in-windows-7-part-1)
+- [Core OS Events in Windows, Part 2 (2009)](https://learn.microsoft.com/en-us/archive/msdn-magazine/2009/october/core-instrumentation-events-in-windows-7-part-2)
 - [About Event Tracing, Provider Types](https://learn.microsoft.com/en-us/windows/win32/etw/about-event-tracing)
 - [How are Events Created](https://learn.microsoft.com/en-us/windows/win32/etw/event-metadata-overview)
 
