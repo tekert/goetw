@@ -1279,11 +1279,11 @@ func (e *EventRecordHelper) buildEvent() (event *Event, err error) {
 
 // parseAndSetProperty parses a single named property and sets its value in the output Event.
 func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err error) {
-	eventData := out.EventData
-
-	// it is a user data property
+	var eventData *[]EventProperty
 	if (e.TraceInfo.Flags & TEMPLATE_USER_DATA) == TEMPLATE_USER_DATA {
-		eventData = out.UserData
+		eventData = &out.UserData
+	} else {
+		eventData = &out.EventData
 	}
 
 	// Check simple properties from schema first using the index map for a fast lookup.
@@ -1291,9 +1291,11 @@ func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err er
 	if index, ok := nameToIndex[name]; ok {
 		if index < len(*e.PropertiesByIndex) {
 			if p := (*e.PropertiesByIndex)[index]; p != nil {
-				if eventData[p.name], err = p.FormatToString(); err != nil {
+				var val string
+				if val, err = p.FormatToString(); err != nil {
 					return fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, p.name, err)
 				}
+				*eventData = append(*eventData, EventProperty{Name: p.name, Value: val})
 				return nil // Property found and parsed.
 			}
 		}
@@ -1302,7 +1304,7 @@ func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err er
 	// Check for custom properties in the map.
 	if p, ok := e.PropertiesCustom[name]; ok {
 		// Custom properties have their value pre-formatted as a string.
-		eventData[p.name] = p.value
+		*eventData = append(*eventData, EventProperty{Name: p.name, Value: p.value})
 		return nil
 	}
 
@@ -1316,7 +1318,7 @@ func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err er
 				return fmt.Errorf("%w array %s[%d]: %s", ErrPropertyParsingTdh, name, i, err)
 			}
 		}
-		eventData[name] = values
+		*eventData = append(*eventData, EventProperty{Name: name, Value: values})
 		return nil
 	}
 
@@ -1325,7 +1327,7 @@ func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err er
 		if structArray, err := e.formatStructs(structs, name); err != nil {
 			return err
 		} else {
-			eventData[name] = structArray
+			*eventData = append(*eventData, EventProperty{Name: name, Value: structArray})
 		}
 		return nil
 	}
@@ -1335,7 +1337,7 @@ func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err er
 		if singleStructs, err := e.formatStructs(*e.StructSingle, name); err != nil {
 			return err
 		} else {
-			eventData[name] = singleStructs
+			*eventData = append(*eventData, EventProperty{Name: name, Value: singleStructs})
 		}
 		return nil
 	}
@@ -1356,11 +1358,13 @@ func (e *EventRecordHelper) shouldParse(name string) bool {
 // this a bit inneficient, but it's not a big deal, we ussually want a few properties not all.
 func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 	var err error
-	eventData := out.EventData
+	var eventData *[]EventProperty
 
 	// it is a user data property
 	if (e.TraceInfo.Flags & TEMPLATE_USER_DATA) == TEMPLATE_USER_DATA {
-		eventData = out.UserData
+		eventData = &out.UserData
+	} else {
+		eventData = &out.EventData
 	}
 
 	// Get or generate property names for this event schema.
@@ -1378,7 +1382,7 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 		if _, err := p.FormatToString(); err != nil {
 			last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
 		} else {
-			eventData[name] = p.value
+			*eventData = append(*eventData, EventProperty{Name: name, Value: p.value})
 		}
 	}
 
@@ -1388,7 +1392,7 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 			continue
 		}
 		// This property was added by manually, value is already a string.
-		eventData[name] = p.value
+		*eventData = append(*eventData, EventProperty{Name: name, Value: p.value})
 	}
 
 	// Arrays
@@ -1407,7 +1411,7 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 			}
 			values = append(values, v)
 		}
-		eventData[pname] = values
+		*eventData = append(*eventData, EventProperty{Name: pname, Value: values})
 	}
 
 	// Handle struct arrays
@@ -1418,7 +1422,7 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 		if structArray, err := e.formatStructs(structs, name); err != nil {
 			last = err
 		} else {
-			eventData[name] = structArray
+			*eventData = append(*eventData, EventProperty{Name: name, Value: structArray})
 		}
 	}
 
@@ -1427,7 +1431,7 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 		if structs, err := e.formatStructs(*e.StructSingle, StructurePropertyName); err != nil {
 			last = err
 		} else {
-			eventData[StructurePropertyName] = structs
+			*eventData = append(*eventData, EventProperty{Name: StructurePropertyName, Value: structs})
 		}
 	}
 

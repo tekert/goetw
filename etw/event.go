@@ -13,9 +13,9 @@ var (
 	eventPool = sync.Pool{
 		New: func() any {
 			return &Event{
-				EventData:    make(map[string]any),
-				UserData:     make(map[string]any),
-				ExtendedData: make([]string, 0),
+				EventData:    make([]EventProperty, 0, 32), // Pre-allocate capacity
+				UserData:     make([]EventProperty, 0, 8),  // Pre-allocate capacity
+				ExtendedData: make([]string, 0, 4),
 			}
 		},
 	}
@@ -23,14 +23,20 @@ var (
 
 type EventID uint16
 
+// EventProperty holds a single key-value pair from an ETW event's data.
+type EventProperty struct {
+	Name  string
+	Value any
+}
+
 type Event struct {
 	Flags struct {
 		// Use to flag event as being skippable for performance reason
 		Skippable bool
 	} `json:"-"`
 
-	EventData map[string]any `json:",omitempty"`
-	UserData  map[string]any `json:",omitempty"`
+	EventData []EventProperty `json:",omitempty"`
+	UserData  []EventProperty `json:",omitempty"`
 	System    struct {
 		Channel     string
 		Computer    string
@@ -92,10 +98,10 @@ func (k MarshalKeywords) MarshalJSON() ([]byte, error) {
 	size += len(maskString)
 
 	if len(k.Name) > 0 {
-		size += len(k.Name) * 2    // quotes for each name
-		size += len(k.Name) - 1    // commas between names (n-1 commas needed)
+		size += len(k.Name) * 2 // quotes for each name
+		size += len(k.Name) - 1 // commas between names (n-1 commas needed)
 		for _, name := range k.Name {
-			size += len(name)      // actual name length
+			size += len(name) // actual name length
 		}
 	}
 
@@ -127,9 +133,9 @@ func NewEvent() *Event {
 }
 
 func (e *Event) reset() {
-	// Clear contents
-	clear(e.EventData)
-	clear(e.UserData)
+	// Resetting slices is much faster than clearing maps.
+	e.EventData = e.EventData[:0]
+	e.UserData = e.UserData[:0]
 
 	// Zero all fields except maps/slices
 	*e = Event{
@@ -145,20 +151,21 @@ func (e *Event) Release() {
 }
 
 func (e *Event) GetProperty(name string) (i any, ok bool) {
-
-	if e.EventData != nil {
-		if i, ok = e.EventData[name]; ok {
-			return
+	// Linear scan is fast enough for the small number of properties
+	// typical in an ETW event.
+	for i := range e.EventData {
+		if e.EventData[i].Name == name {
+			return e.EventData[i].Value, true
 		}
 	}
 
-	if e.UserData != nil {
-		if i, ok = e.UserData[name]; ok {
-			return
+	for i := range e.UserData {
+		if e.UserData[i].Name == name {
+			return e.UserData[i].Value, true
 		}
 	}
 
-	return
+	return nil, false
 }
 
 func (e *Event) GetPropertyString(name string) (string, bool) {
