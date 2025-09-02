@@ -119,7 +119,7 @@ func NewPagedRealTimeSession(name string) (s *RealTimeSession) {
 // have a modern XML manifest.
 //
 // For more details on the EnableFlags, see the #microsoft-docs:
-// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-event_trace_properties
+// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-event_trace_properties_v2
 //
 // Some MOF are not documented on the microsoft site, for example: Process_V4_TypeGroup1 etc..
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa364083(v=vs.85).aspx
@@ -139,7 +139,8 @@ func NewKernelRealTimeSession(flags ...KernelNtFlag) (p *RealTimeSession) {
 // IMPORTANT: This feature is only available on Windows 11 and later.
 //
 // This function creates a session that can consume events from the new "System
-// Providers" model. This model replaces the monolithic "NT Kernel Logger" with
+// Providers" in conjuction with the normal providers.
+// This model replaces the monolithic "NT Kernel Logger" with
 // individual providers for different kernel components (e.g., processes, memory, I/O).
 //
 // Unlike the legacy kernel session, which is configured with bitmask flags at creation,
