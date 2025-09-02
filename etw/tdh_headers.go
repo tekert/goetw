@@ -386,6 +386,8 @@ func (t *TraceEventInfo) EventID() uint16 {
 	} else if t.IsMof() {
 		if c, ok := MofClassMapping[t.EventGUID.Data1]; ok {
 			return c.BaseId + uint16(t.EventDescriptor.Opcode)
+		} else {
+			return uint16(t.EventDescriptor.Opcode) // fallback to raw ID
 		}
 	}
 	// not meaningful, cannot be used to identify event
