@@ -42,10 +42,6 @@ var (
 // 3. [Consumer BufferCallback] From the LogfileInfo.LogfileHeader.EventsLost (only for ETL files).
 // 4. [Session side] From the QueryTrace() call, which returns the total number of lost events
 
-// var (
-// 	aSource = []string{"XML instrumentation manifest", "WMI MOF class", "WPP TMF file"}
-// )
-
 // SessionSlice converts a slice of structures implementing Session
 // to a slice of Session.
 func SessionSlice(i any) (out []Session) {
@@ -82,16 +78,16 @@ func SessionSlice(i any) (out []Session) {
 // always prefer provider-side (Level/Keyword) or runtime-side (ProviderFilter) filtering.
 type Consumer struct {
 	sync.WaitGroup
-	ctx    context.Context
-	cancel context.CancelFunc
-	closed bool
+	ctx     context.Context
+	cancel  context.CancelFunc
+	closed  bool
 	started bool // True if the consumer has been started.
 
-	tmu    sync.RWMutex // Protect trace updates
+	tmu sync.RWMutex // Protect trace updates
 
 	// Holds references to consumer currently active traces.
 	// safe to hold a reference to ConsumerTrace after closing the consumer.
-	traces sync.Map     // map[string]*ConsumerTrace
+	traces sync.Map // map[string]*ConsumerTrace
 
 	lastError atomic.Value // stores error
 
@@ -174,7 +170,7 @@ func (e *EventTraceLogfile) getContext() *traceContext {
 // NewConsumer creates a new Consumer to consume ETW
 func NewConsumer(ctx context.Context) (c *Consumer) {
 	c = &Consumer{
-		Events:                NewEventBuffer(),
+		Events: NewEventBuffer(),
 	}
 
 	c.ctx, c.cancel = context.WithCancel(ctx)
@@ -253,7 +249,7 @@ func (c *Consumer) reportError(err error, er *EventRecord) {
 		entry := conlog.SampledErrorWithErrSig("formatprop-tdh", err)
 		if errors.As(err, &parseErr) {
 			entry.Interface("property", parseErr.p).
-				Interface("property", parseErr.p.erh.TraceInfo).
+				Interface("property", parseErr.p.traceInfo).
 				Msg("tdh failed to format property (ParseError)")
 		} else {
 			entry.Msg("tdh failed to format property")

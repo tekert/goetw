@@ -466,8 +466,8 @@ func (p *Property) decodeToString(outType TdhOutType) (string, error) {
 			return p.decodeToString(TDH_OUTTYPE_GUID)
 		case TDH_INTYPE_POINTER:
 			//* Handle special MOF case
-			if p.erh.TraceInfo.IsMof() {
-				if t, ok := MofClassMapping[p.erh.TraceInfo.EventGUID.Data1]; ok {
+			if p.traceInfo.IsMof() {
+				if t, ok := MofClassMapping[p.traceInfo.EventGUID.Data1]; ok {
 					// "TcpIp" or "UdpIp" /*9a280ac0-c8e0-11d1-84e2-00c04fb998a2*/
 					if t.BaseId == 4845 || t.BaseId == 5865 {
 						// most likely a pointer to a uint32 connid;
@@ -476,7 +476,7 @@ func (p *Property) decodeToString(outType TdhOutType) (string, error) {
 					}
 				}
 			}
-			if p.erh.EventRec.PointerSize() == 8 {
+			if p.pointerSize == 8 {
 				return p.decodeToString(TDH_OUTTYPE_HEXINT64)
 			} else {
 				return p.decodeToString(TDH_OUTTYPE_HEXINT32)
@@ -542,7 +542,7 @@ func (p *Property) decodeSIDIntype() (string, error) {
 	// (8 bytes on 64-bit, 4 bytes on 32-bit)
 	sidPtr := p.pValue
 	if p.evtPropInfo.InType() == TDH_INTYPE_WBEMSID {
-		if p.erh.EventRec.PointerSize() == 8 {
+		if p.pointerSize == 8 {
 			sidPtr += 16 // 2 pointers (8 bytes each)
 		} else {
 			sidPtr += 8 // 2 pointers (4 bytes each)
@@ -754,7 +754,7 @@ func (p *Property) decodeScalarIntype() (uint64, bool, error) {
 		return 0, true, nil
 
 	case TDH_INTYPE_POINTER:
-		if p.erh.EventRec.PointerSize() == 8 {
+		if p.pointerSize == 8 {
 			return *(*uint64)(unsafe.Pointer(p.pValue)), false, nil
 		}
 		return uint64(*(*uint32)(unsafe.Pointer(p.pValue))), false, nil
@@ -765,7 +765,7 @@ func (p *Property) decodeScalarIntype() (uint64, bool, error) {
 		return *(*uint64)(unsafe.Pointer(p.pValue)), false, nil
 
 	case TDH_INTYPE_SIZET:
-		if p.erh.EventRec.PointerSize() == 8 {
+		if p.pointerSize == 8 {
 			return *(*uint64)(unsafe.Pointer(p.pValue)), false, nil
 		}
 		return uint64(*(*uint32)(unsafe.Pointer(p.pValue))), false, nil
@@ -776,4 +776,32 @@ func (p *Property) decodeScalarIntype() (uint64, bool, error) {
 	}
 
 	return 0, false, fmt.Errorf("type %v cannot be converted to integer", p.evtPropInfo.InType())
+}
+
+// isScalarInType determines if a TDH InType represents a simple scalar value
+// that can be decoded without context (like traceInfo or erh). These are candidates
+// for lazy parsing. Complex types like strings, SIDs, and structs are not scalars.
+func (p *Property) isScalarInType() bool {
+	inType := p.evtPropInfo.InType()
+    switch inType {
+    case TDH_INTYPE_INT8,
+        TDH_INTYPE_UINT8,
+        TDH_INTYPE_INT16,
+        TDH_INTYPE_UINT16,
+        TDH_INTYPE_INT32,
+        TDH_INTYPE_UINT32,
+        TDH_INTYPE_INT64,
+        TDH_INTYPE_UINT64,
+        TDH_INTYPE_FLOAT,
+        TDH_INTYPE_DOUBLE,
+        TDH_INTYPE_BOOLEAN,
+        //TDH_INTYPE_POINTER,
+        TDH_INTYPE_FILETIME,
+        TDH_INTYPE_HEXINT32,
+        TDH_INTYPE_HEXINT64,
+        TDH_INTYPE_SIZET:
+        return true
+    default:
+        return false
+    }
 }

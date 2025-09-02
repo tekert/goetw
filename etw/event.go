@@ -4,6 +4,8 @@ package etw
 
 import (
 	"encoding/json"
+	"fmt"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -70,13 +72,19 @@ func (p Properties) MarshalJSON() ([]byte, error) {
 		buf = append(buf, `":`...)
 
 		// Marshal property value.
-		// This is the critical performance optimization. We avoid calling json.Marshal
-		// in a loop by handling the most common type (string) directly.
 		switch v := prop.Value.(type) {
 		case string:
 			// strconv.AppendQuote is significantly faster than json.Marshal for strings
 			// as it avoids reflection.
 			buf = strconv.AppendQuote(buf, v)
+		case int64:
+			buf = strconv.AppendInt(buf, v, 10)
+		case uint64:
+			buf = strconv.AppendUint(buf, v, 10)
+		case float64:
+			buf = strconv.AppendFloat(buf, v, 'g', -1, 64)
+		case bool:
+			buf = strconv.AppendBool(buf, v)
 		default:
 			// For all other types (arrays, structs), we fall back to the standard
 			// marshaler. This is less frequent and acceptable.
@@ -151,44 +159,6 @@ type Event struct {
 type MarshalKeywords struct {
 	Mask uint64
 	Name []string
-}
-
-// Better performance.
-func (k MarshalKeywords) MarshalJSON_hexf() ([]byte, error) {
-	maskString := hexf.NUm64p(k.Mask, false)
-	// Calculate buffer size
-	size := 26 // {"Mask":"","Name":[]}
-	size += len(maskString)
-
-	if len(k.Name) > 0 {
-		size += len(k.Name) * 2 // quotes for each name
-		size += len(k.Name) - 1 // commas between names (n-1 commas needed)
-		for _, name := range k.Name {
-			size += len(name) // actual name length
-		}
-	}
-
-	// Create buffer
-	buf := make([]byte, 0, size)
-
-	// Write JSON structure
-	buf = append(buf, `{"Mask":"`...)
-	buf = append(buf, maskString...)
-	buf = append(buf, `","Name":[`...)
-
-	// Write names array
-	for i, name := range k.Name {
-		if i > 0 {
-			buf = append(buf, ',')
-		}
-		buf = append(buf, '"')
-		buf = append(buf, name...)
-		buf = append(buf, '"')
-	}
-
-	buf = append(buf, "]}"...)
-
-	return buf, nil
 }
 
 // Better performance.
@@ -270,9 +240,60 @@ func (e *Event) GetProperty(name string) (i any, ok bool) {
 
 func (e *Event) GetPropertyString(name string) (string, bool) {
 	if i, ok := e.GetProperty(name); ok {
-		if s, ok := i.(string); ok {
-			return s, ok
+		// Handle both eager-parsed strings and lazily-parsed properties.
+		switch v := i.(type) {
+		case string:
+			return v, true
+		default:
+			// For any other type, format it to a string.
+			return fmt.Sprint(v), true
 		}
 	}
 	return "", false
+}
+
+// GetPropertyInt retrieves a property value directly as an int64, if possible.
+// It provides fast, direct conversion from binary for scalar properties that were
+// lazily parsed. Returns false if the property does not exist or is not a number.
+func (e *Event) GetPropertyInt(name string) (int64, bool) {
+	if val, ok := e.GetProperty(name); ok {
+		switch v := val.(type) {
+		case int64:
+			return v, true
+		case uint64:
+			if v <= math.MaxInt64 {
+				return int64(v), true
+			}
+		}
+	}
+	return 0, false
+}
+
+// GetPropertyUInt retrieves a property value directly as a uint64, if possible.
+// It provides fast, direct conversion from binary for scalar properties that were
+// lazily parsed. Returns false if the property does not exist or is not a number.
+func (e *Event) GetPropertyUInt(name string) (uint64, bool) {
+	if val, ok := e.GetProperty(name); ok {
+		switch v := val.(type) {
+		case uint64:
+			return v, true
+		case int64:
+			if v >= 0 {
+				return uint64(v), true
+			}
+		}
+	}
+	return 0, false
+}
+
+// GetPropertyFloat retrieves a property value directly as a float64, if possible.
+// It provides fast, direct conversion from binary for scalar properties that were
+// lazily parsed. Returns false if the property does not exist or is not a number.
+func (e *Event) GetPropertyFloat(name string) (float64, bool) {
+	if val, ok := e.GetProperty(name); ok {
+		if f, ok := val.(float64); ok {
+			return f, true
+		}
+	}
+	return 0, false
 }

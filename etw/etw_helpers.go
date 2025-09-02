@@ -67,6 +67,8 @@ type schemaCacheEntry struct {
 	nameToIndex map[string]int
 	indexOnce   sync.Once
 
+	// Precomputed id for MOF and XML(manifest) events.
+	eventID uint16 // Cached event ID. For MOF, this is the custom calculated ID.
 	// Lazily populated cache for all metadata strings to avoid repeated conversions.
 	providerName      string
 	levelName         string
@@ -117,11 +119,11 @@ func (sce *schemaCacheEntry) cacheMetadata(er *EventRecord, traceInfo *TraceEven
 		sce.opcodeName = traceInfo.OpcodeName()
 		sce.taskName = traceInfo.TaskName()
 		sce.keywordsNames = traceInfo.KeywordsName()
+		sce.eventID = traceInfo.EventID()
+		sce.activityIDName = traceInfo.ActivityIDName()
+		sce.relatedActivityID = traceInfo.RelatedActivityIDName()
 
 		if traceInfo.IsMof() {
-			sce.activityIDName = traceInfo.ActivityIDName()
-			sce.relatedActivityID = traceInfo.RelatedActivityIDName()
-
 			// e.EventRec.EventHeader.ProviderId is the same as e.TraceInfo.EventGUID for MOF events
 			if c := MofErLookup(er); c != nil {
 				sce.mofEventTypeName = fmt.Sprintf("%s/%s", c.Name, sce.opcodeName)
@@ -694,6 +696,11 @@ func (e *EventRecordHelper) newProperty() *Property {
 	p := &storage.propCache[storage.propIdx]
 	storage.propIdx++
 	p.reset() // Ensure the property is clean before use.
+
+	p.erh = e
+	p.traceInfo = e.TraceInfo
+	p.pointerSize = e.EventRec.PointerSize()
+
 	return p
 }
 
@@ -729,7 +736,7 @@ func (e *EventRecordHelper) setEventMetadata(event *Event) {
 	}
 
 	// EVENT_RECORD.EVENT_HEADER.EventDescriptor == TRACE_EVENT_INFO.EventDescriptor for MOF events
-	event.System.EventID = e.TraceInfo.EventID()
+	event.System.EventID = sce.eventID // Use the cached ID.
 	event.System.Version = e.TraceInfo.EventDescriptor.Version
 	event.System.Channel = sce.channelName
 
@@ -1026,7 +1033,6 @@ func (e *EventRecordHelper) prepareProperty(i uint32, name string) (p *Property,
 
 	epi := e.getEpiAt(i)
 	p.evtPropInfo = epi
-	p.erh = e
 	p.name = name
 	p.pValue = e.userDataIt
 	p.userDataRemaining = e.remainingUserDataLength()
@@ -1377,7 +1383,7 @@ func (e *EventRecordHelper) shouldParse(name string) bool {
 	return ok
 }
 
-// this a bit inneficient, but it's not a big deal, we ussually want a few properties not all.
+// Improved performance by just saving scalars as scalars and not strings.
 func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 	var err error
 	var eventData *Properties
@@ -1402,10 +1408,42 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 		if !e.shouldParse(name) {
 			continue
 		}
-		if _, err := p.FormatToString(); err != nil {
-			last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+
+		// If it's a simple scalar with no value map, parse it to its native Go type.
+		// Otherwise, format it to a string.
+		if p.isScalarInType() && p.evtPropInfo.MapNameOffset() == 0 {
+			var val any
+			inType := p.evtPropInfo.InType()
+
+			// Use the existing decoders to get native types.
+			if inType == TDH_INTYPE_FLOAT || inType == TDH_INTYPE_DOUBLE {
+				val, err = p.decodeFloatIntype()
+			} else {
+				uval, signed, err_ := p.decodeScalarIntype()
+				err = err_
+				if err == nil {
+					if signed {
+						val = int64(uval)
+					} else {
+						val = uval
+					}
+				}
+			}
+
+			if err != nil {
+				last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+			} else {
+				*eventData = append(*eventData, EventProperty{Name: name, Value: val})
+			}
+
 		} else {
-			*eventData = append(*eventData, EventProperty{Name: name, Value: p.value})
+			// (COMPLEX TYPES): Format to a string immediately.
+			var val string
+			if val, err = p.FormatToString(); err != nil {
+				last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+			} else {
+				*eventData = append(*eventData, EventProperty{Name: name, Value: val})
+			}
 		}
 	}
 

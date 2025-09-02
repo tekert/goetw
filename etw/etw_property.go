@@ -12,6 +12,7 @@ import (
 
 type Property struct {
 	erh         *EventRecordHelper
+	traceInfo   *TraceEventInfo
 	evtPropInfo *EventPropertyInfo
 
 	name  string
@@ -34,6 +35,8 @@ type Property struct {
 
 	// Distance in bytes between this prop pointer and the end of UserData.
 	userDataRemaining uint16
+
+	pointerSize uint32 // 4 or 8
 }
 
 func (p *Property) MarshalJSON() ([]byte, error) {
@@ -42,12 +45,18 @@ func (p *Property) MarshalJSON() ([]byte, error) {
 	}
 
 	var jsonEvtPropInfo any
-	if p.evtPropInfo != nil && p.erh != nil && p.erh.TraceInfo != nil {
-		jsonEvtPropInfo = p.evtPropInfo.ToJSON(p.erh.TraceInfo)
+	if p.evtPropInfo != nil && p.erh != nil && p.traceInfo != nil {
+		jsonEvtPropInfo = p.evtPropInfo.ToJSON(p.traceInfo)
 	} else if p.evtPropInfo != nil {
 		// Fallback to marshaling the raw struct if we don't have TraceInfo
 		// to resolve names. This is better than nothing.
 		jsonEvtPropInfo = p.evtPropInfo
+	}
+
+	// Ensure the string value is populated for JSON marshaling.
+	valueStr := p.value
+	if valueStr == "" && p.Parseable() {
+		valueStr, _ = p.FormatToString()
 	}
 
 	return json.Marshal(struct {
@@ -60,7 +69,7 @@ func (p *Property) MarshalJSON() ([]byte, error) {
 		EventPropertyInfo any    `json:"EventPropertyInfo,omitempty"`
 	}{
 		Name:              p.name,
-		Value:             p.value,
+		Value:             valueStr,
 		Length:            p.length,
 		SizeBytes:         p.sizeBytes,
 		UserDataRemaining: p.userDataRemaining,
@@ -75,18 +84,8 @@ func (p *Property) MarshalJSON() ([]byte, error) {
 // Sets all fields of the struct to zero/empty values.
 // This is called by the helper before a property is reused.
 func (p *Property) reset() {
-	//*p = Property{}
-	// This is a performance optimization. Instead of zeroing the entire struct
-	// with `*p = Property{}`, we only reset the fields that are critical
-	// for correctness when reusing a Property object from the pool.
-	//
-	// - `value` must be cleared so `FormatToString` knows to parse the property.
-	// - `pValue` must be cleared to ensure `Parseable()` returns false initially.
-	//   `prepareProperty` will set it to a non-zero value for parseable properties.
-	//
-	// All other fields are guaranteed to be overwritten in `prepareProperty`.
-	p.value = ""
-	p.pValue = 0
+	// Simple reset, no more complex pool management.
+	*p = Property{}
 }
 
 func (p *Property) Parseable() bool {
@@ -181,8 +180,8 @@ func (p *Property) formatToStringTdh() (value string, udc uint16, err error) {
 			TDH_INTYPE_UINT16,
 			TDH_INTYPE_UINT32,
 			TDH_INTYPE_HEXINT32:
-			pMapName := (*uint16)(unsafe.Pointer(p.erh.TraceInfo.pointerOffset(uintptr(p.evtPropInfo.MapNameOffset()))))
-			decSrc := p.erh.TraceInfo.DecodingSource
+			pMapName := (*uint16)(unsafe.Pointer(p.traceInfo.pointerOffset(uintptr(p.evtPropInfo.MapNameOffset()))))
+			decSrc := p.traceInfo.DecodingSource
 			var mapInfoBuffer *EventMapInfoBuffer
 			mapInfoBuffer, err = p.erh.EventRec.GetMapInfo(pMapName, uint32(decSrc))
 			if mapInfoBuffer != nil {
@@ -217,9 +216,9 @@ func (p *Property) formatToStringTdh() (value string, udc uint16, err error) {
 			err = nil
 		} else {
 			err = TdhFormatProperty(
-				p.erh.TraceInfo,
+				p.traceInfo,
 				pMapInfo,
-				p.erh.EventRec.PointerSize(),
+				p.pointerSize,
 				uint16(p.evtPropInfo.InType()),
 				uint16(p.evtPropInfo.OutType()),
 				p.length,
@@ -259,7 +258,7 @@ func (p *Property) formatToStringTdh() (value string, udc uint16, err error) {
 		// Seems some kernel properties can't be parsed with Tdh, maybe is a pointer to kernel memory?
 		// UPDATE: the MOF classes types are wrong, this is not usuable for kernel events.
 		// TODO: remove this now that we have MOF parsing in the custom parser?
-		if p.erh.TraceInfo.IsMof() {
+		if p.traceInfo.IsMof() {
 			if value = p.fixMOFProp(); value != "" {
 				err = nil
 				return
@@ -267,9 +266,9 @@ func (p *Property) formatToStringTdh() (value string, udc uint16, err error) {
 		}
 
 		conlog.Debug().Interface("property", p).
-			Interface("traceInfo", p.erh.TraceInfo).
-			Bool("isMof", p.erh.TraceInfo.IsMof()).
-			Bool("isXML", p.erh.TraceInfo.IsXML()).
+			Interface("traceInfo", p.traceInfo).
+			Bool("isMof", p.traceInfo.IsMof()).
+			Bool("isXML", p.traceInfo.IsXML()).
 			Msg("failed to format property using thd")
 
 		p.erh.addPropError()
@@ -293,7 +292,7 @@ var gFixTcpIpGuid = MustParseGUID("9a280ac0-c8e0-11d1-84e2-00c04fb998a2")
 func (p *Property) fixMOFProp() string {
 	if p.evtPropInfo.InType() == TDH_INTYPE_POINTER {
 		// "TcpIp" or "UdpIp"
-		if p.erh.TraceInfo.EventGUID.Equals(gFixTcpIpGuid) {
+		if p.traceInfo.EventGUID.Equals(gFixTcpIpGuid) {
 			// most likely a pointer to a uint32 connid;
 			return fmt.Sprintf("%d", *(*uint32)(unsafe.Pointer(p.pValue)))
 			// "connid" is always 0 for some reason, the same with "seqnum" prop
