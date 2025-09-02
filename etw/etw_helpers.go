@@ -1180,12 +1180,6 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 		}
 	}
 
-	// if (e.EventRec.EventHeader.Flags & EVENT_HEADER_FLAG_TRACE_MESSAGE) != 0 {
-	// }
-	// if (e.EventRec.EventHeader.Flags & EVENT_HEADER_FLAG_CLASSIC_HEADER) != 0 {
-	//	// Kernel events
-	// }
-
 	// Get or generate property names for this event schema.
 	// This is a performance optimization to avoid repeated UTF-16 to string conversions.
 	names := e.getCachedPropNames()
@@ -1536,12 +1530,6 @@ Values are cached after first access.
 // GetPropertyString returns the formatted string value of the named property.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error) {
-	// Check for custom properties first.
-	if p, ok := e.PropertiesCustom[name]; ok {
-		return p.FormatToString()
-	}
-
-	// TODO: set as custom to cache result?
 	nameToIndex := e.getCachedNameToIndexMap()
 	if index, ok := nameToIndex[name]; ok {
 		if index < len(*e.PropertiesByIndex) {
@@ -1550,7 +1538,9 @@ func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error)
 			}
 		}
 	}
-
+	if p, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
+		return p.FormatToString()
+	}
 	return "", fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
@@ -1558,12 +1548,6 @@ func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error)
 // Returns overflow error for unsigned values exceeding math.MaxInt64.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
-	// Check for custom properties first.
-	if _, ok := e.PropertiesCustom[name]; ok {
-		return 0, fmt.Errorf("custom property %s cannot be read as integer", name)
-	}
-
-	// TODO: set as custom to cache result?
 	nameToIndex := e.getCachedNameToIndexMap()
 	if index, ok := nameToIndex[name]; ok {
 		if index < len(*e.PropertiesByIndex) {
@@ -1572,6 +1556,9 @@ func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
 			}
 		}
 	}
+	if _, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
+		return 0, fmt.Errorf("custom property %s cannot be read as integer", name)
+	}
 	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
@@ -1579,12 +1566,6 @@ func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
 // Returns conversion error for negative signed values.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyUint(name string) (uint64, error) {
-	// Check for custom properties first.
-	if _, ok := e.PropertiesCustom[name]; ok {
-		return 0, fmt.Errorf("custom property %s cannot be read as integer", name)
-	}
-
-	// TODO: set as custom to cache result?
 	nameToIndex := e.getCachedNameToIndexMap()
 	if index, ok := nameToIndex[name]; ok {
 		if index < len(*e.PropertiesByIndex) {
@@ -1593,6 +1574,9 @@ func (e *EventRecordHelper) GetPropertyUint(name string) (uint64, error) {
 			}
 		}
 	}
+	if _, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
+		return 0, fmt.Errorf("custom property %s cannot be read as integer", name)
+	}
 	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
@@ -1600,12 +1584,6 @@ func (e *EventRecordHelper) GetPropertyUint(name string) (uint64, error) {
 // Supports 32-bit and 64-bit IEEE 754 formats.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyFloat(name string) (float64, error) {
-	// Check for custom properties first.
-	if _, ok := e.PropertiesCustom[name]; ok {
-		return 0, fmt.Errorf("custom property %s cannot be read as float", name)
-	}
-
-	// TODO: set as custom to cache result?
 	nameToIndex := e.getCachedNameToIndexMap()
 	if index, ok := nameToIndex[name]; ok {
 		if index < len(*e.PropertiesByIndex) {
@@ -1613,6 +1591,9 @@ func (e *EventRecordHelper) GetPropertyFloat(name string) (float64, error) {
 				return p.GetFloat()
 			}
 		}
+	}
+	if _, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
+		return 0, fmt.Errorf("custom property %s cannot be read as float", name)
 	}
 	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
@@ -1640,10 +1621,10 @@ func (e *EventRecordHelper) SetCustomProperty(name, value string) *Property {
 }
 
 /*
-ETW Property Parsing Methods
+	ETW Property Parsing Methods
 
-Converts raw binary event data into formatted values on-demand. Uses custom
-decoders for performance with TDH fallback for complex types. Results are cached.
+	Converts raw binary event data into formatted values on-demand. Uses custom
+	decoders for performance with TDH fallback for complex types. Results are cached.
 */
 
 // ParseProperties parses multiple properties by name, returning the first error encountered.
@@ -1659,10 +1640,22 @@ func (e *EventRecordHelper) ParseProperties(names ...string) (err error) {
 
 // ParseProperty parses a single property by name, converting its binary data to a formatted value.
 func (e *EventRecordHelper) ParseProperty(name string) (err error) {
-	// Parse simple property.
+	// Parse custom simple property.
 	if p, ok := e.PropertiesCustom[name]; ok {
 		if _, err = p.FormatToString(); err != nil {
 			return fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+		}
+	}
+
+	// Parse simple property from schema using the index map for a fast lookup.
+	nameToIndex := e.getCachedNameToIndexMap()
+	if index, ok := nameToIndex[name]; ok {
+		if index < len(*e.PropertiesByIndex) {
+			if p := (*e.PropertiesByIndex)[index]; p != nil {
+				if _, err = p.FormatToString(); err != nil {
+					return fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+				}
+			}
 		}
 	}
 
@@ -1720,85 +1713,3 @@ func (e *EventRecordHelper) Skippable() {
 func (e *EventRecordHelper) Skip() {
 	e.Flags.Skip = true
 }
-
-// ! TESTING, try todo these in another way.
-/*
-// GetPropertyUintAt finds and decodes a single property by its zero-based index,
-// returning it as a uint64. This is a high-performance method for selectively
-// reading data from high-frequency events without the overhead of preparing all properties.
-//
-// The function performs a lightweight scan from the beginning of the event data for each
-// call and does not modify the state of the EventRecordHelper, making it safe to use
-// in any callback.
-func (e *EventRecordHelper) GetPropertyUintAt(index uint32) (uint64, error) {
-	p, err := e.getPropertyAt(index)
-	if err != nil {
-		return 0, err
-	}
-	return p.GetUInt()
-}
-
-// GetPropertyStringAt finds and decodes a single property by its zero-based index,
-// returning it as a string. This is a high-performance method for selectively
-// reading data from high-frequency events without the overhead of preparing all properties.
-//
-// The function performs a lightweight scan from the beginning of the event data for each
-// call and does not modify the state of the EventRecordHelper, making it safe to use
-// in any callback.
-func (e *EventRecordHelper) GetPropertyStringAt(index uint32) (string, error) {
-	p, err := e.getPropertyAt(index)
-	if err != nil {
-		return "", err
-	}
-	return p.FormatToString()
-}
-
-// getPropertyAt is an internal helper that scans to the specified property index
-// and prepares it for parsing. The function does not modify the state of the
-// EventRecordHelper, making it safe to use in any callback.
-func (e *EventRecordHelper) getPropertyAt(index uint32) (*Property, error) {
-	if e.TraceInfo == nil {
-		return nil, fmt.Errorf("no trace info available to get property at index %d", index)
-	}
-	if index >= e.TraceInfo.PropertyCount {
-		return nil, fmt.Errorf("property index %d out of bounds (max %d)", index, e.TraceInfo.PropertyCount-1)
-	}
-
-	// Save original state that will be modified by the scan.
-	originalUserDataIt := e.userDataIt
-	originalPropIdx := e.storage.propIdx
-
-	// The integerValues and epiArray caches are essential for the scan.
-	// We must clear them to ensure a clean scan from the beginning,
-	// as they might hold state from a previous partial parse.
-	clear(*e.integerValues)
-	clear(*e.epiArray)
-
-	// Set iterator to the start for this local scan.
-	e.userDataIt = e.EventRec.UserData
-	defer func() {
-		// Restore original state. This makes the function stateless to the caller.
-		e.userDataIt = originalUserDataIt
-		e.storage.propIdx = originalPropIdx
-	}()
-
-	// Scan up to the target property, advancing the iterator.
-	for i := uint32(0); i < index; i++ {
-		// getPropertyLength is the lightest way to calculate the size.
-		// It correctly populates the epiArray and integerValues caches as it goes.
-		_, sizeBytes, err := e.getPropertyLength(i)
-		if err != nil {
-			return nil, fmt.Errorf("error calculating size for preceding property %d: %w", i, err)
-		}
-		e.userDataIt += uintptr(sizeBytes)
-		if e.userDataIt > e.userDataEnd {
-			return nil, fmt.Errorf("event data overrun while scanning for property %d", index)
-		}
-	}
-
-	// At the target index, create a temporary property and decode its value.
-	// We pass a dummy name as it's not used for decoding the scalar value.
-	return e.prepareProperty(index, "")
-}
-
-*/
