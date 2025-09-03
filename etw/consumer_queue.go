@@ -42,7 +42,7 @@ type EventBuffer struct {
 	// Default: 200ms
 	Timeout time.Duration
 
-	// The used default callback [DefaultEventCallback] outputs parsed events to this channel.
+	// The default callback [DefaultEventCallback] outputs parsed events to this channel.
 	// This channel can be used to consume events in a non-blocking way.
 	//
 	// The events are batched by size = [Consumer.EventsConfig.BatchSize]
@@ -57,9 +57,10 @@ type EventBuffer struct {
 	nonskippableEvents []*Event
 
 	// Output channel
-	skipped *atomic.Uint64
-	closed  atomic.Bool
-	timer   *time.Timer // flush timer
+	skipped   *atomic.Uint64
+	closed    atomic.Bool
+	timer     *time.Timer // flush timer
+	closeOnce sync.Once   // Ensures the channel is closed exactly once.
 }
 
 func NewEventBuffer() *EventBuffer {
@@ -90,26 +91,34 @@ func (e *EventBuffer) tryLockWithTimeout(timeout time.Duration) bool {
 //
 // This is executed from the client goroutine from [Consumer.close]
 func (e *EventBuffer) close() error {
-	// Only one thread gets past this
-	if !e.closed.CompareAndSwap(false, true) {
-		return nil
-	}
+	// This logic will now only run once.
+	e.closeOnce.Do(func() {
+		defer func() {
+			// Recover from a panic if the channel is closed externally
+			if r := recover(); r != nil {
+				conlog.Warn().Msgf("Recovered from panic while closing Events channel: %v", r)
+			}
+		}()
 
-	// Try graceful shutdown first, timeout after 500ms
-	if e.tryLockWithTimeout(500 * time.Millisecond) {
-		defer e.Unlock()
+		e.closed.Store(true) // Mark as closed immediately.
 
-		if e.timer != nil {
-			e.timer.Stop()
-			e.timer = nil
+		// Try graceful shutdown first, timeout after 500ms
+		if e.tryLockWithTimeout(500 * time.Millisecond) {
+			defer e.Unlock()
+
+			if e.timer != nil {
+				e.timer.Stop()
+				e.timer = nil
+			}
+
+			// Safe flush while we have the lock
+			e.flush()
 		}
 
-		// Safe flush while we have the lock
-		e.flush()
-	}
-
-	// Single thread that passed CompareAndSwap closes channel
-	close(e.Channel)
+		// Single thread that passed closes channel
+		close(e.Channel)
+		conlog.Info().Msg("Events channel closed.")
+	})
 	return nil
 }
 

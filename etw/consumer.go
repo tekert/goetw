@@ -581,7 +581,6 @@ func (c *Consumer) closeAll(wait bool) (lastErr error) {
 	})
 
 	c.Events.close()
-	seslog.Debug().Msg("Events channel closed.")
 
 	// After all processing is complete, flush the global sampler to report
 	// a summary of suppressed logs that occurred during the consumer's lifetime.
@@ -804,6 +803,21 @@ func (c *Consumer) Start() (err error) {
 		return err
 	}
 
+	// It waits for all trace processing to finish
+	// and then ensures the event channel is closed.
+	go func() {
+		c.Wait()         // Block until all ProcessTrace goroutines call Done().
+		c.Events.close() // Safely close the channel.
+	}()
+
+	// It listens for an explicit shutdown signal (e.g., Ctrl+C)
+	// and ensures the event channel is closed to unblock the user's
+	// ProcessEvents loop. (no effect is using the other callbacks 1,2,3)
+	go func() {
+		<-c.ctx.Done()   // Block until the consumer's context is canceled.
+		c.Events.close() // Safely close the channel.
+	}()
+
 	// opens a new goroutine for each trace and blocks.
 	c.traces.Range(func(key, value any) bool {
 		name := key.(string)
@@ -886,7 +900,7 @@ func (c *Consumer) processTraceWithTimeout(name string, trace *ConsumerTrace) {
 		return // Finished cleanly before any cancellation signal.
 	}
 
-	// If we are here, it means a cancellation occurred. We now handle the shutdown.
+	// If we are here, it means a cancellation (interrupt) occurred. We now handle the shutdown.
 	switch {
 	case timeout > 0: // Wait with a timeout.
 		timer := time.NewTimer(timeout)
