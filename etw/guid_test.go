@@ -38,6 +38,59 @@ func TestGUID(t *testing.T) {
 	tt.Assert(strings.EqualFold(fmt.Sprintf("{%s}", guid), g.StringU()))
 }
 
+func TestParseGUID_ErrorCases(t *testing.T) {
+	t.Parallel()
+
+	// These test cases cover various invalid formats. The test only asserts
+	// that an error is returned, not what the specific error message is.
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "Empty String",
+			input: "",
+		},
+		{
+			name:  "Incorrect Length (Short)",
+			input: "54849625-5478-4994-a5ba-3e3b0328c30",
+		},
+		{
+			name:  "Incorrect Length (Long)",
+			input: "54849625-5478-4994-a5ba-3e3b0328c30dd",
+		},
+		{
+			name:  "Mismatched Braces (Missing Closing)",
+			input: "{45d8cccd-539f-4b72-a8b7-5c683142609a",
+		},
+		{
+			name:  "Mismatched Braces (Missing Opening)",
+			input: "45d8cccd-539f-4b72-a8b7-5c683142609a}",
+		},
+		{
+			name:  "Invalid Separator (Correct Length)",
+			input: "45d8cccd-539f-4b72-a8b7 5c683142609a",
+		},
+		{
+			name:  "Missing Hyphens (Incorrect Length)",
+			input: "45d8cccd539f4b72a8b75c683142609a",
+		},
+		{
+			name:  "Invalid Hex Character",
+			input: "{45d8cccd-539f-4b72-a8b7-5c683142609g}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseGUID(tt.input)
+			if err == nil {
+				t.Fatalf("ParseGUID(%q) succeeded, want error", tt.input)
+			}
+		})
+	}
+}
+
 func TestGUIDEquality(t *testing.T) {
 	t.Parallel()
 
@@ -116,4 +169,105 @@ func TestGUIDStringConversion(t *testing.T) {
 			}
 		})
 	}
+}
+
+// --- Benchmark for Equals method ---
+
+var (
+	guid1 = MustParseGUID("{13D70263-4226-42DB-9EEF-43D052A43822}")
+	guid2 = MustParseGUID("{13D70263-4226-42DB-9EEF-43D052A43822}")
+	guid3 = MustParseGUID("{E752D673-035F-422D-833E-262651098568}")
+)
+
+func BenchmarkGUIDEquals(b *testing.B) {
+	// Manual field-by-field comparison for benchmarking against.
+	equalsManual := func(g, other *GUID) bool {
+		return g.Data1 == other.Data1 &&
+			g.Data2 == other.Data2 &&
+			g.Data3 == other.Data3 &&
+			g.Data4[0] == other.Data4[0] &&
+			g.Data4[1] == other.Data4[1] &&
+			g.Data4[2] == other.Data4[2] &&
+			g.Data4[3] == other.Data4[3] &&
+			g.Data4[4] == other.Data4[4] &&
+			g.Data4[5] == other.Data4[5] &&
+			g.Data4[6] == other.Data4[6] &&
+			g.Data4[7] == other.Data4[7]
+	}
+
+	b.Run("ManualCompare_Equal", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = equalsManual(guid1, guid2)
+		}
+	})
+
+	b.Run("DirectCompare_Equal", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = guid1.Equals(guid2)
+		}
+	})
+
+	b.Run("ManualCompare_NotEqual", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = equalsManual(guid1, guid3)
+		}
+	})
+
+	b.Run("DirectCompare_NotEqual", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = guid1.Equals(guid3)
+		}
+	})
+}
+
+// --- Benchmark for String methods ---
+
+func BenchmarkGUIDString(b *testing.B) {
+	guid := MustParseGUID("{13D70263-4226-42DB-9EEF-43D052A43822}")
+
+	// Sprintf version for comparison.
+	stringSprintf := func(g *GUID) string {
+		return fmt.Sprintf("{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+			g.Data1, g.Data2, g.Data3,
+			g.Data4[0], g.Data4[1], g.Data4[2], g.Data4[3],
+			g.Data4[4], g.Data4[5], g.Data4[6], g.Data4[7])
+	}
+
+	b.Run("Optimized", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = guid.String()
+		}
+	})
+
+	b.Run("Sprintf", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = stringSprintf(guid)
+		}
+	})
+}
+
+// --- Benchmark for ParseGUID method ---
+
+func BenchmarkParseGUID(b *testing.B) {
+	guidStr := "{13D70263-4226-42DB-9EEF-43D052A43822}"
+
+	b.Run("Optimized", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = ParseGUID(guidStr)
+		}
+	})
+
+	b.Run("RegexpAndSplit", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = parseGUID_old(guidStr)
+		}
+	})
 }
