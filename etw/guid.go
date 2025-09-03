@@ -125,22 +125,8 @@ func (g *GUID) String() string {
 // Equals compares this GUID with another GUID for equality.
 // Returns true if all fields of both GUIDs are identical.
 func (g *GUID) Equals(other *GUID) bool {
-	return g.Data1 == other.Data1 &&
-		g.Data2 == other.Data2 &&
-		g.Data3 == other.Data3 &&
-		g.Data4[0] == other.Data4[0] &&
-		g.Data4[1] == other.Data4[1] &&
-		g.Data4[2] == other.Data4[2] &&
-		g.Data4[3] == other.Data4[3] &&
-		g.Data4[4] == other.Data4[4] &&
-		g.Data4[5] == other.Data4[5] &&
-		g.Data4[6] == other.Data4[6] &&
-		g.Data4[7] == other.Data4[7]
+	return *g == *other
 }
-
-var (
-	guidRE = regexp.MustCompile(`^\{?[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}\}?$`)
-)
 
 // MustParseGUID parses a guid string into a GUID struct or panics
 func MustParseGUID(sguid string) (guid *GUID) {
@@ -152,7 +138,72 @@ func MustParseGUID(sguid string) (guid *GUID) {
 }
 
 // ParseGUID parses a guid string into a GUID structure
-func ParseGUID(guid string) (g *GUID, err error) {
+func ParseGUID(guid string) (*GUID, error) {
+	if len(guid) == 0 {
+		return nil, fmt.Errorf("bad GUID format: empty string")
+	}
+
+	// Trim optional curly braces
+	if guid[0] == '{' {
+		if len(guid) != 38 || guid[37] != '}' {
+			return nil, fmt.Errorf("bad GUID format: mismatched braces")
+		}
+		guid = guid[1:37]
+	} else if len(guid) != 36 {
+		return nil, fmt.Errorf("bad GUID format: incorrect length")
+	}
+
+	// Check for hyphens
+	if guid[8] != '-' || guid[13] != '-' || guid[18] != '-' || guid[23] != '-' {
+		return nil, fmt.Errorf("bad GUID format: missing hyphens")
+	}
+
+	g := &GUID{}
+	var p1, p2, p3, p4, p5 uint64
+	var err error
+
+	p1, err = strconv.ParseUint(guid[0:8], 16, 32)
+	if err != nil {
+		return nil, err
+	}
+	p2, err = strconv.ParseUint(guid[9:13], 16, 16)
+	if err != nil {
+		return nil, err
+	}
+	p3, err = strconv.ParseUint(guid[14:18], 16, 16)
+	if err != nil {
+		return nil, err
+	}
+	p4, err = strconv.ParseUint(guid[19:23], 16, 16)
+	if err != nil {
+		return nil, err
+	}
+	p5, err = strconv.ParseUint(guid[24:36], 16, 48)
+	if err != nil {
+		return nil, err
+	}
+
+	g.Data1 = uint32(p1)
+	g.Data2 = uint16(p2)
+	g.Data3 = uint16(p3)
+	g.Data4[0] = byte(p4 >> 8)
+	g.Data4[1] = byte(p4)
+	g.Data4[2] = byte(p5 >> 40)
+	g.Data4[3] = byte(p5 >> 32)
+	g.Data4[4] = byte(p5 >> 24)
+	g.Data4[5] = byte(p5 >> 16)
+	g.Data4[6] = byte(p5 >> 8)
+	g.Data4[7] = byte(p5)
+
+	return g, nil
+}
+
+var (
+	guidRE = regexp.MustCompile(`^\{?[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}\}?$`)
+)
+
+// ParseGUID parses a guid string into a GUID structure (older, slower version)
+func parseGUID_old(guid string) (g *GUID, err error) {
 	var u uint64
 
 	g = &GUID{}
@@ -191,15 +242,6 @@ func ParseGUID(guid string) (g *GUID, err error) {
 	g.Data4[7] = uint8(u & 0xff)
 
 	return
-}
-
-func (g GUID) MarshalJSON_old() ([]byte, error) {
-	s := g.StringU()
-	buf := make([]byte, 0, len(s)+2) // +2 for quotes
-	buf = append(buf, '"')
-	buf = append(buf, s...)
-	buf = append(buf, '"')
-	return buf, nil
 }
 
 func (g GUID) MarshalJSON() ([]byte, error) {
