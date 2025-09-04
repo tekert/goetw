@@ -17,7 +17,7 @@ type logInfo struct {
 }
 
 // DeduplicatingSampler provides high-performance, adaptive sampling with exponential backoff.
-// Deprecated: This sampler uses a background goroutine. Use EventDrivenSampler for a goroutine-free alternative
+// This sampler uses a background goroutine. Use EventDrivenSampler for a goroutine-free alternative
 // that offers simpler lifecycle management.
 type DeduplicatingSampler struct {
 	config   BackoffConfig
@@ -27,7 +27,7 @@ type DeduplicatingSampler struct {
 }
 
 // NewDeduplicatingSampler creates a new sampler with exponential backoff.
-// Deprecated: This sampler uses a background goroutine. Use NewEventDrivenSampler for a goroutine-free alternative.
+// This sampler uses a background goroutine. Use NewEventDrivenSampler for a goroutine-free alternative.
 func NewDeduplicatingSampler(config BackoffConfig, reporter SummaryReporter) *DeduplicatingSampler {
 	s := &DeduplicatingSampler{
 		config:   config,
@@ -43,7 +43,11 @@ func NewDeduplicatingSampler(config BackoffConfig, reporter SummaryReporter) *De
 // ShouldLog determines if an event should be logged based on its adaptive strategy.
 func (s *DeduplicatingSampler) ShouldLog(key string, err error) (bool, int64) {
 	now := time.Now().UnixNano()
-	val, _ := s.logs.LoadOrStore(key, &logInfo{})
+	val, ok := s.logs.Load(key)
+	if !ok {
+		// The key is not in the map. Create a new entry. Alloc here.
+		val, _ = s.logs.LoadOrStore(key, &logInfo{})
+	}
 	info := val.(*logInfo)
 
 	lastLog := info.lastLogTime.Load()
@@ -159,7 +163,7 @@ func (s *DeduplicatingSampler) garbageCollector() {
 }
 
 // Close stops the background summary reporter and flushes any pending summaries.
-// Deprecated: This sampler uses a background goroutine. Use EventDrivenSampler for a goroutine-free alternative.
+// This sampler uses a background goroutine. Use EventDrivenSampler for a goroutine-free alternative.
 func (s *DeduplicatingSampler) Close() {
 	if s.reporter != nil {
 		close(s.stopCh)
