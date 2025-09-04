@@ -1,2 +1,2 @@
-github.com/phuslu/log v1.0.119 h1:nAgPG0UdDHEKvfAFDo/IaEqyAHWXv8H+CjEmGm8e3xI=
-github.com/phuslu/log v1.0.119/go.mod h1:F8osGJADo5qLK/0F88djWwdyoZZ9xDJQL1HYRHFEkS0=
+github.com/tekert/phuslulog v1.0.120-beta h1:YIcAzkGrdjLv252D4T0NlnE5ztwL2gQmE6OpNu5yS3c=
+github.com/tekert/phuslulog v1.0.120-beta/go.mod h1:F8osGJADo5qLK/0F88djWwdyoZZ9xDJQL1HYRHFEkS0=
