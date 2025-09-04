@@ -1,3 +1,4 @@
-# github.com/phuslu/log v1.0.119
+# github.com/phuslu/log v1.0.119 => github.com/tekert/phuslulog v1.0.120-beta
 ## explicit; go 1.18
 github.com/phuslu/log
+# github.com/phuslu/log => github.com/tekert/phuslulog v1.0.120-beta
