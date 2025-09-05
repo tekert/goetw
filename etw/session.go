@@ -244,6 +244,69 @@ func (s *RealTimeSession) SetClockResolution(c ClockType) bool {
 	return true
 }
 
+// SetGuid sets the session's GUID. This is an advanced option with specific use cases.
+// The following is from the official Microsoft documentation for the Wnode.Guid field:
+//
+// For an NT Kernel Logger session, set this member to SystemTraceControlGuid.
+//
+// If this member is set to SystemTraceControlGuid or GlobalLoggerGuid, the logger will be a system logger.
+//
+// For a private logger session, set this member to the provider's GUID that you are going to enable for the session.
+//
+// If you start a session that is not a kernel logger or private logger session, you do not have to specify a session GUID. If you do not specify a GUID, ETW creates one for you. You need to specify a session GUID only if you want to change the default permissions associated with a specific session. For details, see the EventAccessControl function.
+//
+// You cannot start more than one session with the same session GUID.
+//
+// Library-specific notes:
+//   - For the "NT Kernel Logger" session, this GUID is fixed and automatically set to `etw.SystemTraceControlGuid` when you call `NewKernelRealTimeSession`.
+//   - For standard real-time sessions (created with `NewRealTimeSession`), if you do not provide a GUID, ETW will assign one when `Start()` is called. You can retrieve this assigned GUID by calling the `GetGuid()` method after the session starts.
+//
+// This must be called before `Start()`. Returns false if the session is already started.
+//
+// Wnode.Guid: https://learn.microsoft.com/en-us/windows/win32/etw/wnode-header
+func (s *RealTimeSession) SetGuid(guid GUID) bool {
+    // If the session is already started, we cannot change the GUID.
+    if s.IsStarted() {
+        seslog.Error().Str("guid", guid.String()).Msg("Cannot set session GUID after the session has started")
+        return false
+    }
+    s.traceProps.Wnode.Guid = guid
+    seslog.Debug().Str("guid", guid.String()).Msg("Session GUID configured")
+    return true
+}
+
+// GetGuid returns the GUID of the session.
+//
+// For sessions where the GUID is auto-assigned by ETW (the default for non-kernel
+// sessions), this method is most useful after `Start()` has been called to retrieve
+// the assigned GUID of the session.
+//
+// Wnode.Guid: https://learn.microsoft.com/en-us/windows/win32/etw/wnode-header
+func (s *RealTimeSession) GetGuid() GUID {
+    return s.traceProps.Wnode.Guid
+}
+
+// TraceProperties returns a pointer to the underlying properties structure for the session.
+// This allows advanced users to fine-tune session parameters like buffer sizes,
+// flush timers, and other options before the session is started.
+//
+// WARNING: This provides direct access to the session's configuration.
+// Modifications should be made with care and only before calling Start().
+// Changing fundamental properties like LogFileMode or the LoggerNameOffset after
+// the session has been initialized may lead to unexpected behavior or errors.
+//
+// Example of customizing buffer settings:
+//
+//	s := etw.NewRealTimeSession("MyCustomSession")
+//	props := s.TraceProperties()
+//	props.BufferSize = 128 // 128 KB
+//	props.MinimumBuffers = 16
+//	props.MaximumBuffers = 64
+//	s.Start()
+func (s *RealTimeSession) TraceProperties() *EventTraceProperties2Wrapper {
+	return s.traceProps
+}
+
 // IsStarted returns true if the session is already started
 func (s *RealTimeSession) IsStarted() bool {
 	return s != nil && s.sessionHandle != 0
