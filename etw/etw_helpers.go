@@ -71,11 +71,11 @@ type schemaCacheEntry struct {
 	eventID uint16 // Cached event ID. For MOF, this is the custom calculated ID.
 	// Lazily populated cache for all metadata strings to avoid repeated conversions.
 	providerName      string
-	levelName         string
-	channelName       string
+	levelName         string   // not hashes if using 64bit key
+	channelName       string   // not hashes if using 64bit key
 	opcodeName        string
-	taskName          string
-	keywordsNames     []string
+	taskName          string   // not hashes if using 64bit key
+	keywordsNames     []string // not hashes if using 64bit key
 	activityIDName    string
 	relatedActivityID string
 	mofEventTypeName  string
@@ -503,6 +503,7 @@ func (e *EventRecordHelper) release() {
 
 // newEventRecordHelper creates a new EventRecordHelper and retrieves the TRACE_EVENT_INFO
 // for the given EventRecord. It implements a multi-level caching and fallback strategy.
+// +120% performance gain by using caching vs no caching of the TraceInfo (while caching names etc)
 func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) { // mi version
 	erh = helperPool.Get().(*EventRecordHelper)
 	storage := er.userContext().storage
@@ -516,6 +517,8 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 
 	providerCache := er.getOrSetProviderCache()
 	schemaKey := er.schemaCacheKey64()
+
+	// TODO: erase the  globalTraceEventInfoCacheEnabled when tested enough
 
 	// --- Stage 1: Check Cache ---
 	if globalTraceEventInfoCacheEnabled {
@@ -586,9 +589,6 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 	// The small race of overwriting is acceptable for the performance gain.
 	providerCache.Store(schemaKey, newEntry)
 
-	// --- Post-fetch: Populate helper with new schema info ---
-	// erh.cacheSchemaDetails(newEntry) // This is the source of the regression.
-
 	return erh, err
 }
 
@@ -620,18 +620,14 @@ func (e *EventRecordHelper) getCachedSchemaEntry() *schemaCacheEntry {
 // It uses a cache for each provider event type to avoid repeated UTF-16 to string conversions.
 func (e *EventRecordHelper) getCachedPropNames() []string {
 	entry := e.getCachedSchemaEntry()
-	// GetPropertyNames will lazily parse the names on the first call
-	// and return the cached slice on subsequent calls.
-	return entry.GetPropertyNames(e.TraceInfo)
+	return entry.GetPropertyNames(e.TraceInfo) // will lazily parse the names on first call
 }
 
 // getCachedNameToIndexMap retrieves the name-to-index map for the event schema.
 // It uses the same caching mechanism as getCachedPropNames.
 func (e *EventRecordHelper) getCachedNameToIndexMap() map[string]int {
 	entry := e.getCachedSchemaEntry()
-	// GetNameToIndexMap will lazily parse the map on the first call
-	// and return the cached map on subsequent calls.
-	return entry.GetNameToIndexMap(e.TraceInfo)
+	return entry.GetNameToIndexMap(e.TraceInfo) // will lazily parse the map on first call
 }
 
 // This memory was already reseted when it was released.
@@ -738,18 +734,22 @@ func (e *EventRecordHelper) setEventMetadata(event *Event) {
 	// EVENT_RECORD.EVENT_HEADER.EventDescriptor == TRACE_EVENT_INFO.EventDescriptor for MOF events
 	event.System.EventID = sce.eventID // Use the cached ID.
 	event.System.Version = e.TraceInfo.EventDescriptor.Version
-	event.System.Channel = sce.channelName
 
 	event.System.Provider.Guid = e.TraceInfo.ProviderGUID
 	event.System.Provider.Name = sce.providerName
-	event.System.Level.Value = e.TraceInfo.EventDescriptor.Level
-	event.System.Level.Name = sce.levelName
+
 	event.System.Opcode.Value = e.TraceInfo.EventDescriptor.Opcode
 	event.System.Opcode.Name = sce.opcodeName
+
+	// These are not hashed when using 64bit key, so we must get the current values.
+	// TODO: cache these using a 128bit key exept channelName
+	event.System.Channel = e.TraceInfo.ChannelName() // sce.channelName
+	event.System.Level.Value = e.TraceInfo.EventDescriptor.Level
+	event.System.Level.Name = e.TraceInfo.LevelName() //sce.levelName
 	event.System.Keywords.Mask = e.TraceInfo.EventDescriptor.Keyword
-	event.System.Keywords.Name = sce.keywordsNames
+	event.System.Keywords.Name = e.TraceInfo.KeywordsName() //sce.traceInfo.keywordsName
 	event.System.Task.Value = uint8(e.TraceInfo.EventDescriptor.Task)
-	event.System.Task.Name = sce.taskName
+	event.System.Task.Name = e.TraceInfo.TaskName() //sce.taskName
 
 	// Use the converted timestamp if available, otherwise fall back to raw timestamp
 	event.System.TimeCreated.SystemTime = e.Timestamp()
@@ -1558,11 +1558,11 @@ func (e *EventRecordHelper) EventID() uint16 {
 }
 
 /*
-ETW Property Access Methods
+	ETW Property Access Methods
 
-Provides typed access to event properties after preparation. Properties are parsed
-on-demand using custom decoders (faster) with TDH fallback for complex types.
-Values are cached after first access.
+	Provides typed access to event properties after preparation. Properties are parsed
+	on-demand using custom decoders (faster) with TDH fallback for complex types.
+	Values are cached after first access.
 */
 
 // GetPropertyString returns the formatted string value of the named property.
