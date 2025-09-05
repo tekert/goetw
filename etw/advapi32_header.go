@@ -915,22 +915,6 @@ type EventFilterEventID struct {
 	Events [1]uint16
 }
 
-func AllocEventFilterEventID_old(filter []uint16) (f *EventFilterEventID) {
-	count := uint16(len(filter))
-	size := max(4+len(filter)*2, int(unsafe.Sizeof(EventFilterEventID{})))
-	buf := make([]byte, size)
-
-	// buf[0] should always be valid
-	f = (*EventFilterEventID)(unsafe.Pointer(&buf[0]))
-	eid := unsafe.Pointer((&f.Events[0]))
-	for i := range filter {
-		*((*uint16)(eid)) = filter[i]
-		eid = unsafe.Add(eid, 2)
-	}
-	f.Count = count
-	return
-}
-
 // AllocEventFilterEventID allocates a buffer for an EVENT_FILTER_EVENT_ID structure
 // with a flexible array member.
 func AllocEventFilterEventID(filter []uint16) (f *EventFilterEventID, keepAlive *[]byte) {
