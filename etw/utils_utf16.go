@@ -40,37 +40,44 @@ func fnvHash(data []uint16) uint64 {
 	return h
 }
 
+// FromUTF16PointerN is a variant of FromUTF16Pointer that also returns the
+// length of the string in characters. This is useful for iterating over lists of
+// null-terminated strings without rescanning to find the length.
+func FromUTF16PointerN(p *uint16) (string, int) {
+    if p == nil {
+        return "", 0
+    }
+
+    // Calculate string length and FNV-1a hash in a single loop for optimal performance.
+    h := uint64(fnvOffset64) // FNV-1a offset basis
+    end := unsafe.Pointer(p)
+    n := 0
+    for {
+        char := *(*uint16)(end)
+        if char == 0 {
+            break // Null terminator found
+        }
+        h ^= uint64(char) // XOR with character value
+        h *= fnvPrime64   // Multiply by FNV prime
+
+        end = unsafe.Pointer(uintptr(end) + 2) // 2 bytes per uint16
+        n++
+    }
+
+    if n == 0 {
+        return "", 0
+    }
+    s := unsafe.Slice(p, n)
+
+    return decodeUtf16(s, h, n), n
+}
+
 // FromUTF16Pointer is the most performant way to convert a null-terminated
 // UTF-16 pointer to a Go string. It finds the string length and calculates
 // its hash in a single pass to optimize cache lookups.
 func FromUTF16Pointer(p *uint16) string {
-	if p == nil {
-		return ""
-	}
-
-	// Calculate string length and FNV-1a hash in a single loop for optimal performance.
-	// This specialized loop is the key to this function's efficiency.
-	h := uint64(fnvOffset64) // FNV-1a offset basis
-	end := unsafe.Pointer(p)
-	n := 0
-	for {
-		char := *(*uint16)(end)
-		if char == 0 {
-			break // Null terminator found
-		}
-		h ^= uint64(char) // XOR with character value
-		h *= fnvPrime64   // Multiply by FNV prime
-
-		end = unsafe.Pointer(uintptr(end) + 2) // 2 bytes per uint16
-		n++
-	}
-
-	if n == 0 {
-		return ""
-	}
-	s := unsafe.Slice(p, n)
-
-	return decodeUtf16(s, h, n)
+	str, _ := FromUTF16PointerN(p)
+	return str
 }
 
 // FromUTF16Slice converts a UTF-16 slice to a string, using a cache for performance.

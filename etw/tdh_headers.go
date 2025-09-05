@@ -454,18 +454,18 @@ func (t *TraceEventInfo) OpcodeName() string {
 // 	return names
 // }
 
-// Returs a list of keyword names (2x faster)
+// KeywordsName returns a list of keyword names from a double-null-terminated list of UTF-16 strings.
 func (t *TraceEventInfo) KeywordsName() []string {
 	var names []string
 	if t.KeywordsNameOffset > 0 {
-		var pKeyword = (*uint16)(unsafe.Add(unsafe.Pointer(t), t.KeywordsNameOffset))
+		pKeyword := (*uint16)(unsafe.Add(unsafe.Pointer(t), t.KeywordsNameOffset))
 		// The list is terminated with two null characters.
 		for *pKeyword != 0 {
-			utf8Key := FromUTF16Pointer(pKeyword)
-			names = append(names, utf8Key)
-			// Advance pointer by string length + 1 (null terminator)
-			strLen := uintptr(Wcslen(pKeyword)+1) * 2 // *2 for UTF16
-			pKeyword = (*uint16)(unsafe.Add(unsafe.Pointer(pKeyword), strLen))
+			utf8Key, strLen := FromUTF16PointerN(pKeyword)
+			names = append(names, strings.Trim(utf8Key, " "))
+			// Advance pointer to the next string.
+			// (length in chars + 1 for null terminator) * 2 for bytes.
+			pKeyword = (*uint16)(unsafe.Add(unsafe.Pointer(pKeyword), uintptr(strLen+1)*2))
 		}
 	}
 	return names
