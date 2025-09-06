@@ -37,12 +37,22 @@ type Provider struct {
 	// Friendly name of the provider. (not used for enabling, just informational)
 	Name string
 
-	// The logging level specified. Standard logging levels are:
-	// 0 — Log Always; 1 — Critical; 2 — Error; 3 — Warning; 4 — Informational; 5 — Verbose.
-	// Custom logging levels can also be defined, but levels 6–15 are reserved.
-	// More than one logging level can be captured by ORing respective levels;
-	// supplying 255 (0xFF) is the standard method of capturing all supported logging levels.
-	// Note that if you set the EnableLevel to LogAlways, it ensures that all error events will always be written.
+	// The logging level specified. The provider typically writes an event if the
+	// event's level is less than or equal to this value, in addition to meeting
+	// the keyword criteria.
+	//
+	// Each value of Level enables the specified level and all more-severe levels.
+	// For example, if you specify TRACE_LEVEL_WARNING (3), your consumer will
+	// receive warning, error, and critical events.
+	//
+	// Standard logging levels are:
+	//   - 1 (TRACE_LEVEL_CRITICAL): Abnormal exit or termination events.
+	//   - 2 (TRACE_LEVEL_ERROR): Severe error events.
+	//   - 3 (TRACE_LEVEL_WARNING): Warning events such as allocation failures.
+	//   - 4 (TRACE_LEVEL_INFORMATION): Non-error informational events.
+	//   - 5 (TRACE_LEVEL_VERBOSE): Detailed diagnostic events.
+	//
+	// Supplying 255 (0xFF) is the standard method for capturing all supported levels.
 	EnableLevel uint8
 
 	// 64-bit bitmask of keywords that determine the categories of events that you want the provider to write.
@@ -59,7 +69,7 @@ type Provider struct {
 	MatchAnyKeyword uint64
 
 	// 64-bit bitmask of keywords that restricts the events that you want the provider to write.
-	// The provider typically writes an event if the event's keyword bits match all of the bits
+	// The provider typically writes an event if the event's keyword bits match 'all' of the bits
 	// set in this value or if the event has no keyword bits set, in addition to meeting the Level
 	// and MatchAllKeyword criteria.
 	//
@@ -68,28 +78,35 @@ type Provider struct {
 	// Note that this mask is not used if Keywords(Any) is set to zero.
 	MatchAllKeyword uint64
 
-	// Filters provides a mechanism for more granular, kernel-level filtering,
-	// supporting types like EventIDFilter, PIDFilter, etc.
+	// Filters provides a mechanism for more granular, kernel-level filtering.
+	// This maps to the `EnableParameters` argument of the `EnableTraceEx2` API.
 	//
-	// Performance Note: There is a significant performance difference between filtering
-	// via Level/Keywords and filtering via this `Filters` slice.
+	// # Filter Types and Performance
 	//
-	// - Level/Keyword Filtering (Highest Performance): This is "provider-side" filtering.
-	//   The provider code itself checks if a specific level or keyword is enabled *before*
-	//   it generates an event. If the event is disabled, the `EventWrite` call is skipped
-	//   entirely, resulting in near-zero CPU and memory overhead for filtered-out events.
+	// ETW supports several types of filtering with different performance characteristics.
+	// It is crucial to understand the distinction to build efficient tracers.
 	//
-	// - `Filters` Slice (Medium Performance): This is "runtime-side" filtering. The provider
-	//   generates the event and sends it to the ETW runtime. The runtime then checks these
-	//   filters (e.g., EventID, PID) before forwarding the event to the session buffer.
-	//   This means the overhead of creating and serializing the event has already been
-	//   incurred. This method is effective for reducing trace data volume but does not
-	//   reduce the initial CPU overhead of event generation.
+	//   - **Provider-Side Filtering (Level & Keywords):** This is the most efficient
+	//     method. The provider's own code checks the enabled Level and Keywords
+	//     *before* generating an event. If an event is filtered out, the call to
+	//     `EventWrite` is skipped entirely, resulting in near-zero overhead.
+	//
+	//   - **Scope Filtering (`PIDFilter`, `ExecutableNameFilter`):** This is highly
+	//     efficient. The ETW runtime can prevent a provider from being enabled
+	//     within a process altogether, eliminating all event generation overhead
+	//     from that process.
+	//
+	//   - **Attribute & Payload Filtering (`EventIDFilter`, etc.):** This filtering is
+	//     performed by the ETW runtime *after* the provider has generated the event
+	//     and sent it to ETW. This means the CPU cost of creating the event has
+	//     already been paid. This type of filtering is effective for reducing trace
+	//     data volume but is not as effective for reducing trace CPU overhead.
 	//
 	// For more info read:
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/nf-evntrace-enabletraceex2#remarks
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-enable_trace_parameters EnableFilterDesc
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_filter_descriptor EVENT_FILTER_TYPE_EVENT_ID
+
 	Filters []ProviderFilter
 
 	// EnableProperties specifies flags from the EVENT_ENABLE_PROPERTY_* constants.

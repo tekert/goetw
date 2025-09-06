@@ -8,7 +8,9 @@ package etw
 
 import (
 	"fmt"
+	"maps"
 	"runtime"
+	"sync"
 	"syscall"
 	"unsafe"
 )
@@ -17,21 +19,27 @@ import (
 type Session interface {
 	TraceName() string
 	Providers() []Provider
-	IsKernelSession() bool
+	Restart() error
 }
 
 // Real time Trace Session
 type RealTimeSession struct {
 	traceProps    *EventTraceProperties2Wrapper
+	configProps   *EventTraceProperties2Wrapper // used only for config that survives Stop/Start
 	sessionHandle syscall.Handle
 	traceName     string
 
-	enabledProviders []Provider
+	mu               sync.Mutex        // Protects session state during Start/Stop/Enable/Disable
+	addedProviders   map[GUID]Provider // Providers configured before Start()
+	enabledProviders map[GUID]Provider // Providers active on a running session
 }
 
-func (p *RealTimeSession) IsKernelSession() bool {
-	return p.traceName == NtKernelLogger ||
-		(p.traceProps.LogFileMode&EVENT_TRACE_SYSTEM_LOGGER_MODE) != 0
+func (p *RealTimeSession) IsNtKernelSession() bool {
+	return p.traceName == NtKernelLogger || (p.configProps.Wnode.Guid == *SystemTraceControlGuid)
+}
+
+func (p *RealTimeSession) IsSystemSession() bool {
+	return (p.configProps.LogFileMode & EVENT_TRACE_SYSTEM_LOGGER_MODE) != 0
 }
 
 // NewRealTimeSession creates a new ETW trace session to receive events in real time.
@@ -41,14 +49,24 @@ func (p *RealTimeSession) IsKernelSession() bool {
 // which offers high performance but consumes a more limited system resource.
 // For tracing user-mode providers where the absolute lowest latency is not
 // critical, or to conserve non-paged memory, consider using [NewPagedRealTimeSession].
-// You can check current created sessions with
 //
-//	> logman query -ets
+// # Best Practices for Session Naming and Lifecycle
+//
+// As per Microsoft's documentation for the `StartTrace` API, ETW sessions are a
+// limited system resource (typically 64 sessions per system). It is crucial to:
+//   - Use a descriptive and unique name for your session so its ownership and
+//     purpose can be easily identified.
+//   - Ensure your application calls `Stop()` to clean up the session when it is
+//     no longer needed. If an application terminates unexpectedly, the session
+//     may be left running.
+//
+// You can check currently active sessions with the command: `logman query -ets`
 func NewRealTimeSession(name string) (s *RealTimeSession) {
 	s = &RealTimeSession{}
-	s.traceProps = NewRealTimeEventTraceProperties()
+	s.configProps = NewRealTimeEventTraceProperties()
 	s.traceName = name
-	s.enabledProviders = make([]Provider, 0)
+	s.addedProviders = make(map[GUID]Provider)
+	s.enabledProviders = make(map[GUID]Provider)
 	return
 }
 
@@ -65,7 +83,7 @@ func NewRealTimeSession(name string) (s *RealTimeSession) {
 // will fail. This session type is strictly for user-mode providers.
 func NewPagedRealTimeSession(name string) (s *RealTimeSession) {
 	s = NewRealTimeSession(name)
-	s.traceProps.LogFileMode |= EVENT_TRACE_USE_PAGED_MEMORY
+	s.configProps.LogFileMode |= EVENT_TRACE_USE_PAGED_MEMORY
 	return
 }
 
@@ -126,14 +144,14 @@ func NewPagedRealTimeSession(name string) (s *RealTimeSession) {
 func NewKernelRealTimeSession(flags ...KernelNtFlag) (p *RealTimeSession) {
 	p = NewRealTimeSession(NtKernelLogger)
 	// guid must be set for Kernel Session
-	p.traceProps.Wnode.Guid = *systemTraceControlGuid
+	p.configProps.Wnode.Guid = *SystemTraceControlGuid
 	for _, flag := range flags {
-		p.traceProps.EnableFlags |= uint32(flag)
+		p.configProps.EnableFlags |= uint32(flag)
 	}
 	return
 }
 
-// NewSystemTraceProviderSession creates a session for the modern SystemTraceProvider.
+// NewSystemTraceSession creates a session for the modern SystemTraceProvider.
 // This the modern way to capture kernel events, offer more flexibility.
 //
 // IMPORTANT: This feature is only available on Windows 11 and later.
@@ -143,10 +161,13 @@ func NewKernelRealTimeSession(flags ...KernelNtFlag) (p *RealTimeSession) {
 // This model replaces the monolithic "NT Kernel Logger" with
 // individual providers for different kernel components (e.g., processes, memory, I/O).
 //
-// Unlike the legacy kernel session, which is configured with bitmask flags at creation,
-// this session is started first and then individual system providers are enabled
-// using `EnableProvider`, just like any other manifest-based provider. This allows
-// for more granular and flexible kernel tracing.
+// # System Logger Restrictions
+//
+// Because system loggers receive special kernel events, they are subject to
+// additional restrictions:
+//   - There can be no more than 8 system loggers active on the same system.
+//   - System loggers cannot be created within a Windows Server container.
+//   - System loggers cannot use paged memory (the EVENT_TRACE_USE_PAGED_MEMORY flag).
 //
 // For a full list of system providers and their keywords, see:
 // https://learn.microsoft.com/en-us/windows/win32/etw/system-providers
@@ -156,7 +177,7 @@ func NewKernelRealTimeSession(flags ...KernelNtFlag) (p *RealTimeSession) {
 //
 // Example - Capturing process and thread start/stop events:
 //
-//	s, err := etw.NewSystemTraceProviderSession("MySystemSession")
+//	s, err := etw.NewSystemTraceSession("MySystemSession")
 //	if err != nil {
 //		// handle error
 //	}
@@ -174,9 +195,9 @@ func NewKernelRealTimeSession(flags ...KernelNtFlag) (p *RealTimeSession) {
 // You can discover the names of the available system providers using 'logman':
 //
 //	logman query providers | findstr -i system
-func NewSystemTraceProviderSession(name string) (s *RealTimeSession) {
+func NewSystemTraceSession(name string) (s *RealTimeSession) {
 	s = NewRealTimeSession(name)
-	s.traceProps.LogFileMode |= EVENT_TRACE_SYSTEM_LOGGER_MODE
+	s.configProps.LogFileMode |= EVENT_TRACE_SYSTEM_LOGGER_MODE
 	return
 }
 
@@ -235,10 +256,10 @@ func (s *RealTimeSession) SetClockResolution(c ClockType) bool {
 			Msg("Invalid clock type, must be between QPC, SystemTime and CpuCycle")
 		return false
 	}
-	s.traceProps.Wnode.ClientContext = uint32(c)
+	s.configProps.Wnode.ClientContext = uint32(c)
 
-	seslog.Debug().Uint32("ClientContext", s.traceProps.Wnode.ClientContext).
-		Str("ClockType", ClockType(s.traceProps.Wnode.ClientContext).String()).
+	seslog.Debug().Uint32("ClientContext", s.configProps.Wnode.ClientContext).
+		Str("ClockType", ClockType(s.configProps.Wnode.ClientContext).String()).
 		Msg("Session configured with clock type")
 
 	return true
@@ -265,14 +286,14 @@ func (s *RealTimeSession) SetClockResolution(c ClockType) bool {
 //
 // Wnode.Guid: https://learn.microsoft.com/en-us/windows/win32/etw/wnode-header
 func (s *RealTimeSession) SetGuid(guid GUID) bool {
-    // If the session is already started, we cannot change the GUID.
-    if s.IsStarted() {
-        seslog.Error().Str("guid", guid.String()).Msg("Cannot set session GUID after the session has started")
-        return false
-    }
-    s.traceProps.Wnode.Guid = guid
-    seslog.Debug().Str("guid", guid.String()).Msg("Session GUID configured")
-    return true
+	// If the session is already started, we cannot change the GUID.
+	if s.IsStarted() {
+		seslog.Error().Str("guid", guid.String()).Msg("Cannot set session GUID after the session has started")
+		return false
+	}
+	s.configProps.Wnode.Guid = guid
+	seslog.Debug().Str("guid", guid.String()).Msg("Session GUID configured")
+	return true
 }
 
 // GetGuid returns the GUID of the session.
@@ -283,7 +304,7 @@ func (s *RealTimeSession) SetGuid(guid GUID) bool {
 //
 // Wnode.Guid: https://learn.microsoft.com/en-us/windows/win32/etw/wnode-header
 func (s *RealTimeSession) GetGuid() GUID {
-    return s.traceProps.Wnode.Guid
+	return s.configProps.Wnode.Guid
 }
 
 // TraceProperties returns a pointer to the underlying properties structure for the session.
@@ -304,7 +325,7 @@ func (s *RealTimeSession) GetGuid() GUID {
 //	props.MaximumBuffers = 64
 //	s.Start()
 func (s *RealTimeSession) TraceProperties() *EventTraceProperties2Wrapper {
-	return s.traceProps
+	return s.configProps
 }
 
 // IsStarted returns true if the session is already started
@@ -312,10 +333,40 @@ func (s *RealTimeSession) IsStarted() bool {
 	return s != nil && s.sessionHandle != 0
 }
 
+// Restart stops and then starts the ETW session, re-enabling all previously
+// enabled providers. This is useful for recovering a session that was stopped
+// externally. It ensures the session is running with the same configuration
+// and all providers are active.
+func (s *RealTimeSession) Restart() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Stop the session first. This is idempotent and will clean up any existing state,
+	// moving the list of enabled providers into the "added" list for restart.
+	// We ignore the error because the session might already be stopped, which is fine.
+	_ = s.stop()
+
+	// Start the session again. This will re-enable all the providers that were
+	// moved into the "added" list by the stop() call.
+	if err := s.start(); err != nil {
+		return fmt.Errorf("failed to restart session %q: %w", s.traceName, err)
+	}
+
+	seslog.Info().Str("session", s.traceName).Msg("Session restarted successfully")
+	return nil
+}
+
 // Start setups our session buffers so that providers can write to it
 func (s *RealTimeSession) Start() (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.start()
+}
+
+// start is the internal, non-locking version of Start.
+func (s *RealTimeSession) start() (err error) {
 	if s.IsStarted() {
-		return
+		return nil
 	}
 
 	var u16TraceName *uint16
@@ -323,12 +374,18 @@ func (s *RealTimeSession) Start() (err error) {
 		return err
 	}
 
-	if s.IsKernelSession() {
+	if s.IsNtKernelSession() {
 		// Remove EVENT_TRACE_USE_PAGED_MEMORY flag from session properties
-		s.traceProps.LogFileMode &= ^uint32(EVENT_TRACE_USE_PAGED_MEMORY)
+		s.configProps.LogFileMode &= ^uint32(EVENT_TRACE_USE_PAGED_MEMORY)
 	}
 
-	traceProps := &s.traceProps.EventTraceProperties2
+	if s.IsNtKernelSession() && s.configProps.EnableFlags == 0 {
+		return fmt.Errorf("cannot start kernel session without any kernel flags enabled")
+	}
+
+	// StartTrace
+	propsForAPI := s.configProps.Clone()
+	traceProps := &propsForAPI.EventTraceProperties2
 	if err = StartTrace(&s.sessionHandle, u16TraceName, traceProps); err != nil {
 		// we handle the case where the trace already exists
 		if err == ERROR_ALREADY_EXISTS {
@@ -338,31 +395,95 @@ func (s *RealTimeSession) Start() (err error) {
 			propCopy := *traceProps
 			// we close the trace first
 			ControlTrace(0, u16TraceName, &propCopy, EVENT_TRACE_CONTROL_STOP)
-			return StartTrace(&s.sessionHandle, u16TraceName, traceProps)
+			err = StartTrace(&s.sessionHandle, u16TraceName, traceProps)
 		}
-		return
 	}
 
-	return
+	// On success, store the live properties returned by the API.
+	s.traceProps = propsForAPI
+
+	// Now, enable all pre-configured providers.
+	// Iterate over a copy of the providers since enableProvider modifies the map.
+	providersToEnable := make([]Provider, 0, len(s.addedProviders))
+	for _, p := range s.addedProviders {
+		providersToEnable = append(providersToEnable, p)
+	}
+
+	for _, p := range providersToEnable {
+		if err := s.enableProvider(p); err != nil {
+			// If enabling a provider fails, stop the session to leave it in a clean state.
+			_ = s.stop()
+			return fmt.Errorf("failed to enable provider %q during session start: %w", p.Name, err)
+		}
+	}
+
+	seslog.Info().Str("session", s.traceName).Uint64("Handle", uint64(s.sessionHandle)).
+		Msg("Session started")
+
+	return err
+}
+
+// AddProvider configures a provider to be enabled when the session starts.
+// This method allows you to define all required providers before activating the
+// session, minimizing the time between session start and event consumption.
+//
+// This is a configuration step and does not interact with the ETW subsystem.
+// The providers are activated only when Start() is called. If a provider with
+// the same GUID is added multiple times, the last one overwrites the previous ones.
+func (s *RealTimeSession) AddProvider(prov Provider) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.IsStarted() {
+		return fmt.Errorf("cannot add provider %q to a running session; use EnableProvider() instead", prov.Name)
+	}
+	s.addedProviders[prov.GUID] = prov
+	return nil
 }
 
 // EnableProvider enables the trace session to receive events from a given provider
 // using the configuration options specified within the Provider struct.
 //
-// Performance Note: Filtering events via the provider's Level and Keywords is the
+// If the session is not yet running, this method will add the provider and then
+// start the session, which enables all other providers that have been added.
+// If the session is already running, the provider is enabled immediately.
+//
+// # Updating Provider Settings
+//
+// If a provider is already enabled for this session, calling `EnableProvider` again
+// with the same provider GUID will update the session's configuration for that
+// provider. This is the correct way to change the `Level`, `Keywords`, or `Filters`
+// for a provider on a live session.
+//
+// As per the `EnableTraceEx2` documentation: "Every time EnableTraceEx2 is called,
+// the filters for the provider in that session are replaced by the new parameters."
+//
+// # Performance Note
+//
+// Filtering events via the provider's Level and Keywords is the
 // most efficient method, as it prevents the provider from generating disabled events
 // in the first place. Other filter types (e.g., EventIDFilter) are applied by the
 // ETW runtime after the event has been generated (depends on provider), which reduces
 // trace volume but not the initial CPU overhead of generation.
 func (s *RealTimeSession) EnableProvider(prov Provider) (err error) {
-	// If the trace is not started yet we have to start it
-	// otherwise we cannot enable provider
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if !s.IsStarted() {
-		if err = s.Start(); err != nil {
-			return
-		}
+		// Add the provider to the configured list. The map handles duplicates.
+		s.addedProviders[prov.GUID] = prov
+		// Start the session, which will enable this provider and any others.
+		return s.start()
 	}
 
+	// If session is already running, enable the provider directly.
+	return s.enableProvider(prov)
+}
+
+// enableProvider is the internal, non-locking version of EnableProvider.
+// It is the single point of truth for enabling a provider via the API
+// and updating the session's internal state maps.
+func (s *RealTimeSession) enableProvider(prov Provider) (err error) {
 	var descriptors []EventFilterDescriptor
 	// The data backing the pointers in the descriptors is managed by Go's GC.
 	// It will be kept alive on the stack/heap during the synchronous EnableTraceEx2 call.
@@ -400,18 +521,28 @@ func (s *RealTimeSession) EnableProvider(prov Provider) (err error) {
 		return fmt.Errorf("EnableTraceEx2 failed for provider %s (%s): %w", prov.Name, prov.GUID.String(), err)
 	}
 
+	// On success, update state: add/update the provider in the "enabled" map
+	// and ensure it's removed from the "added" map.
+	s.enabledProviders[prov.GUID] = prov
+	delete(s.addedProviders, prov.GUID)
+
 	// By reaching this point, the C call is done. The `cleanups` slice
 	// can now go out of scope, and the GC is free to collect the buffers.
 	runtime.KeepAlive(keepAlives)
 
-	s.enabledProviders = append(s.enabledProviders, prov)
-
-	return
+	return nil
 }
 
-// DisableProvider removes a provider from the session.
+// DisableProvider removes a provider from a running session.
 // Returns nil if session is not started (no-op).
 func (s *RealTimeSession) DisableProvider(prov Provider) (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.disableProvider(prov)
+}
+
+// disableProvider is the internal, non-locking version of DisableProvider.
+func (s *RealTimeSession) disableProvider(prov Provider) (err error) {
 	if !s.IsStarted() {
 		// Can't disable a provider on a session that isn't running.
 		return nil
@@ -431,13 +562,7 @@ func (s *RealTimeSession) DisableProvider(prov Provider) (err error) {
 	}
 
 	// Remove from the active provider list.
-	newEnabled := s.enabledProviders[:0]
-	for _, p := range s.enabledProviders {
-		if !p.GUID.Equals(&prov.GUID) {
-			newEnabled = append(newEnabled, p)
-		}
-	}
-	s.enabledProviders = newEnabled
+	delete(s.enabledProviders, prov.GUID)
 
 	return
 }
@@ -448,6 +573,9 @@ func (s *RealTimeSession) DisableProvider(prov Provider) (err error) {
 // NOTE: nt kernel sessions do not support SystemConfig rundown events. Access Denied.
 // Just start a nt kernel session and stop it to get SystemConfig rundown events.
 func (s *RealTimeSession) GetRundownEvents(guid *GUID) (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if !s.IsStarted() {
 		return fmt.Errorf("session not started")
 	}
@@ -482,25 +610,60 @@ func (s *RealTimeSession) TraceName() string {
 
 // Providers returns a slice of all currently enabled providers for this session.
 func (s *RealTimeSession) Providers() []Provider {
-	// Return a copy to prevent modification of the internal slice.
-	providers := make([]Provider, len(s.enabledProviders))
-	copy(providers, s.enabledProviders)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Return a copy to prevent modification of the internal map.
+	providers := make([]Provider, 0, len(s.enabledProviders))
+	for _, p := range s.enabledProviders {
+		providers = append(providers, p)
+	}
 	return providers
 }
 
 // Stop stops the session. It first attempts to disable all enabled providers
 // and then blocks until all buffers are flushed and the session is fully stopped.
 func (s *RealTimeSession) Stop() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.stop()
+}
+
+// stop is the internal, non-locking version of Stop.
+func (s *RealTimeSession) stop() error {
+	if !s.IsStarted() {
+		return nil
+	}
+	seslog.Debug().Msg("Session stopping...")
+
 	// It's best practice to disable providers before stopping the session.
 	for _, p := range s.enabledProviders {
 		// We can ignore errors here, as we're stopping the session anyway.
-		_ = s.DisableProvider(p)
+		_ = s.disableProvider(p)
 	}
+	//seslog.Debug().Str("trace", s.traceName).Interface("Props", *s.traceProps).Msg("Properties BEFORE closing")
 
-	s.enabledProviders = nil // Clear the slice
-
-	return ControlTrace(s.sessionHandle, nil, &s.traceProps.EventTraceProperties2,
+	// we have to use a copy of properties as ControlTrace modifies
+	// the structure and if we don't do that we cannot StartTrace later
+	propClone := *s.traceProps.Clone()
+	// - The contigous memory space is not needed for this operation (LoggerName in the Props)
+	// - For some reason after this call, if this prop is reused in StartTrace, doesn't fail but the handle is invalid.
+	// - After this call the props become unusable.
+	err := ControlTrace(s.sessionHandle, nil, &propClone.EventTraceProperties2,
 		EVENT_TRACE_CONTROL_STOP)
+
+	//seslog.Debug().Str("trace", s.traceName).Interface("closedProps", propClone).Msg("Properties AFTER trace closed")
+	// s.traceProps = &propClone          // ! TESTING
+	// s.traceProps.LogFileNameOffset = 0 // ! TESTING
+
+	// Always reset the handle after a stop attempt to ensure IsStarted() is accurate.
+	s.sessionHandle = 0
+
+	// For potential Restart(), move the list of what was enabled into the "added" list.
+	maps.Copy(s.addedProviders, s.enabledProviders)
+	clear(s.enabledProviders)
+
+	seslog.Info().Str("session", s.traceName).Msg("Session stopped")
+	return err
 }
 
 // Gets a copy of the current EventTraceProperties file used for this session

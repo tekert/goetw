@@ -25,9 +25,20 @@ type ProviderFilter interface {
 
 // EventIDFilter filters events based on their 16-bit event ID.
 //
-// NOTE: This is a "runtime-side" filter. The provider generates the event, and the
-// ETW runtime checks its ID against this filter before sending it to the session.
-// The overhead of event creation has already occurred, but this can reduce trace volume.
+// # CPU Performance Impact: Medium
+//
+// This is an "attribute filter" that is applied by the ETW runtime *after* the
+// provider has already generated the event and sent it to ETW. This means the
+// CPU cost of creating the event has already been paid.
+//
+// This type of filtering is effective for reducing the volume of trace data
+// written to the session buffers, but it is not effective for reducing the
+// initial CPU overhead of event generation on the provider side.
+//
+// When applied to a TraceLogging provider, this filter will be ignored as
+// TraceLogging events do not have static event IDs.
+//
+// The maximum number of event IDs allowed is limited by MAX_EVENT_FILTER_EVENT_ID_COUNT (64).
 type EventIDFilter struct {
 	IDs      []uint16
 	FilterIn bool // True (default) to include these IDs, false to exclude them.
@@ -59,15 +70,22 @@ func (f *EventIDFilter) build() (EventFilterDescriptor, any) {
 
 // PIDFilter filters events based on the Process ID (PID) of the originating process.
 //
-// NOTE: This is a "scope filter". It is highly efficient because it can prevent a
-// provider from being enabled within a process altogether, eliminating all event
-// generation overhead from that process.
+// # CPU Performance Impact: Low
+//
+// This is a "scope filter" and is highly efficient. According to Microsoft's
+// documentation, providers disabled by scope filters have "almost no impact on
+// system performance". This is because the ETW runtime can prevent the provider
+// from being enabled within the specified processes altogether, avoiding the CPU
+// cost of event generation from those processes entirely.
+//
+// # Kernel Provider Limitation
 //
 // This has a critical implication for Kernel Providers (e.g., "Microsoft-Windows-Kernel-Process"):
 // The provider is the kernel itself (PID 4 or 0). When a PID filter for a user-mode
 // process is applied to a kernel provider, the ETW subsystem appears to IGNORE the
-// filter rather than blocking events. Events will still be received from the provider
-// as if no PID filter was applied.
+// filter. Events will still be received from the provider as if no PID filter was applied.
+//
+// The maximum number of PIDs that can be filtered is limited by MAX_EVENT_FILTER_PID_COUNT (8).
 type PIDFilter struct {
 	PIDs []uint32
 }
@@ -99,9 +117,18 @@ func (f *PIDFilter) build() (EventFilterDescriptor, any) {
 
 // ExecutableNameFilter filters events based on the file name of the originating process.
 //
-// NOTE: This is a "scope filter" and has the same behavior and limitations as the
-// PIDFilter. It is highly efficient for user-mode providers but is generally ignored
-// when used with Kernel Providers.
+// # CPU Performance Impact: Low
+//
+// This is a "scope filter" and is highly efficient for the same reasons as the
+// PIDFilter. It can prevent a provider from being enabled within processes matching
+// the given executable names, which avoids the CPU cost of event generation.
+//
+// # Kernel Provider Limitation
+//
+// This filter is generally ignored when used with Kernel Providers, similar to the PIDFilter.
+//
+// The filter is a single string that can contain multiple executable file names
+// separated by semicolons (e.g., "svchost.exe;conhost.exe").
 type ExecutableNameFilter struct {
 	Names []string
 }
