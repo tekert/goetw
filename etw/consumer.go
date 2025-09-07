@@ -80,14 +80,16 @@ type Consumer struct {
 	sync.WaitGroup
 	ctx     context.Context
 	cancel  context.CancelFunc
-	closed  bool
-	started bool // True if the consumer has been started.
+	closed  atomic.Bool
+	started atomic.Bool // True if the consumer has been started.
 
 	tmu sync.RWMutex // Protect trace updates
 
 	// Holds references to consumer currently active traces.
 	// safe to hold a reference to ConsumerTrace after closing the consumer.
 	traces sync.Map // map[string]*ConsumerTrace
+
+	stoppedTraces chan *ConsumerTrace // Channel for stopped trace notifications.
 
 	lastError atomic.Value // stores error
 
@@ -170,7 +172,8 @@ func (e *EventTraceLogfile) getContext() *traceContext {
 // NewConsumer creates a new Consumer to consume ETW
 func NewConsumer(ctx context.Context) (c *Consumer) {
 	c = &Consumer{
-		Events: NewEventBuffer(),
+		Events:        NewEventBuffer(),
+		stoppedTraces: make(chan *ConsumerTrace, 16), // Buffer to handle multiple traces stopping at once.
 	}
 
 	c.ctx, c.cancel = context.WithCancel(ctx)
@@ -188,17 +191,18 @@ func NewConsumer(ctx context.Context) (c *Consumer) {
 //
 // This function is not thread-safe and must be called before the consumer is started.
 func (c *Consumer) SetTraceInfoCache(enable bool) error {
-	if c.started { // TODO: and (not closed) when we do that a consumer can be reused?
+	if c.started.Load() {
 		return errors.New("cannot change trace info cache setting after consumer has started")
 	}
 	globalTraceEventInfoCacheEnabled = enable
 	return nil
 }
 
-// gets or creates a new one if it doesn't exist
-func (c *Consumer) getOrAddTrace(traceName string) *ConsumerTrace {
-	actual, _ := c.traces.LoadOrStore(traceName, newConsumerTrace(traceName))
-	return actual.(*ConsumerTrace)
+// getOrAddTrace gets or creates a new one if it doesn't exist.
+// Returns the trace and a boolean indicating if it already existed.
+func (c *Consumer) getOrAddTrace(traceName string) (trace *ConsumerTrace, exists bool) {
+	actual, loaded := c.traces.LoadOrStore(traceName, newConsumerTrace(traceName))
+	return actual.(*ConsumerTrace), loaded
 }
 
 // GetTraces returns a snapshot of all managed ConsumerTrace objects with statistics.
@@ -232,6 +236,54 @@ func (c *Consumer) GetTrace(tname string) (t *ConsumerTrace, ok bool) {
 		return nil, false
 	}
 	return v.(*ConsumerTrace), true
+}
+
+// StoppedTraces returns a channel that emits a pointer to a ConsumerTrace
+// each time one of the consumer's trace processing goroutines stops. This
+// provides a centralized way to monitor for stopped traces.
+//
+// The channel is buffered. If the buffer is full, the notification for a
+// stopped trace will be dropped and a warning will be logged. It is the
+// caller's responsibility to consume from this channel promptly.
+//
+// The channel is NOT closed when the consumer stops. Listeners should use a
+// select statement with the consumer's context to handle shutdown.
+//
+// Example:
+//
+//	go func() {
+//	    for {
+//	        select {
+//	        case stoppedTrace := <-consumer.StoppedTraces():
+//	            log.Printf("Trace %s stopped, attempting restart...", stoppedTrace.TraceName)
+//	            // Add logic here to restart the session if the stop was not intentional.
+//	            // e.g., consumer.RestartTrace(stoppedTrace.TraceName) // Or RestartSession(session)
+//	        case <-consumer.Context().Done():
+//	            log.Println("Consumer stopping, exiting trace monitor.")
+//	            return
+//	        }
+//	    }
+//	}()
+func (c *Consumer) StoppedTraces() <-chan *ConsumerTrace {
+	return c.stoppedTraces
+}
+
+// Context returns the consumer's root context. This context is canceled when
+// Stop(), StopWithTimeout(), or Abort() is called. It can be used to signal
+// shutdown on the Consumer.
+func (c *Consumer) Context() context.Context {
+	return c.ctx
+}
+
+// IsTraceProcessing returns true if the ProcessTrace goroutine for the given
+// trace name is currently active. This provides a real-time view of the consumer's
+// processing state for a specific trace.
+func (c *Consumer) IsTraceRunning(name string) bool {
+	trace, ok := c.GetTrace(name) // Ensure trace exists
+	if ok {
+		return trace.IsRunning()
+	}
+	return false
 }
 
 // reportError is the centralized error handler for the consumer callback.
@@ -457,7 +509,7 @@ func (c *Consumer) stopTrace(name string, timeout time.Duration) error {
 	trace := v.(*ConsumerTrace)
 
 	// If not processing, it's already stopped or never started.
-	if !trace.processing.Load() {
+	if !trace.open || !trace.processing.Load() {
 		return nil
 	}
 
@@ -490,7 +542,7 @@ func (c *Consumer) cleanupTrace(trace *ConsumerTrace, name string) {
 		// The goroutine finished gracefully. It is now safe to remove the trace
 		// from the map.
 		c.traces.Delete(name)
-		seslog.Debug().Str("trace", name).Msg("Trace closed and removed from consumer.")
+		seslog.Debug().Str("trace", name).Msg("Trace deleted from consumer.")
 	} else {
 		// The goroutine was detached (due to timeout or abort). We must not
 		// delete it from the map yet. Spawn a reaper goroutine to perform
@@ -503,7 +555,7 @@ func (c *Consumer) cleanupTrace(trace *ConsumerTrace, name string) {
 					// The detached goroutine has finally finished. It is now safe
 					// to remove the trace from the map.
 					c.traces.Delete(name)
-					seslog.Debug().Str("trace", name).Msg("Reaped and cleaned up detached trace.")
+					seslog.Debug().Str("trace", name).Msg("Trace (detached) deleted from consumer.")
 					return // Exit the reaper goroutine.
 				}
 			}
@@ -544,19 +596,21 @@ func (c *Consumer) closeTrace(trace *ConsumerTrace) (err error) {
 	return nil // Return nil on success or pending close.
 }
 
-// closeAll closes all open handles and eventually waits for ProcessTrace goroutines
+// closeConsumer closes all open handles and eventually waits for ProcessTrace goroutines
 // to return if wait = true
-func (c *Consumer) closeAll(wait bool) (lastErr error) {
-	if c.closed {
+func (c *Consumer) closeConsumer(wait bool) (lastErr error) {
+	if c.closed.Load() {
 		seslog.Debug().Msg("Consumer already closed.")
 		return
 	}
-	seslog.Debug().Msg("Closing all traces for consumer...")
+	seslog.Debug().Msg("Closing Consmer...")
 
 	// 1: Signal the global context for all callbacks.
+	seslog.Debug().Msg("Canceling consumer context...")
 	c.cancel()
 
 	// 2: Signal all traces to unblock by calling closeTrace for each one.
+	seslog.Debug().Msg("Closing all traces for consumer...")
 	c.traces.Range(func(key, value any) bool {
 		trace := value.(*ConsumerTrace)
 		if err := c.closeTrace(trace); err != nil {
@@ -573,6 +627,7 @@ func (c *Consumer) closeAll(wait bool) (lastErr error) {
 	}
 
 	// 4: After waiting, iterate again to perform the final cleanup for each trace.
+	seslog.Debug().Msg("Cleaning up all traces for consumer...")
 	c.traces.Range(func(key, value any) bool {
 		name := key.(string)
 		trace := value.(*ConsumerTrace)
@@ -586,7 +641,8 @@ func (c *Consumer) closeAll(wait bool) (lastErr error) {
 	// a summary of suppressed logs that occurred during the consumer's lifetime.
 	GetLogManager().GetSampler().Flush()
 
-	c.closed = true
+	c.closed.Store(true)
+	seslog.Debug().Msg("Consumer closed.")
 
 	return
 }
@@ -599,14 +655,20 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	c.tmu.Lock()
 	defer c.tmu.Unlock()
 
+	ti, _ := c.getOrAddTrace(name)
+	if ti.open {
+		return nil // Already open, do nothing.
+	}
+
 	var traceHandle syscall.Handle
-	ti := c.getOrAddTrace(name)
-	// Important: we must keep a Go reference, so we save this first to ti._ctx
-	// to prevent being garbage collected
-	ti._ctx = &traceContext{
-		trace:    ti,
-		consumer: c,
-		storage:  newTraceStorage(),
+	if ti._ctx == nil {
+		// Important: we must keep a Go reference, so we save this first to ti._ctx
+		// to prevent being garbage collected
+		ti._ctx = &traceContext{
+			trace:    ti,
+			consumer: c,
+			storage:  newTraceStorage(),
+		}
 	}
 
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-event_trace_logfilea
@@ -633,8 +695,20 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 		loggerInfo.LoggerName = ti.TraceNameW
 	}
 
+	seslog.Trace().Str("trace", name).Interface("Sent-EventTraceLogFile", loggerInfo).
+		Bool("realtime", ti.realtime).Msg("Opening trace")
+
 	if traceHandle, err = OpenTrace(&loggerInfo); err != nil {
 		return err
+	} else {
+		// The OpenTrace API can return success but provide an uninitialized header
+		// during a kernel-level race condition (e.g., immediately after a session
+		// is restarted). We must validate the header to ensure the handle is usable.
+		// We check fields that must be non-zero on any valid, running session.
+		if loggerInfo.LogfileHeader.BootTime == 0 && loggerInfo.LogfileHeader.NumberOfProcessors == 0 {
+			_ = CloseTrace(traceHandle) // Clean up the invalid handle.
+			return fmt.Errorf("trace %q opened successfully but returned an invalid/uninitialized header", name)
+		}
 	}
 
 	// Trace open
@@ -659,7 +733,8 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	// Determine and store the clock type from the log file header.
 	// The ReservedFlags field indicates the clock resolution used by the session.
 	ti.ClockType = ClockType(ti.traceLogfile.LogfileHeader.ReservedFlags)
-	seslog.Info().Str("trace", name).Str("ClockType", ti.ClockType.String()).Msg("Consumer opened trace")
+	seslog.Trace().Str("trace", name).Interface("Returned-EventTraceLogFile", loggerInfo).Msg("OpenTrace API call returned")
+	seslog.Info().Str("trace", name).Str("ClockType", ti.ClockType.String()).Msg("Consumer opened trace successfully")
 
 	return nil
 }
@@ -780,10 +855,88 @@ func (c *Consumer) DefaultEventCallback(event *Event) error {
 	return nil
 }
 
+// RestartTrace attempts to restart a consumer's connection to a single trace by name.
+// This function is designed for scenarios where the underlying ETW session is known
+// to be running, but the consumer's connection was lost (e.g., the session was
+// briefly stopped and started by an external process).
+//
+// This function does NOT restart the underlying ETW session itself. For owned
+// sessions, use RestartSessions to manage both the session and the consumer.
+//
+// It re-opens the trace for consumption and starts a new processing goroutine,
+// preserving the trace's existing statistics.
+func (c *Consumer) RestartTrace(name string) error {
+	trace, ok := c.GetTrace(name)
+	if !ok {
+		return fmt.Errorf("trace %q not found in consumer", name)
+	}
+
+	// CRITICAL: Wait for the previous goroutine to fully exit.
+	select {
+	case <-trace.Done():
+		// Previous goroutine has finished. It's safe to proceed.
+	case <-time.After(5 * time.Second): // A safety timeout.
+		return fmt.Errorf("timed out waiting for previous trace %q to stop", name)
+	}
+
+	if trace.processing.Load() {
+		return fmt.Errorf("trace %q is still processing, cannot restart", name)
+	}
+
+	// Re-open the consumer's trace handle to the session.
+	if err := c.OpenTrace(name); err != nil {
+		return fmt.Errorf("failed to re-open consumer trace for %q: %w", name, err)
+	}
+
+	// Re-initialize done channel for the new goroutine.
+	trace.done = make(chan struct{})
+
+	c.startTraceGoroutine(name, trace)
+	return nil
+}
+
+// RestartSessions attempts to restart one or more owned sessions and the consumer's
+// connection to them.
+// This is useful for scenarios where a real-time session is stopped by an
+// external process.
+//
+// If the consumer is consuming events in real time,
+//
+//	the ProcessTrace function returns () [<-trace.Done()] after the controller stops
+//	the trace session. (Note that there may be a delay of several
+//	seconds before the function returns.
+//
+// For each provided session, its `Restart()` method is called first to ensure
+// the underlying ETW session is running before the consumer tries to reconnect.
+//
+// This function re-opens the trace for consumption and starts a new processing
+// goroutine, preserving the trace's existing statistics.
+//
+// It returns an error if a trace is already processing, not found in the consumer,
+// or fails to restart.
+func (c *Consumer) RestartSessions(sessions ...Session) error {
+	for _, s := range sessions {
+		name := s.TraceName()
+
+		// TODO: check if session was not already manually restarted.
+
+		// First, ensure the underlying ETW session is running.
+		if err := s.Restart(); err != nil {
+			return fmt.Errorf("failed to restart underlying session for trace %q: %w", name, err)
+		}
+
+		// Now, restart the consumer's connection to the newly started session.
+		if err := c.RestartTrace(name); err != nil {
+			return fmt.Errorf("failed to restart consumer trace for session %q: %w", name, err)
+		}
+	}
+	return nil
+}
+
 // Start starts the consumer, for each real time trace opened starts ProcessTrace in new goroutine
 // Also opens any trace session not already opened for consumption.
 func (c *Consumer) Start() (err error) {
-	c.started = true
+	c.started.Store(true)
 	// opening all traces that are not opened first,
 	c.traces.Range(func(key, value any) bool {
 		name := key.(string)
@@ -811,33 +964,37 @@ func (c *Consumer) Start() (err error) {
 			return true // continue iteration
 		}
 
-		c.Add(1)
-		go func(name string, trace *ConsumerTrace) {
-			defer c.Done()
-			defer close(trace.done) // Signal completion when this goroutine exits.
-
-			//c.processTrace(name, trace)
-			c.processTraceWithTimeout(name, trace)
-		}(name, trace)
+		c.startTraceGoroutine(name, trace)
 		return true
 	})
 
-	// Important: runs these after c.Add(1) so Wait() works correctly.
-	// It waits for all trace processing to finish to close the event channel.
-	go func() {
-		c.Wait()         // Block until all ProcessTrace goroutines call Done().
-		c.Events.close()
-	}()
-
-	// It listens for an explicit shutdown signal (e.g., Ctrl+C)
-	// and ensures the event channel is closed to unblock the user's
-	// ProcessEvents loop. (no effect is using the other callbacks 1,2,3)
-	go func() {
-		<-c.ctx.Done()   // Block until the consumer's context is canceled.
-		c.Events.close()
-	}()
-
 	return
+}
+
+// startTraceGoroutine launches the ProcessTrace loop for a single trace.
+func (c *Consumer) startTraceGoroutine(name string, trace *ConsumerTrace) {
+	c.Add(1)
+	go func(name string, trace *ConsumerTrace) {
+		defer c.Done()
+
+		// Run the main processing loop. This blocks until the trace stops.
+		//c.processTrace(name, trace)
+		c.processTraceWithTimeout(name, trace)
+
+		// Signal completion when ProcessTrace goroutine exits.
+		// The `done` channel is closed here to correctly signal when the
+		// processTrace wrapper and the underlying processTrace have finished.
+		close(trace.done)
+
+		// Send a non-blocking notification to the consumer-wide channel.
+		select {
+		case c.stoppedTraces <- trace:
+		default:
+			// Don't block if the channel is full.
+			seslog.Debug().Str("trace", trace.TraceName).
+				Msg("StoppedTraces channel is full; notification dropped.")
+		}
+	}(name, trace)
 }
 
 func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
@@ -846,7 +1003,7 @@ func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
 	defer runtime.UnlockOSThread()
 
 	goroutineID := getGoroutineID()
-	seslog.Info().Str("trace", name).Interface("goroutineID", goroutineID).Msg("Starting processing trace")
+	seslog.Info().Str("trace", name).Int64("goroutineID", goroutineID).Msg("Starting processing trace")
 
 	trace.processing.Store(true)
 	trace.StartTime = time.Now()
@@ -855,8 +1012,10 @@ func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
 	// Won't return even if canceled (CloseTrace or callbackBuffer returning 0),
 	// until the session buffer is empty, meaning the defined callback has to return
 	// for every remaining event in the buffer, then ProcessTrace will unblock.
-	// This must be to make sure all events are processed before  the user closes the handle.
-	if err := ProcessTrace(&trace.handle, 1, nil, nil); err != nil {
+	// Maybe this was done like this to make sure all events are processed before the user closes the handle.
+	err := ProcessTrace(&trace.handle, 1, nil, nil)
+	trace.processing.Store(false)
+	if err != nil {
 		if err == ERROR_CANCELLED {
 			// The consumer canceled processing by returning FALSE in their
 			// BufferCallback function.
@@ -865,10 +1024,19 @@ func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
 			lastErr := fmt.Errorf(
 				"ProcessTrace failed: %w, handle: %v, LoggerName: %s", err, trace.handle, name)
 			c.lastError.Store(lastErr)
-			seslog.Error().Err(lastErr).Msg("ProcessTrace failed")
+			seslog.Error().Err(lastErr).Str("trace", name).Msg("ProcessTrace failed")
+		}
+	} else {
+		// ProcessTrace returned ERROR_SUCCESS. If the consumer is still active
+		// (i.e., not shutting down), it means the session was likely stopped externally.
+		if !c.closed.Load() && c.ctx.Err() == nil && trace.ctx.Err() == nil && trace.realtime {
+			seslog.Warn().Str("trace", name).
+				Msg("ProcessTrace finished unexpectedly; session may have been stopped externally. Use consumer.RestartSession() to resume.")
 		}
 	}
-	trace.processing.Store(false)
+	// The handle is now invalid. We close it logically to prepare for a potential restart.
+	_ = c.closeTrace(trace)
+
 	trace._ctx = nil // context can be safely released now. (bufferCallback will not be called anymore)
 	seslog.Debug().Str("trace", name).Msg("ProcessTrace finished")
 }
@@ -891,10 +1059,10 @@ func (c *Consumer) processTraceWithTimeout(name string, trace *ConsumerTrace) {
 	// 3. The underlying ProcessTrace function finishes on its own (`pdone`).
 	select {
 	case <-c.ctx.Done(): // Global shutdown signal.
-		seslog.Debug().Str("trace", name).Msg("Global context canceled, shutting down trace...")
+		seslog.Debug().Str("trace", name).Msg("processTrace: Global context canceled, shutting down trace...")
 		timeout = c.closeTimeout
 	case <-trace.ctx.Done(): // Individual shutdown signal.
-		seslog.Debug().Str("trace", name).Msg("Trace context canceled, shutting down trace...")
+		seslog.Debug().Str("trace", name).Msg("processTrace: Trace context canceled, shutting down trace...")
 		timeout = trace.closeTimeout
 	case <-pdone: // ProcessTrace finished cleanly.
 		return // Finished cleanly before any cancellation signal.
@@ -910,7 +1078,7 @@ func (c *Consumer) processTraceWithTimeout(name string, trace *ConsumerTrace) {
 		case <-pdone:
 			// ProcessTrace returned gracefully before timeout.
 		case <-timer.C:
-			seslog.Warn().Str("trace", name).Msg("ProcessTrace did not return within timeout, detaching goroutine.")
+			seslog.Warn().Str("trace", name).Msg("processTrace: ProcessTrace did not return within timeout, detaching goroutine.")
 		}
 	case timeout == 0: // Wait indefinitely.
 		<-pdone
@@ -939,7 +1107,7 @@ func (c *Consumer) LastError() error {
 func (c *Consumer) Stop() (err error) {
 	// ProcessTrace will exit only if the session buffer is empty.
 	c.closeTimeout = 0
-	return c.closeAll(true)
+	return c.closeConsumer(true)
 }
 
 // StopWithTimeout initiates a shutdown with a timeout.
@@ -958,7 +1126,7 @@ func (c *Consumer) Stop() (err error) {
 func (c *Consumer) StopWithTimeout(timeout time.Duration) (err error) {
 	// ProcessTrace will exit only if the session buffer is empty.
 	c.closeTimeout = timeout
-	return c.closeAll(true)
+	return c.closeConsumer(true)
 }
 
 // Abort forces an immediate, non-graceful shutdown of the consumer.
@@ -972,7 +1140,7 @@ func (c *Consumer) StopWithTimeout(timeout time.Duration) (err error) {
 // in-flight events is acceptable.
 func (c *Consumer) Abort() (err error) {
 	c.closeTimeout = -1 // A negative value signals an immediate return.
-	return c.closeAll(false)
+	return c.closeConsumer(false)
 }
 
 // StopTrace gracefully shuts down a single trace session by name, with an optional timeout.
@@ -991,4 +1159,16 @@ func (c *Consumer) StopTrace(name string, timeout ...time.Duration) error {
 		t = timeout[0]
 	}
 	return c.stopTrace(name, t)
+}
+
+// CloseEventsChannel safely closes the Consumer's Events channel.
+// This signals the end of event processing and unblocks any goroutines
+// waiting on the channel. It is safe to call multiple times.
+//
+// Only useful if consuming from the c.ProcessEvents(func(e *etw.Event) error method.
+// No need to call this if using c.Stop() or c.Abort() as they call it internally.
+func (c *Consumer) CloseEventsChannel() {
+	if c.Events != nil {
+		c.Events.close() // Use the internal close method
+	}
 }

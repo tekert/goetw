@@ -296,6 +296,31 @@ func (t *ConsumerTrace) updateTraceLogFile(bufferLogFile *EventTraceLogfile) {
 	t.traceLogfile.Union1 = bufferLogFile.Union1
 }
 
+// IsTraceProcessing returns true if the ProcessTrace goroutine is currently active.
+// This means the ProcessTrace function is blocking and processing events.
+// Useful to know if another external process closed the session while we were running.
+func (t *ConsumerTrace) IsRunning() bool {
+	return t.processing.Load()
+}
+
+// Done returns a channel that is closed when the trace's processing goroutine
+// has fully completed. This is the most reliable way to detect that a trace
+// has stopped, whether intentionally or unexpectedly.
+//
+// This channel can be used to build robust restart logic. A select on this
+// channel will unblock as soon as the goroutine exits.
+//
+// Example:
+//
+//	go func() {
+//	    <-trace.Done()
+//	    log.Printf("Trace %s stopped, attempting restart...", trace.TraceName)
+//	    // Add logic here to restart the session if the stop was not intentional.
+//	}()
+func (t *ConsumerTrace) Done() <-chan struct{} {
+	return t.done
+}
+
 // QueryTrace retrieves the status and current settings for this tracing session.
 // This is the "consumer's view" of the session. It queries the session by its
 // name, allowing a consumer to get statistics for any session it is listening to,

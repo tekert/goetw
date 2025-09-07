@@ -85,6 +85,12 @@ func (e *EventBuffer) tryLockWithTimeout(timeout time.Duration) bool {
 	return false
 }
 
+// Close the events channel, flushing any pending events first.
+// This is safe to call multiple times, the channel will only be closed once.
+func (e *EventBuffer) Close() error {
+	return e.close()
+}
+
 // Flushes and then closes the channel
 // if the channel is blocked, try to acquire lock with timeout.
 // if we can't acquire the lock, just close the channel without flush.
@@ -96,7 +102,7 @@ func (e *EventBuffer) close() error {
 		defer func() {
 			// Recover from a panic if the channel is closed externally
 			if r := recover(); r != nil {
-				conlog.Warn().Msgf("Recovered from panic while closing Events channel: %v", r)
+				seslog.Warn().Msgf("Recovered from panic while closing Events channel: %v", r)
 			}
 		}()
 
@@ -117,7 +123,7 @@ func (e *EventBuffer) close() error {
 
 		// Single thread that passed closes channel
 		close(e.Channel)
-		conlog.Info().Msg("Events channel closed.")
+		seslog.Info().Msg("Events channel closed.")
 	})
 	return nil
 }
