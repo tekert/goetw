@@ -81,7 +81,7 @@ func FromUTF16Pointer(p *uint16) string {
 }
 
 // FromUTF16Slice converts a UTF-16 slice to a string, using a cache for performance.
-// For best performance, use UTF16PtrToString2 when you have a pointer.
+// For best performance, use UTF16PtrToString when you have a pointer.
 func FromUTF16Slice(s []uint16) string {
 	if len(s) == 0 {
 		return ""

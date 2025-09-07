@@ -1531,6 +1531,86 @@ func (e *EventRecord) MofClassVersion() uint8 {
 	return e.EventHeader.EventDescriptor.Version
 }
 
+// GetAnsiStringAt reads an ANSI string from the UserData buffer at a specific
+// byte offset. If count is -1, the string is assumed to be null-terminated.
+// Otherwise, it reads exactly 'count' bytes.
+func (e *EventRecord) GetAnsiStringAt(offset uintptr, count int) (string, error) {
+	if offset > uintptr(e.UserDataLength) {
+		return "", fmt.Errorf("offset %d is out of bounds for UserData length %d",
+			offset, e.UserDataLength)
+	}
+	if offset == uintptr(e.UserDataLength) {
+		return "", nil
+	}
+
+	remainingBytes := uintptr(e.UserDataLength) - offset
+	var bytes []byte
+
+	if count < 0 { // Null-terminated
+		allBytes := unsafe.Slice((*byte)(unsafe.Pointer(e.UserData+offset)), remainingBytes)
+		end := -1
+		for i, b := range allBytes {
+			if b == 0 {
+				end = i
+				break
+			}
+		}
+		if end != -1 {
+			bytes = allBytes[:end]
+		} else {
+			bytes = allBytes
+		}
+	} else { // Counted
+		if uintptr(count) > remainingBytes {
+			return "", fmt.Errorf("requested ansi string length %d exceeds remaining UserData length %d", count, remainingBytes)
+		}
+		bytes = unsafe.Slice((*byte)(unsafe.Pointer(e.UserData+offset)), count)
+	}
+	return string(bytes), nil
+}
+
+// GetUTF16StringAt reads a UTF-16 string from the UserData buffer at a specific
+// byte offset. If count is -1, the string is assumed to be null-terminated.
+// Otherwise, it reads exactly 'count' characters (uint16 values).
+func (e *EventRecord) GetUTF16StringAt(offset uintptr, count int) (string, error) {
+	if offset > uintptr(e.UserDataLength) {
+		return "", fmt.Errorf("offset %d is out of bounds for UserData length %d",
+			offset, e.UserDataLength)
+	}
+	if offset == uintptr(e.UserDataLength) {
+		return "", nil
+	}
+
+	remainingBytes := uintptr(e.UserDataLength) - offset
+	maxChars := remainingBytes / 2
+	if maxChars == 0 {
+		return "", nil
+	}
+
+	var resultSlice []uint16
+	if count < 0 { // Null-terminated
+		allWchars := unsafe.Slice((*uint16)(unsafe.Pointer(e.UserData+offset)), maxChars)
+		end := -1
+		for i, w := range allWchars {
+			if w == 0 {
+				end = i
+				break
+			}
+		}
+		if end != -1 {
+			resultSlice = allWchars[:end]
+		} else {
+			resultSlice = allWchars
+		}
+	} else { // Counted
+		if uintptr(count) > maxChars {
+			return "", fmt.Errorf("requested utf16 string length %d chars exceeds remaining UserData capacity for %d chars", count, maxChars)
+		}
+		resultSlice = unsafe.Slice((*uint16)(unsafe.Pointer(e.UserData+offset)), count)
+	}
+	return FromUTF16Slice(resultSlice), nil
+}
+
 // GetUint64At reads a uint64 value from the UserData buffer at a specific byte offset.
 // It performs bounds checking to prevent memory access violations.
 // This is an unsafe, high-performance method for well-known event layouts.
