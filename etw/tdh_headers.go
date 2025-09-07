@@ -377,18 +377,32 @@ func (t *TraceEventInfo) cleanStringAt(offset uintptr) string {
 	return ""
 }
 
-// EventID returns the event ID of the event record.
-// For MOF events, this ID is unique derived from provider id and opcode.
-// For non-MOF events, this is the EventRecord.EventDescriptor.Id.
-func (t *TraceEventInfo) EventID() uint16 {
-	if t.IsXML() {
-		return t.EventDescriptor.Id
-	} else if t.IsMof() {
+// EventMofID returns the unique ID of the event record for MOF events.
+// Uses provider BaseId + EventDescriptor.Opcode.
+// For non-MOF events, this returns same as EventID().
+func (t *TraceEventInfo) EventMofID() uint16 {
+	if t.IsMof() {
 		if c, ok := MofClassMapping[t.EventGUID.Data1]; ok {
 			return c.BaseId + uint16(t.EventDescriptor.Opcode)
 		} else {
 			return uint16(t.EventDescriptor.Opcode) // fallback to raw ID
 		}
+	} else if t.IsXML() {
+		// For XML-based events, return the EventDescriptor ID.
+		return t.EventDescriptor.Id
+	}
+	// not meaningful, cannot be used to identify event
+	return 0
+}
+
+// EventID returns the event ID of the event record.
+// For MOF events, this is the EventRecord.EventDescriptor.Opcode.
+// For non-MOF events, this is the EventRecord.EventDescriptor.Id.
+func (t *TraceEventInfo) EventID() uint16 {
+	if t.IsXML() {
+		return t.EventDescriptor.Id
+	} else if t.IsMof() {
+		return uint16(t.EventDescriptor.Opcode)
 	}
 	// not meaningful, cannot be used to identify event
 	return 0

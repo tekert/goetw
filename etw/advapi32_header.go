@@ -1132,15 +1132,31 @@ type EventRecord struct {
 
 // EventID returns the event ID of the event record.
 // If the event is XML-based (manifest), it returns the EventDescriptor ID.
-// If the event is MOF-based (old), it returns the BaseId (ProviderId) + EventDescriptor Opcode.
+// If the event is MOF-based (old), it returns the EventDescriptor Opcode.
 // If the event is neither, it returns 0.
 func (e *EventRecord) EventID() uint16 {
 	if e.IsXML() {
 		return e.EventHeader.EventDescriptor.Id
 	} else if e.IsMof() {
+		return uint16(e.EventHeader.EventDescriptor.Opcode)
+	}
+	// not meaningful, cannot be used to identify event
+	return 0
+}
+
+// EventMofID returns the unique ID of the MOF-based event record.
+// It is calculated as BaseId (ProviderId) + EventDescriptor Opcode.
+// If the event is not MOF-based, it returns the same as EventID().
+func (e *EventRecord) EventMofID() uint16 {
+	if e.IsMof() {
 		if c, ok := MofClassMapping[e.EventHeader.ProviderId.Data1]; ok {
 			return c.BaseId + uint16(e.EventHeader.EventDescriptor.Opcode)
+		} else {
+			return uint16(e.EventHeader.EventDescriptor.Opcode)
 		}
+	} else if e.IsXML() {
+		// For XML-based events, return the EventDescriptor ID.
+		return e.EventHeader.EventDescriptor.Id
 	}
 	// not meaningful, cannot be used to identify event
 	return 0

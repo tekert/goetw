@@ -1269,13 +1269,13 @@ func (e *EventRecordHelper) prepareMofPropertyFix(remainingData []byte, remainin
 		return nil
 	}
 
-	eventID := e.TraceInfo.EventID()
+	mofID := e.TraceInfo.EventMofID()
 	//eventType := e.TraceInfo.EventDescriptor.Opcode
 
 	// Thread_V3_TypeGroup1 new ThreadName not included in TraceEventInfo propierties on Windows 10.
-	if (eventID == 5358 || // Thread/DCStart
-		eventID == 5357 || // Thread/End
-		eventID == 5359) && // Thread/DCEnd
+	if (mofID == 5358 || // Thread/DCStart
+		mofID == 5357 || // Thread/End
+		mofID == 5359) && // Thread/DCEnd
 		remaining > 2 {
 		threadName := FromUTF16Bytes(remainingData)
 		e.SetCustomProperty("ThreadName", threadName)
@@ -1283,14 +1283,14 @@ func (e *EventRecordHelper) prepareMofPropertyFix(remainingData []byte, remainin
 	}
 
 	// Handle SystemConfig PnP events with device names
-	if eventID == 1807 && // SystemConfig/PnP
+	if mofID == 1807 && // SystemConfig/PnP
 		remaining > 2 {
 		deviceName := FromUTF16Bytes(remainingData)
 		e.SetCustomProperty("DeviceName", deviceName)
 		return nil
 	}
 
-	return fmt.Errorf("unhandled MOF event %d", eventID)
+	return fmt.Errorf("unhandled MOF event %d", mofID)
 }
 
 // buildEvent creates the final Event object, populates its properties and metadata.

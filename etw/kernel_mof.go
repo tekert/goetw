@@ -270,7 +270,7 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 
 	// 1. Populate the TRACE_EVENT_INFO header with static information.
 	tei := (*TraceEventInfo)(unsafe.Pointer(&buffer[0]))
-	tei.ProviderGUID = *systemTraceControlGuid
+	tei.ProviderGUID = *SystemTraceControlGuid
 	tei.EventGUID = mofClass.GUID
 	//tei.EventDescriptor = er.EventHeader.EventDescriptor // EventDescriptor is patched at runtime from the live event.
 	tei.DecodingSource = DecodingSourceWbem
