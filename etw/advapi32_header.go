@@ -476,7 +476,7 @@ const (
 
 // evntcons.h
 // used in EventProperty for EVENT_HEADER
-// https://learn.microsoft.com/es-es/windows/win32/api/evntcons/ns-evntcons-event_header
+// https://learn.microsoft.com/en-us/windows/win32/api/evntcons/ns-evntcons-event_header
 const (
 	EVENT_HEADER_PROPERTY_XML             = 0x0001
 	EVENT_HEADER_PROPERTY_FORWARDED_XML   = 0x0002
@@ -1133,15 +1133,12 @@ type EventRecord struct {
 // EventID returns the event ID of the event record.
 // If the event is XML-based (manifest), it returns the EventDescriptor ID.
 // If the event is MOF-based (old), it returns the EventDescriptor Opcode.
-// If the event is neither, it returns 0.
 func (e *EventRecord) EventID() uint16 {
-	if e.IsXML() {
+	if !e.IsMof() {
 		return e.EventHeader.EventDescriptor.Id
-	} else if e.IsMof() {
+	} else { // xml-based event
 		return uint16(e.EventHeader.EventDescriptor.Opcode)
 	}
-	// not meaningful, cannot be used to identify event
-	return 0
 }
 
 // EventMofID returns the unique ID of the MOF-based event record.
@@ -1325,8 +1322,13 @@ func (e *EventRecord) ExtStackTrace() (EventStackTrace, bool) {
 
 // IsXML checks if the event is manifest-based (XML).
 func (e *EventRecord) IsXML() bool {
-	// If not classic/MOF and has provider, it's manifest-based
-	return !e.IsMof() && !e.EventHeader.ProviderId.IsZero() // TODO(tekert): test this
+    return !e.IsMof()
+}
+
+// IsWpp checks if the event is WPP (Windows Software Trace Preprocessor).
+func (e *EventRecord) IsWPP() bool {
+    // Trace message flag specifically indicates WPP events
+    return e.EventHeader.Flags&EVENT_HEADER_FLAG_TRACE_MESSAGE != 0
 }
 
 // IsMof checks if the event is classic (MOF).
