@@ -328,4 +328,42 @@ BenchmarkSamplers/EventDrivenSampler/MultiCore_1024Keys
 BenchmarkSamplers/EventDrivenSampler/MultiCore_1024Keys-16
  5769141	       206.8 ns/op	      13 B/op	       1 allocs/op
 PASS
+
+Improve performance dedup sampler:
+Running tool: C:\Program Files\Go\bin\go.exe test -benchmem -run=^$ -bench ^BenchmarkSamplers$ github.com/tekert/goetw/logsampler -v
+
+goos: windows
+goarch: amd64
+pkg: github.com/tekert/goetw/logsampler
+cpu: AMD Ryzen 7 5700X3D 8-Core Processor
+BenchmarkSamplers
+BenchmarkSamplers/DeduplicatingSampler
+BenchmarkSamplers/DeduplicatingSampler/SingleCore_16Keys
+BenchmarkSamplers/DeduplicatingSampler/SingleCore_16Keys-16
+13031480	        91.14 ns/op	       6 B/op	       1 allocs/op
+BenchmarkSamplers/DeduplicatingSampler/MultiCore_16Keys
+BenchmarkSamplers/DeduplicatingSampler/MultiCore_16Keys-16
+76780834	        15.17 ns/op	       6 B/op	       1 allocs/op
+BenchmarkSamplers/DeduplicatingSampler/SingleCore_1024Keys
+BenchmarkSamplers/DeduplicatingSampler/SingleCore_1024Keys-16
+10678825	       111.6 ns/op	      14 B/op	       1 allocs/op
+BenchmarkSamplers/DeduplicatingSampler/MultiCore_1024Keys
+BenchmarkSamplers/DeduplicatingSampler/MultiCore_1024Keys-16
+63371020	        21.30 ns/op	      14 B/op	       1 allocs/op
+BenchmarkSamplers/EventDrivenSampler
+BenchmarkSamplers/EventDrivenSampler/SingleCore_16Keys
+BenchmarkSamplers/EventDrivenSampler/SingleCore_16Keys-16
+13833889	        86.33 ns/op	       6 B/op	       1 allocs/op
+BenchmarkSamplers/EventDrivenSampler/MultiCore_16Keys
+BenchmarkSamplers/EventDrivenSampler/MultiCore_16Keys-16
+ 6575997	       182.1 ns/op	       6 B/op	       1 allocs/op
+BenchmarkSamplers/EventDrivenSampler/SingleCore_1024Keys
+BenchmarkSamplers/EventDrivenSampler/SingleCore_1024Keys-16
+11121841	       107.2 ns/op	      14 B/op	       1 allocs/op
+BenchmarkSamplers/EventDrivenSampler/MultiCore_1024Keys
+BenchmarkSamplers/EventDrivenSampler/MultiCore_1024Keys-16
+ 5623645	       210.6 ns/op	      13 B/op	       1 allocs/op
+PASS
+ok  	github.com/tekert/goetw/logsampler	10.119s
+
 */
