@@ -451,7 +451,7 @@ func BenchmarkSamplers(b *testing.B) {
 	runBenchmarks := func(b *testing.B, s sampler.Sampler, keyspace int) {
 		b.Run(fmt.Sprintf("SingleCore_%dKeys", keyspace), func(b *testing.B) {
 			b.ReportAllocs()
-			for i := 0; i < b.N; i++ {
+			for i := 0; b.Loop(); i++ {
 				s.ShouldLog(fmt.Sprintf("key-%d", i%keyspace), nil)
 			}
 		})
