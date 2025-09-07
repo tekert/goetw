@@ -94,7 +94,8 @@ function Get-MofRepresentationRaw {
     return $outputLines -join "`n"
 }
 
-# Stage 2: Formats a raw MOF string with wrapping and indentation rules. (Asked IA for this)
+# Stage 2: Formats a raw MOF string with wrapping and indentation rules. ( AI CODE don't look, just works)
+# This is a complete rewrite to provide a simpler, more robust formatting algorithm.
 function Format-MofContent {
     param([string]$MofContent)
 
@@ -104,89 +105,101 @@ function Format-MofContent {
 
     foreach ($block in $blocks) {
         if ($block.Trim().Length -eq 0) { continue }
-        $lines = $block.Trim() -split "`n"
-        $header = $lines[0]
-        $properties = $lines[1..($lines.Count - 2)]
-        $footer = $lines[-1]
 
-        # --- 1. Format Class Header ---
-        # Only break if the line actually exceeds the limit
-        if ($header.Length -gt $lineLengthLimit) {
-            # Find the last comma before the limit
-            $pos = $header.LastIndexOf(',', $lineLengthLimit)
-            if ($pos -gt 0) {
-                # Break at that comma and continue with remaining line
-                $firstPart = $header.Substring(0, $pos + 1)
-                $secondPart = $header.Substring($pos + 1).TrimStart()
-                $header = $firstPart + "`n" + (" " * 9) + $secondPart
-            }
-        }
+        $allLines = $block.Trim() -split "`n"
+        $headerIndex = [array]::FindIndex($allLines, [Predicate[string]] { param($line) $line -match 'class\s' })
+        if ($headerIndex -lt 0) { $headerIndex = 0 }
 
-        # --- 2. Handle empty classes ---
-        if ($properties.Count -eq 0) {
-            $header = $header -replace ' {$', '{}'
-            $formattedLines.Add($header)
-            $formattedLines.Add("")
-            continue
-        }
-        $formattedLines.Add($header)
+        $header = $allLines[$headerIndex]
+        $properties = if ($allLines.Count -gt ($headerIndex + 2)) { $allLines[($headerIndex + 1)..($allLines.Count - 2)] } else { @() }
+        $footer = $allLines[-1]
 
-        # --- 3. Format Properties ---
-        foreach ($prop in $properties) {
-            # Special case: MSNT_SystemTrace.Flags
-            if ($header.Contains("class MSNT_SystemTrace") -and $prop.Contains("] uint32 Flags;")) {
-                $prop -match '(\s*)\[ (.*) \] (.*)' | Out-Null
-                $indent, $qualifiersStr, $rest = $Matches[1], $Matches[2], $Matches[3]
+        # --- Unified Formatting for Headers and Properties ---
+        $linesToProcess = @($header) + $properties
+        $formattedBlock = [System.Collections.Generic.List[string]]::new()
 
-                $newProp = "$indent[`n"
+        foreach ($line in $linesToProcess) {
+            # Special case for the complex MSNT_SystemTrace.Flags property
+            if ($line.Contains("class MSNT_SystemTrace") -or $line.Contains("] uint32 Flags;")) {
+                if ($line.Contains("] uint32 Flags;")) {
+                    $line -match '(\s*)\[(.*)\](.*)' | Out-Null
+                    $indent, $qualifiersStr, $rest = $Matches[1], $Matches[2].Trim(), $Matches[3]
+                    $formattedQualifiers = [System.Collections.Generic.List[string]]::new()
+                    $qualifiers = $qualifiersStr -split '(?=DefineValues|format|ValueMap|Values)' | ForEach-Object { $_.Trim().TrimEnd(',') }
 
-                # Extract and format each qualifier type
-                if ($qualifiersStr -match 'DefineValues({.*?})') {
-                    $items = $Matches[1] -replace '[{}"]' -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                    $newProp += "$indent    DefineValues{`"" + ($items -join "`",`n$indent                 `"") + "`"},`n"
-                }
-
-                if ($qualifiersStr -match 'format\("(.*?)"\)') {
-                    $newProp += "$indent    format(`"$($Matches[1])`"),`n"
-                }
-
-                if ($qualifiersStr -match 'Values({.*?})') {
-                    $items = $Matches[1] -replace '[{}"]' -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                    $newProp += "$indent    Values{`""
-                    for ($i = 0; $i -lt $items.Count; $i += 2) {
-                        if ($i -gt 0) { $newProp += ",`n$indent           `"" }
-                        $newProp += ($items[$i..([Math]::Min($i + 1, $items.Count - 1))] -join "`", `"")
+                    foreach ($q in $qualifiers) {
+                        if ($q.StartsWith("DefineValues") -or $q.StartsWith("Values") -or $q.StartsWith("ValueMap")) {
+                            $q -match '([a-zA-Z]+)\{(.*)\}' | Out-Null
+                            $qName, $qValues = $Matches[1], $Matches[2]
+                            $values = $qValues -split ',\s*'
+                            $formattedQ = "$indent  $qName{`n"
+                            $currentSubLine = "$indent    "
+                            foreach ($v in $values) {
+                                if (($currentSubLine.Length + $v.Length + 2) -gt $lineLengthLimit) {
+                                    $formattedQ += $currentSubLine.TrimEnd().TrimEnd(',') + ",`n"
+                                    $currentSubLine = "$indent    "
+                                }
+                                $currentSubLine += "$v, "
+                            }
+                            $formattedQ += $currentSubLine.TrimEnd().TrimEnd(',') + "`n$indent  }"
+                            $formattedQualifiers.Add($formattedQ)
+                        }
+                        elseif ($q) { $formattedQualifiers.Add("$indent  $q") }
                     }
-                    $newProp += "`"},`n"
+                    $formattedBlock.Add("$indent[`n" + ($formattedQualifiers -join ",`n") + "`n$indent]$rest")
+                    continue
                 }
-
-                if ($qualifiersStr -match 'ValueMap({.*?})') {
-                    $items = $Matches[1] -replace '[{}"]' -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                    $newProp += "$indent    ValueMap{`""
-                    for ($i = 0; $i -lt $items.Count; $i += 4) {
-                        if ($i -gt 0) { $newProp += ",`n$indent             `"" }
-                        $newProp += ($items[$i..([Math]::Min($i + 3, $items.Count - 1))] -join "`", `"")
-                    }
-                    $newProp += "`"}`n"
-                }
-
-                $newProp = $newProp.TrimEnd(",`n") + "`n$indent] $rest"
-                $formattedLines.Add($newProp)
-                continue
             }
 
-            # Regular properties: only wrap if really long
-            if ($prop.Length -gt $lineLengthLimit) {
-                $prop -match '(\s*)\[(.*)\](.*)' | Out-Null
-                $indent, $qualifiers, $rest = $Matches[1], $Matches[2].Trim(), $Matches[3]
+            # Generic formatting for all other lines
+            if (($line.Length -gt $lineLengthLimit) -and $line.Trim().StartsWith("[")) {
+                $line -match '(\s*)\[(.*)\](.*)' | Out-Null
+                $indent, $qualifiersStr, $rest = $Matches[1], $Matches[2].Trim(), $Matches[3]
+                $formattedQualifiers = $qualifiersStr
 
-                $formattedLines.Add("$indent[`n$indent  " + ($qualifiers -replace ', ', ",`n$indent  ") + "`n$indent]$rest")
+                # Strategy 1: If the line is long due to an EventType, wrap the numbers inside it.
+                $match = [regex]::Match($qualifiersStr, '(EventType\{[^\}]+\})')
+                if ($match.Success) {
+                    $eventQualifier = $match.Groups[1].Value
+                    $eventQualifier -match 'EventType\{([^\}]+)\}' | Out-Null
+                    $eventNumbers = $Matches[1].Trim() -split ',\s*'
+
+                    # FIX: The previous arbitrary length check was unreliable.
+                    # This now wraps only if there are a significant number of events (more than 10).
+                    if ($eventNumbers.Count -gt 10) {
+                        $numberLines, $itemsPerLine = @(), 10
+                        for ($j = 0; $j -lt $eventNumbers.Count; $j += $itemsPerLine) {
+                            $chunk = $eventNumbers[$j..([Math]::Min($j + $itemsPerLine - 1, $eventNumbers.Count - 1))]
+                            $numberLines += ($chunk -join ", ")
+                        }
+                        $numberIndent = "            " # 12 spaces for alignment
+                        $wrappedNumbers = $numberLines[0]
+                        if ($numberLines.Count -gt 1) {
+                            $wrappedNumbers += ",`n" + $numberIndent + ($numberLines[1..($numberLines.Count - 1)] -join ",`n" + $numberIndent)
+                        }
+                        $newQualifier = "EventType{" + $wrappedNumbers + "}"
+                        $formattedQualifiers = $qualifiersStr.Replace($eventQualifier, $newQualifier)
+                    }
+                }
+
+                # Strategy 2: If the line is still too long, wrap the top-level qualifiers.
+                $tempLine = "$indent[" + $formattedQualifiers + "]$rest"
+                if ($tempLine.Contains("`n") -eq $false -and $tempLine.Length -gt $lineLengthLimit) {
+                    $indentForNextLines = $indent + "  "
+                    $formattedQualifiers = ($qualifiersStr -replace ',(?![^{]*})', ",`n$indentForNextLines")
+                }
+                $formattedBlock.Add("$indent[" + $formattedQualifiers + "]$rest")
             }
             else {
-                $formattedLines.Add($prop)
+                $formattedBlock.Add($line)
             }
         }
 
+        # Re-assemble the block
+        if ($properties.Count -eq 0) {
+            $formattedBlock[0] = $formattedBlock[0] -replace ' {$', '{}'
+        }
+        $formattedLines.Add($formattedBlock -join "`n")
         $formattedLines.Add($footer)
         $formattedLines.Add("")
     }
