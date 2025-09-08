@@ -56,9 +56,7 @@ func parseClass(match []string) *mofParsedClass {
 
 	class := &mofParsedClass{
 		Name:          match[2],
-		NameW:         stringToUint16SliceLiteral(match[2]),
 		Base:          match[3],
-		BaseW:         stringToUint16SliceLiteral(match[3]),
 		Properties:    make([]mofParsedProperty, 0),
 		MofDefinition: match[0], // Store complete MOF definition
 	}
@@ -163,9 +161,8 @@ func (c *mofParsedClass) parseProperties(body string) {
 		}
 
 		prop := mofParsedProperty{
-			ID:    match[1],
-			Name:  match[4],
-			NameW: stringToUint16SliceLiteral(match[4]),
+			ID:   match[1],
+			Name: match[4],
 		}
 
 		// Parse type and qualifiers

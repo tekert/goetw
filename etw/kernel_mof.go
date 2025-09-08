@@ -5,6 +5,7 @@ package etw
 import (
 	"fmt"
 	"sync"
+	"syscall"
 	"unsafe"
 )
 
@@ -91,7 +92,6 @@ func EnableMofTemplateRegeneration(enable bool) {
 type MofPropertyDef struct {
 	ID         uint16 // WmiDataId
 	Name       string
-	NameW      []uint16   // UTF-16 null-terminated name
 	InType     TdhInType  // How to read the raw data
 	OutType    TdhOutType // How to represent in Go
 	Extension  string     // From extension("...") qualifier
@@ -103,9 +103,7 @@ type MofPropertyDef struct {
 // MofClassDef represents a complete MOF class definition
 type MofClassDef struct {
 	Name       string           // Class name (e.g. "Process_V2_TypeGroup1")
-	NameW      []uint16         // UTF-16 null-terminated name
 	Base       string           // Base class name (e.g. "Process_V2")
-	BaseW      []uint16         // UTF-16 null-terminated base name
 	GUID       GUID             // From parent class
 	Version    uint8            // From parent class
 	EventTypes []uint8          // List of event types this class handles
@@ -246,16 +244,23 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	propCount := len(mofClass.Properties)
 	propInfosSize := propCount * int(unsafe.Sizeof(EventPropertyInfo{}))
 
+	// Convert strings to UTF-16 on the fly (this schema is meant to be cached either way).
+	taskNameW, _ := syscall.UTF16FromString(mofClass.Base)
+	opcodeNameW, _ := syscall.UTF16FromString(mofClass.Name)
+
+	propNamesW := make([][]uint16, propCount)
+	var totalPropNamesSize int
+	for i, prop := range mofClass.Properties {
+		propNamesW[i], _ = syscall.UTF16FromString(prop.Name)
+		totalPropNamesSize += len(propNamesW[i]) * 2
+	}
+
 	// Use pre-converted UTF-16 slices and pre-calculated sizes.
 	providerNameSize := len(utf16MSNT_SystemTrace) * 2
-	taskNameSize := len(mofClass.BaseW) * 2
-	opcodeNameSize := len(mofClass.NameW) * 2
+	taskNameSize := len(taskNameW) * 2
+	opcodeNameSize := len(opcodeNameW) * 2
 
 	// Calculate total size of all property name strings.
-	var totalPropNamesSize int
-	for _, prop := range mofClass.Properties {
-		totalPropNamesSize += len(prop.NameW) * 2
-	}
 
 	traceEventInfoBaseSize := int(unsafe.Offsetof(TraceEventInfo{}.EventPropertyInfoArray))
 	requiredSize := traceEventInfoBaseSize +
@@ -288,11 +293,11 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	currentNameOffset += providerNameSize
 
 	tei.TaskNameOffset = uint32(currentNameOffset)
-	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.BaseW[0])), taskNameSize))
+	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&taskNameW[0])), taskNameSize))
 	currentNameOffset += taskNameSize
 
 	tei.OpcodeNameOffset = uint32(currentNameOffset)
-	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&mofClass.NameW[0])), opcodeNameSize))
+	copy(buffer[currentNameOffset:], unsafe.Slice((*byte)(unsafe.Pointer(&opcodeNameW[0])), opcodeNameSize))
 	currentNameOffset += opcodeNameSize
 
 	// 4. Create a slice header that points directly into our buffer.
@@ -313,7 +318,8 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 
 		// Set name and offset. The offset is relative to the start of the buffer.
 		epi.NameOffset = uint32(currentNameOffset)
-		nameBytes := unsafe.Slice((*byte)(unsafe.Pointer(&propDef.NameW[0])), len(propDef.NameW)*2)
+		propNameW := propNamesW[i]
+		nameBytes := unsafe.Slice((*byte)(unsafe.Pointer(&propNameW[0])), len(propNameW)*2)
 		copy(buffer[currentNameOffset:], nameBytes)
 		currentNameOffset += len(nameBytes)
 
@@ -481,19 +487,17 @@ func init() {
 	// TODO(tekert): Find the correct definition for this event
 	var FileIo_V3_Type8X = &MofClassDef{
 		Name:       "FileIo_V3_TypeX",
-		NameW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'T', 'y', 'p', 'e', '8', '4', 0},
 		Base:       "FileIo",
-		BaseW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 		GUID:       *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"), // FileIo GUID
 		Version:    3,
 		EventTypes: []uint8{83, 84},
 		Properties: []MofPropertyDef{
-			{ID: 1, Name: "IrpPtr", NameW: []uint16{'I', 'r', 'p', 'P', 't', 'r', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 2, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 3, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 4, Name: "ExtraInfo", NameW: []uint16{'E', 'x', 't', 'r', 'a', 'I', 'n', 'f', 'o', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 5, Name: "TTID", NameW: []uint16{'T', 'T', 'I', 'D', 0}, InType: TDH_INTYPE_UINT32},
-			{ID: 6, Name: "InfoClass", NameW: []uint16{'I', 'n', 'f', 'o', 'C', 'l', 'a', 's', 's', 0}, InType: TDH_INTYPE_UINT32},
+			{ID: 1, Name: "IrpPtr", InType: TDH_INTYPE_POINTER},
+			{ID: 2, Name: "FileObject", InType: TDH_INTYPE_POINTER},
+			{ID: 3, Name: "FileKey", InType: TDH_INTYPE_POINTER},
+			{ID: 4, Name: "ExtraInfo", InType: TDH_INTYPE_POINTER},
+			{ID: 5, Name: "TTID", InType: TDH_INTYPE_UINT32},
+			{ID: 6, Name: "InfoClass", InType: TDH_INTYPE_UINT32},
 		},
 	}
 
@@ -508,20 +512,18 @@ func init() {
 	// TODO(tekert): Find the correct definition for this event
 	var FileIo_V3_MapFile = &MofClassDef{
 		Name:       "FileIo_V3_MapFile",
-		NameW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', '_', 'V', '3', '_', 'M', 'a', 'p', 'F', 'i', 'l', 'e', 0},
 		Base:       "FileIo",
-		BaseW:      []uint16{'F', 'i', 'l', 'e', 'I', 'o', 0},
 		GUID:       *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"), // FileIo GUID
 		Version:    3,
 		EventTypes: []uint8{37, 38, 39},
 		Properties: []MofPropertyDef{
-			{ID: 1, Name: "FileObject", NameW: []uint16{'F', 'i', 'l', 'e', 'O', 'b', 'j', 'e', 'c', 't', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 2, Name: "ImageBase", NameW: []uint16{'I', 'm', 'a', 'g', 'e', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 3, Name: "ViewBase", NameW: []uint16{'V', 'i', 'e', 'w', 'B', 'a', 's', 'e', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 4, Name: "PageProtection", NameW: []uint16{'P', 'a', 'g', 'e', 'P', 'r', 'o', 't', 'e', 'c', 't', 'i', 'o', 'n', 0}, InType: TDH_INTYPE_UINT32},
-			{ID: 5, Name: "ProcessId", NameW: []uint16{'P', 'r', 'o', 'c', 'e', 's', 's', 'I', 'd', 0}, InType: TDH_INTYPE_UINT32},
-			{ID: 6, Name: "FileKey", NameW: []uint16{'F', 'i', 'l', 'e', 'K', 'e', 'y', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 7, Name: "Reserved", NameW: []uint16{'R', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0}, InType: TDH_INTYPE_UINT32},
+			{ID: 1, Name: "FileObject", InType: TDH_INTYPE_POINTER},
+			{ID: 2, Name: "ImageBase", InType: TDH_INTYPE_POINTER},
+			{ID: 3, Name: "ViewBase", InType: TDH_INTYPE_POINTER},
+			{ID: 4, Name: "PageProtection", InType: TDH_INTYPE_UINT32},
+			{ID: 5, Name: "ProcessId", InType: TDH_INTYPE_UINT32},
+			{ID: 6, Name: "FileKey", InType: TDH_INTYPE_POINTER},
+			{ID: 7, Name: "Reserved", InType: TDH_INTYPE_UINT32},
 		},
 	}
 
@@ -536,14 +538,12 @@ func init() {
 	// TODO(tekert): Find the correct definition for this event
 	var ALPC_V2_Type3X = &MofClassDef{
 		Name:       "ALPC_V2_Type38",
-		NameW:      []uint16{'A', 'L', 'P', 'C', '_', 'V', '2', '_', 'T', 'y', 'p', 'e', '3', '8', 0},
 		Base:       "ALPC",
-		BaseW:      []uint16{'A', 'L', 'P', 'C', 0},
 		GUID:       *MustParseGUID("{45d8cccd-539f-4b72-a8b7-5c683142609a}"), // ALPC GUID
 		Version:    2,
 		EventTypes: []uint8{38, 39, 41},
 		Properties: []MofPropertyDef{
-			{ID: 1, Name: "Data", NameW: []uint16{'D', 'a', 't', 'a', 0}, InType: TDH_INTYPE_UINT32},
+			{ID: 1, Name: "Data", InType: TDH_INTYPE_UINT32},
 		},
 	}
 
@@ -553,18 +553,16 @@ func init() {
 	// TODO(tekert): Find the correct definition for this event
 	var Registry_V2_Type33 = &MofClassDef{
 		Name:       "Registry_Type33",
-		NameW:      []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', '_', 'T', 'y', 'p', 'e', '3', '3', 0},
 		Base:       "Registry",
-		BaseW:      []uint16{'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 0},
 		GUID:       *MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}"), // Registry
 		Version:    2,
 		EventTypes: []uint8{33},
 		Properties: []MofPropertyDef{
-			{ID: 1, Name: "InitialTime", NameW: []uint16{'I', 'n', 'i', 't', 'i', 'a', 'l', 'T', 'i', 'm', 'e', 0}, InType: TDH_INTYPE_INT64},
-			{ID: 2, Name: "Status", NameW: []uint16{'S', 't', 'a', 't', 'u', 's', 0}, InType: TDH_INTYPE_UINT32},
-			{ID: 3, Name: "Index", NameW: []uint16{'I', 'n', 'd', 'e', 'x', 0}, InType: TDH_INTYPE_UINT32},
-			{ID: 4, Name: "KeyHandle", NameW: []uint16{'K', 'e', 'y', 'H', 'a', 'n', 'd', 'l', 'e', 0}, InType: TDH_INTYPE_POINTER},
-			{ID: 5, Name: "KeyName", NameW: []uint16{'K', 'e', 'y', 'N', 'a', 'm', 'e', 0}, InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
+			{ID: 1, Name: "InitialTime", InType: TDH_INTYPE_INT64},
+			{ID: 2, Name: "Status", InType: TDH_INTYPE_UINT32},
+			{ID: 3, Name: "Index", InType: TDH_INTYPE_UINT32},
+			{ID: 4, Name: "KeyHandle", InType: TDH_INTYPE_POINTER},
+			{ID: 5, Name: "KeyName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 		},
 	}
 

@@ -97,10 +97,9 @@ package etw
 // mof{{.Name}} class definition
 var mof{{.Name}} = &MofClassDef{
 	Name: "{{.Name}}",
-	NameW: {{.NameW}},
 	{{- if .Base}}
 	Base: "{{.Base}}",
-	BaseW: {{.BaseW}},{{end}}
+	{{end}}
 	{{- if not .InheritsGUID}}
 	GUID: *MustParseGUID("{{.GUID}}"),
 	{{- else}}
@@ -116,7 +115,7 @@ var mof{{.Name}} = &MofClassDef{
 	{{- if .Properties}}
 	Properties: []MofPropertyDef{
 		{{- range .Properties}}
-		{ID: {{.ID}}, Name: "{{.Name}}", NameW: {{.NameW}}, InType: {{.InType}}
+		{ID: {{.ID}}, Name: "{{.Name}}", InType: {{.InType}}
 			{{- if .OutType}}, OutType: {{.OutType}}{{- end -}}
 			{{- if .Extension}}, Extension: "{{.Extension}}"{{- end -}}
 			{{- if .IsArray}}, IsArray: {{.IsArray}}{{- end -}}
@@ -173,9 +172,9 @@ func (p *Parser) generateCode() (string, error) {
 	// Execute template with parsed data
 	var buf strings.Builder
 	err := tmpl.Execute(&buf, map[string]any{
-		"Classes":      p.outputClasses, // Use ordered slice instead of map
-		"Version":      p.version,
-//		"ClassMapping": p.generateClassMapping(),
+		"Classes": p.outputClasses, // Use ordered slice instead of map
+		"Version": p.version,
+		//		"ClassMapping": p.generateClassMapping(),
 	})
 	if err != nil {
 		return "", err

@@ -3,7 +3,6 @@ package mofgen
 type mofParsedProperty struct {
 	ID         string // WmiDataId
 	Name       string
-	NameW      string // Go literal for []uint16
 	InType     string // string constant
 	OutType    string // string constant
 	Extension  string // e.g., "SizeT", "IPAddr"
@@ -14,9 +13,7 @@ type mofParsedProperty struct {
 
 type mofParsedClass struct {
 	Name            string
-	NameW           string // Go literal for []uint16
 	Base            string
-	BaseW           string // Go literal for []uint16
 	GUID            string
 	Version         string
 	EventTypes      string
