@@ -460,11 +460,12 @@ func (s *RealTimeSession) AddProvider(prov Provider) error {
 //
 // # Performance Note
 //
-// Filtering events via the provider's Level and Keywords is the
-// most efficient method, as it prevents the provider from generating disabled events
-// in the first place. Other filter types (e.g., EventIDFilter) are applied by the
-// ETW runtime after the event has been generated (depends on provider), which reduces
-// trace volume but not the initial CPU overhead of generation.
+// Filtering events via the provider's Level and Keywords is the most efficient
+// method, as it prevents the provider from generating disabled events in the first
+// place. Scope filters (e.g., PIDFilter) are also highly efficient.
+// Other filter types (e.g., EventIDFilter) are applied by the ETW runtime after
+// the event has been generated, which reduces trace volume but not the initial
+// CPU overhead of generation.
 func (s *RealTimeSession) EnableProvider(prov Provider) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
