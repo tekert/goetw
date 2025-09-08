@@ -130,6 +130,13 @@ func (p *Property) GetFloat() (float64, error) {
 	return p.decodeFloatIntype()
 }
 
+// GetGUID returns the property value as a pointer to GUID (live data)
+// This is mostly used for comparing GUIDs so that's why we return a pointer.
+// Only if the data is a GUID InType
+func (p *Property) GetGUID() (*GUID, error) {
+	return p.decodeGUIDIntype()
+}
+
 // FormatToString formats the property data value to a string representation.
 // Uses a Custom parser (improves performance by 30%, fallbacks to tdh on error)
 func (p *Property) FormatToString() (string, error) {

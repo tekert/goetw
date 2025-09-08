@@ -717,6 +717,20 @@ func (p *Property) decodeFloatIntype() (float64, error) {
 	return 0, fmt.Errorf("cannot be convert type %v to float64", p.evtPropInfo.InType())
 }
 
+// returns pointer to GUID (live data, use with care)
+func (p *Property) decodeGUIDIntype() (*GUID, error) {
+	if !p.Parseable() {
+		return nil, fmt.Errorf("property not parseable")
+	}
+
+	if p.evtPropInfo.InType() != TDH_INTYPE_GUID {
+		return nil, fmt.Errorf("type %v is not a GUID", p.evtPropInfo.InType())
+	}
+
+	guid := (*GUID)(unsafe.Pointer(p.pValue))
+	return guid, nil
+}
+
 // decodeScalarIntype returns numeric value as uint64 with a flag indicating if it
 // should be interpreted as signed
 // Returns (uint64Value, isSigned, error)
