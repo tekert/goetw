@@ -62,6 +62,11 @@ type ConsumerTrace struct {
 	// logfileMu protects logfile against concurrent access.
 	logfileMu sync.RWMutex
 
+	// Returned logFile by the call to OpenTrace, used as snapshot of the initial state.
+	// This is only set once when the trace is opened and remains constant.
+	// Used so we don't have to lock a mutex to access immutable data.
+	startLogFile EventTraceLogfile
+
 	// processTraceMode caches the trace processing flags. This value is set when
 	// the trace is opened and is immutable for the lifetime of the session.
 	// It is used in the hot path for timestamp conversion to avoid locking.

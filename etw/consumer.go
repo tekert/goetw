@@ -707,7 +707,8 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 		// We check fields that must be non-zero on any valid, running session.
 		if loggerInfo.LogfileHeader.BootTime == 0 && loggerInfo.LogfileHeader.NumberOfProcessors == 0 {
 			_ = CloseTrace(traceHandle) // Clean up the invalid handle.
-			return fmt.Errorf("trace %q opened successfully but returned an invalid/uninitialized header", name)
+			return fmt.Errorf("trace %q opened successfully but returned an" +
+				"invalid/uninitialized header, session may not exist?", name)
 		}
 	}
 
@@ -720,6 +721,7 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	// Since pointers may not be valid when the trace is closed,
 	// we clone the EventTraceLogfile structure (except the pointers).
 	ti.traceLogfile = *loggerInfo.Clone()
+	ti.startLogFile = *loggerInfo.Clone() // immutable copy for reference
 
 	// NOTE: we save the tracemode we used to open the trace to know if we should handle raw timestamps for each trace callback.
 	// ! For ETL file traces the returned ProcessTraceMode is overwrriten with the logfile.LogfileHeader.LogFileMode.
@@ -936,6 +938,7 @@ func (c *Consumer) RestartSessions(sessions ...Session) error {
 // Start starts the consumer, for each real time trace opened starts ProcessTrace in new goroutine
 // Also opens any trace session not already opened for consumption.
 func (c *Consumer) Start() (err error) {
+	// TODO: make is auto start the sessions that where added from FromSessions ?
 	c.started.Store(true)
 	// opening all traces that are not opened first,
 	c.traces.Range(func(key, value any) bool {

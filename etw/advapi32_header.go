@@ -1132,12 +1132,14 @@ type EventRecord struct {
 
 // EventID returns the event ID of the event record.
 // If the event is XML-based (manifest), it returns the EventDescriptor ID.
-// If the event is MOF-based (old), it returns the EventDescriptor Opcode.
+// If the event is MOF-based (legacy), it returns the EventDescriptor Opcode(EventType).
 func (e *EventRecord) EventID() uint16 {
 	if !e.IsMof() {
+		// modern xml-based event
 		return e.EventHeader.EventDescriptor.Id
-	} else { // xml-based event
-		return uint16(e.EventHeader.EventDescriptor.Opcode)
+	} else {
+		// legacy mof-based event
+		return uint16(e.EventHeader.EventDescriptor.Opcode) // EventType
 	}
 }
 
@@ -1157,6 +1159,31 @@ func (e *EventRecord) EventMofID() uint16 {
 	}
 	// not meaningful, cannot be used to identify event
 	return 0
+}
+
+// GetKernelTimeNs as nanoseconds
+//
+// This is the total CPU time (in nanoseconds) used by the current thread in kernel
+// mode up to the point where this event was logged.
+//
+// To get the time of instructions between events A and B (not elapsed wall clock time),
+// you need to calculate the difference between the two events' kernel times for the same
+// EventRecord.EventHeader.ThreadId
+//
+// Remarks: https://learn.microsoft.com/en-us/windows/win32/api/evntcons/ns-evntcons-event_header
+func (e *EventRecord) GetKernelTimeNs() uint64 {
+	logfile := &e.userContext().trace.startLogFile // inmmutable if trace is running
+	return uint64(e.EventHeader.GetKernelTime()) *
+		uint64(logfile.LogfileHeader.TimerResolution) * 100
+}
+
+// GetuserTimeNs as nanoseconds
+//
+// Read GetKernelTimeNs doc.
+func (e *EventRecord) GetUserTimeNs() uint64 {
+	logfile := &e.userContext().trace.startLogFile // inmmutable if trace is running
+	return uint64(e.EventHeader.GetUserTime()) *
+		uint64(logfile.LogfileHeader.TimerResolution) * 100
 }
 
 // The number of the CPU on which the provider process was running.
@@ -1322,13 +1349,13 @@ func (e *EventRecord) ExtStackTrace() (EventStackTrace, bool) {
 
 // IsXML checks if the event is manifest-based (XML).
 func (e *EventRecord) IsXML() bool {
-    return !e.IsMof()
+	return !e.IsMof()
 }
 
 // IsWpp checks if the event is WPP (Windows Software Trace Preprocessor).
 func (e *EventRecord) IsWPP() bool {
-    // Trace message flag specifically indicates WPP events
-    return e.EventHeader.Flags&EVENT_HEADER_FLAG_TRACE_MESSAGE != 0
+	// Trace message flag specifically indicates WPP events
+	return e.EventHeader.Flags&EVENT_HEADER_FLAG_TRACE_MESSAGE != 0
 }
 
 // IsMof checks if the event is classic (MOF).
@@ -1726,12 +1753,21 @@ type EventHeader struct {
 // Low-order bytes are listed first in unions
 // Example, Kernel time is listed first in the union, so it is the lower 32 bits.
 
+// GetKernelTime You can use the KernelTime and UserTime members to determine the CPU cost in units
+// for a set of instructions (the values indicate the CPU usage charged to that thread
+// at the time of logging). For example, if Event A and Event B are consecutively
+// logged by the same thread and they have CPU usage numbers 150 and 175, then the
+// activity that was performed by that thread between events A and B cost 25 CPU
+// time units (175 – 150).
+//
+// To get the CPU time in nanoseconds use EventRecord.GetKernelTimeNs() and EventRecord.GetUserTimeNs()
 func (e *EventHeader) GetKernelTime() uint32 {
 	// Extract KernelTime (lower 32 bits)
 	// (Little endian they are stored backwards)
 	return uint32(e.ProcessorTime & 0xFFFFFFFF)
 }
 
+// To get the CPU time in nanoseconds use EventRecord.GetKernelTimeNs() and EventRecord.GetUserTimeNs()
 func (e *EventHeader) GetUserTime() uint32 {
 	// Extract UserTime (higher 32 bits)
 	return uint32(e.ProcessorTime >> 32)
