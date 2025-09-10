@@ -119,6 +119,11 @@ type MofClassDef struct {
 	template64  []byte
 }
 
+// mofSchemaKey is the 2nd level key for MOF class map definitions.
+func mofSchemaKey(opcode uint8, version uint8) uint16 {
+	return uint16(opcode)<<8 | uint16(version)
+}
+
 // MofRegister adds a MOF class definition to the global maps.
 // It now uses the two-level cache structure.
 func MofRegister(class *MofClassDef) {
@@ -134,7 +139,7 @@ func MofRegister(class *MofClassDef) {
 
 	for _, eventType := range class.EventTypes {
 		// The second-level key for MOF events is Opcode + Version.
-		schemaKey := uint32(eventType)<<8 | uint32(class.Version)
+		schemaKey := mofSchemaKey(eventType, class.Version)
 		schemaCache.Store(schemaKey, class)
 	}
 
@@ -152,8 +157,7 @@ func MofErLookup(er *EventRecord) *MofClassDef {
 	schemaCache := val.(*sync.Map)
 
 	// Second-level lookup by schema key (Opcode + Version).
-	schemaKey := uint32(er.EventHeader.EventDescriptor.Opcode)<<8 |
-		uint32(er.EventHeader.EventDescriptor.Version)
+	schemaKey := mofSchemaKey(er.EventHeader.EventDescriptor.Opcode, er.EventHeader.EventDescriptor.Version)
 	classVal, ok := schemaCache.Load(schemaKey)
 	if !ok {
 		return nil
@@ -172,7 +176,7 @@ func MofLookup(guid GUID, eventType uint8, version uint8) *MofClassDef {
 	schemaCache := val.(*sync.Map)
 
 	// Second-level lookup
-	schemaKey := uint32(eventType)<<8 | uint32(version)
+	schemaKey := mofSchemaKey(eventType, version)
 	classVal, ok := schemaCache.Load(schemaKey)
 	if !ok {
 		return nil
@@ -233,7 +237,9 @@ func getTdhInTypeFixedSize(inType TdhInType, er *EventRecord) uint16 {
 	}
 }
 
-// buildTraceInfoTemplate is called to build the complete, cached TRACE_EVENT_INFO buffer.
+// buildTraceInfoTemplate is called to build the complete, cached TRACE_EVENT_INFO buffer
+// from custom mof definitions.
+// NOTE: I made this just for fun really, it's a bit overkill but it has it's uses maybe.
 func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	// The layout of our buffer will be:
 	// 1. TRACE_EVENT_INFO struct

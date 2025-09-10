@@ -2,6 +2,8 @@
 
 package etw
 
+import "maps"
+
 // KernelNtFlag defines a bitmask for enabling a specific group of legacy kernel events.
 // These flags are used with NewKernelRealTimeSession to configure the "NT Kernel Logger".
 type KernelNtFlag uint32
@@ -190,6 +192,31 @@ var KernelProviders = []KernelProviderInfo{
 }
 
 var kernelProviderMap = make(map[string]KernelNtFlag)
+var kernelProviderLogmanMap = map[string]KernelNtFlag{
+	"process":          Process,
+	"thread":           Thread,
+	"img":              ImageLoad,
+	"proccntr":         ProcessCounters,
+	"cswitch":          CSwitch,
+	"dpc":              DPC,
+	"isr":              Interrupt,
+	"syscall":          Syscall,
+	"disk":             DiskIo,
+	"file":             DiskFileIo, // "file" from logman corresponds to DiskFileIo for file details
+	"diskinit":         DiskIoInit,
+	"dispatcher":       Dispatcher,
+	"pf":               MemoryPageFault,
+	"hf":               MemoryHardFault,
+	"virtalloc":        VirtualAlloc,
+	"net":              TcpIp,
+	"registry":         Registry,
+	"alpc":             ALPC,
+	"splitio":          SplitIo,
+	"driver":           Driver,
+	"profile":          Profile,
+	"fileiocompletion": FileIo, // This is the FileIo flag
+	"fileio":           FileIoInit,
+}
 
 func init() {
 	for _, p := range KernelProviders {
@@ -202,6 +229,17 @@ func init() {
 			kernelProviderMap[guidStr] = p.Flags
 		}
 	}
+	// Add logman aliases
+	maps.Copy(kernelProviderMap, kernelProviderLogmanMap)
+}
+
+// GetKernelProviderNames returns a sorted list of all supported kernel provider keyword names.
+func GetKernelProviderNames() []string {
+	names := make([]string, 0, len(KernelProviders))
+	for _, p := range KernelProviders {
+		names = append(names, p.Name)
+	}
+	return names
 }
 
 // IsKernelProvider checks if a given provider name or GUID string corresponds to a known legacy kernel provider.
