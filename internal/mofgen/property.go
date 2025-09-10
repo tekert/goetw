@@ -1,6 +1,7 @@
 package mofgen
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -63,17 +64,22 @@ func (p *mofParsedProperty) parseType(typeName, qualifiers string, idMap map[str
 
 		// All strings use string output type regardless of input format
 		p.OutType = "TDH_OUTTYPE_STRING"
+		p.GoType = "uintptr" // Strings in structs are offsets.
 		return
 	}
 
-	// Set base TDH type first
+	// Set base TDH type and Go type first
 	if baseType, ok := typeMap[strings.ToLower(typeName)]; ok {
 		p.InType = baseType
+	}
+	if goType, ok := goTypeMap[strings.ToLower(typeName)]; ok {
+		p.GoType = goType
 	}
 
 	// Handle qualifiers that override the base type
 	if strings.Contains(strings.ToLower(qualifiers), "pointer") {
 		p.InType = "TDH_INTYPE_POINTER"
+		p.GoType = "uintptr"
 		return // Pointer qualifier overrides everything else
 	}
 
@@ -105,6 +111,9 @@ func (p *mofParsedProperty) parseType(typeName, qualifiers string, idMap map[str
 				p.OutType = types[1]
 			}
 		}
+		if goType, ok := goExtensionTypeMap[ext]; ok {
+			p.GoType = goType
+		}
 	}
 
 	// Handle array size with ID map
@@ -112,8 +121,10 @@ func (p *mofParsedProperty) parseType(typeName, qualifiers string, idMap map[str
 	if isArray {
 		p.IsArray = "true"
 		p.ArraySize = arraySize
+		p.GoType = fmt.Sprintf("[%s]%s", arraySize, p.GoType)
 	} else if sizeFromID != "" {
 		p.SizeFromID = sizeFromID
+		p.GoType = "uintptr" // Variable-size array is a pointer/offset.
 	}
 }
 

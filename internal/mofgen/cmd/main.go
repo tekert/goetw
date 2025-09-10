@@ -1,4 +1,4 @@
-// File: etw/internal/mofgen/cmd/main.go
+// File: /internal/mofgen/cmd/main.go
 
 /*
 The mofgen tool generates Go code for Windows ETW MOF (Managed Object Format) class definitions.
@@ -10,7 +10,7 @@ WindowsKernelTrace.mof file taken from:
 https://gist.github.com/jdu2600/a2b03e4e9cf19282a41ad766388c9856
 
 Usage:
-    go run main.go || go generate
+	go run main.go || go generate
 
 The tool will:
 1. Find the project root by looking for go.mod
@@ -68,6 +68,7 @@ func main() {
 		log.Fatalf("Failed to find project root: %v", err)
 	}
 	mofPath := filepath.Join(projectRoot, "internal", "mofgen", "cmd", "WindowsKernelTrace.mof")
+	//mofPath := filepath.Join(projectRoot, "internal", "mofgen", "cmd", "GeneratedWindowsKernelTrace.mof")
 	outPath := filepath.Join(projectRoot, "etw", "gen_mof_kerneldef.go")
 
 	// // Get directory containing main.go

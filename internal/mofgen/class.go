@@ -8,6 +8,7 @@ import (
 )
 
 // stringToUint16SliceLiteral converts a string to a Go literal for a null-terminated []uint16 slice.
+// Deprecated: now we cache the schemas so no need to generate utf16 string versions on the interface.
 func stringToUint16SliceLiteral(s string) string {
 	if s == "" {
 		return "nil"

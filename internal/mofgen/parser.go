@@ -94,6 +94,14 @@ package etw
 {{- range $line := splitAndComment .MofDefinition}}
 {{$line}}
 {{- end}}
+{{- if .InheritsGUID}}
+// Go struct for event data
+type Mof{{.Name}} struct {
+{{- range .Properties}}
+	{{.Name}} {{.GoType}}
+{{- end}}
+}
+{{- end}}
 // mof{{.Name}} class definition
 var mof{{.Name}} = &MofClassDef{
 	Name: "{{.Name}}",

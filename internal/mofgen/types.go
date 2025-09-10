@@ -9,6 +9,7 @@ type mofParsedProperty struct {
 	IsArray    string // "true" if is array.
 	ArraySize  string // MAX(n)
 	SizeFromID string // WmiSizeIs property ID
+	GoType     string // Go type for struct generation
 }
 
 type mofParsedClass struct {
@@ -21,7 +22,6 @@ type mofParsedClass struct {
 	InheritsGUID    bool
 	InheritsVersion bool
 	MofDefinition   string // Original MOF class definition text
-	GUIDFirst32Bits string // First 32 bits of GUID for mapping
 }
 
 // Mappings from MOF types to ETW types
@@ -39,6 +39,23 @@ var typeMap = map[string]string{
 	"object":  "TDH_INTYPE_POINTER",
 	"char16":  "TDH_INTYPE_UNICODECHAR",
 	"boolean": "TDH_INTYPE_BOOLEAN",
+}
+
+// Mappings from MOF types to Go types for struct generation
+var goTypeMap = map[string]string{
+	"uint8":   "uint8",
+	"uint16":  "uint16",
+	"uint32":  "uint32",
+	"uint64":  "uint64",
+	"sint8":   "int8",
+	"sint16":  "int16",
+	"sint32":  "int32",
+	"sint64":  "int64",
+	"pointer": "uintptr",
+	"string":  "uintptr", // Strings are represented as an offset within UserData.
+	"object":  "uintptr",
+	"char16":  "uint16",
+	"boolean": "uint32", // TDH_INTYPE_BOOLEAN is 4 bytes.
 }
 
 // Mappings for format qualifiers
@@ -65,4 +82,11 @@ var extensionMap = map[string][2]string{
 	"RString":  {"TDH_INTYPE_ANSISTRING", "TDH_OUTTYPE_STRING"},
 	"RWString": {"TDH_INTYPE_UNICODESTRING", "TDH_OUTTYPE_STRING"},
 	"Variant":  {"TDH_INTYPE_BINARY", "TDH_OUTTYPE_NULL"},
+}
+
+// Mappings for extension qualifiers to Go types
+var goExtensionTypeMap = map[string]string{
+	"SizeT": "uintptr",
+	"GUID":  "GUID",    // Assumes etw.GUID is available in the generated code's package
+	"Sid":   "SID",     // SIDs are variable length and are represented as an offset.
 }

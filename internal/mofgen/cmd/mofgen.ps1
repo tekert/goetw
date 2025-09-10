@@ -212,7 +212,7 @@ function Format-MofContent {
 
 $namespace = 'root\wmi'
 $baseClassName = 'MSNT_SystemTrace'
-$outputFile = "GeneratedWindowsKernelTrace-Win10.mof"
+$outputFile = "_GeneratedWindowsKernelTrace-Win10.mof"
 
 Write-Host "Discovering kernel trace classes in '$namespace'..."
 $allClasses = Get-CimClass -Namespace $namespace
