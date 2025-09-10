@@ -88,5 +88,5 @@ var extensionMap = map[string][2]string{
 var goExtensionTypeMap = map[string]string{
 	"SizeT": "uintptr",
 	"GUID":  "GUID",    // Assumes etw.GUID is available in the generated code's package
-	"Sid":   "SID",     // SIDs are variable length and are represented as an offset.
+	"Sid":   "uintptr", // SIDs are variable length and are represented as an offset.
 }
