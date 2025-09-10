@@ -107,7 +107,7 @@ var mof{{.Name}} = &MofClassDef{
 	Name: "{{.Name}}",
 	{{- if .Base}}
 	Base: "{{.Base}}",
-	{{end}}
+	{{- end}}
 	{{- if not .InheritsGUID}}
 	GUID: *MustParseGUID("{{.GUID}}"),
 	{{- else}}

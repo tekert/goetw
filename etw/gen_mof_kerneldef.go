@@ -14,7 +14,6 @@ package etw
 var mofFileIo_V2 = &MofClassDef{
 	Name: "FileIo_V2",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 2,
 }
@@ -39,7 +38,6 @@ type MofFileIo_V2_MapFile struct {
 var mofFileIo_V2_MapFile = &MofClassDef{
 	Name: "FileIo_V2_MapFile",
 	Base: "FileIo_V2",
-	
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 37,  38,  39,  40 },
@@ -80,7 +78,6 @@ type MofFileIo_V2_DirEnum struct {
 var mofFileIo_V2_DirEnum = &MofClassDef{
 	Name: "FileIo_V2_DirEnum",
 	Base: "FileIo_V2",
-	
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 72,  77 },
@@ -111,7 +108,6 @@ type MofFileIo_V2_OpEnd struct {
 var mofFileIo_V2_OpEnd = &MofClassDef{
 	Name: "FileIo_V2_OpEnd",
 	Base: "FileIo_V2",
-	
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 76 },
@@ -140,7 +136,6 @@ type MofFileIo_V2_SimpleOp struct {
 var mofFileIo_V2_SimpleOp = &MofClassDef{
 	Name: "FileIo_V2_SimpleOp",
 	Base: "FileIo_V2",
-	
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 65,  66,  73 },
@@ -175,7 +170,6 @@ type MofFileIo_V2_ReadWrite struct {
 var mofFileIo_V2_ReadWrite = &MofClassDef{
 	Name: "FileIo_V2_ReadWrite",
 	Base: "FileIo_V2",
-	
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 67,  68 },
@@ -212,7 +206,6 @@ type MofFileIo_V2_Info struct {
 var mofFileIo_V2_Info = &MofClassDef{
 	Name: "FileIo_V2_Info",
 	Base: "FileIo_V2",
-	
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 69,  70,  71,  74,  75 },
@@ -243,7 +236,6 @@ type MofFileIo_V2_Name struct {
 var mofFileIo_V2_Name = &MofClassDef{
 	Name: "FileIo_V2_Name",
 	Base: "FileIo_V2",
-	
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 0,  32,  35,  36 },
@@ -279,7 +271,6 @@ type MofFileIo_V2_Create struct {
 var mofFileIo_V2_Create = &MofClassDef{
 	Name: "FileIo_V2_Create",
 	Base: "FileIo_V2",
-	
 	GUID: mofFileIo_V2.GUID,
 	Version: mofFileIo_V2.Version,
 	EventTypes: []uint8{ 64 },
@@ -300,7 +291,6 @@ var mofFileIo_V2_Create = &MofClassDef{
 var mofPerfInfo_V0 = &MofClassDef{
 	Name: "PerfInfo_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}"),
 	Version: 0,
 }
@@ -318,7 +308,6 @@ type MofMark_V0 struct {
 var mofMark_V0 = &MofClassDef{
 	Name: "Mark_V0",
 	Base: "PerfInfo_V0",
-	
 	GUID: mofPerfInfo_V0.GUID,
 	Version: mofPerfInfo_V0.Version,
 	EventTypes: []uint8{ 34 },
@@ -334,7 +323,6 @@ var mofMark_V0 = &MofClassDef{
 var mofObTrace = &MofClassDef{
 	Name: "ObTrace",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{89497f50-effe-4440-8cf2-ce6b1cdcaca7}"),
 	Version: 2,
 }
@@ -354,7 +342,6 @@ type MofObReferenceEvent struct {
 var mofObReferenceEvent = &MofClassDef{
 	Name: "ObReferenceEvent",
 	Base: "ObTrace",
-	
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 50,  51 },
@@ -383,7 +370,6 @@ type MofObTypeEvent struct {
 var mofObTypeEvent = &MofClassDef{
 	Name: "ObTypeEvent",
 	Base: "ObTrace",
-	
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 36,  37 },
@@ -416,7 +402,6 @@ type MofObHandleRundownEvent struct {
 var mofObHandleRundownEvent = &MofClassDef{
 	Name: "ObHandleRundownEvent",
 	Base: "ObTrace",
-	
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 38,  39 },
@@ -442,7 +427,6 @@ type MofObObjectEvent struct {
 var mofObObjectEvent = &MofClassDef{
 	Name: "ObObjectEvent",
 	Base: "ObTrace",
-	
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 48,  49 },
@@ -471,7 +455,6 @@ type MofObHandleDuplicateEvent struct {
 var mofObHandleDuplicateEvent = &MofClassDef{
 	Name: "ObHandleDuplicateEvent",
 	Base: "ObTrace",
-	
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 34 },
@@ -504,7 +487,6 @@ type MofObHandleEvent struct {
 var mofObHandleEvent = &MofClassDef{
 	Name: "ObHandleEvent",
 	Base: "ObTrace",
-	
 	GUID: mofObTrace.GUID,
 	Version: mofObTrace.Version,
 	EventTypes: []uint8{ 32,  33 },
@@ -522,7 +504,6 @@ var mofObHandleEvent = &MofClassDef{
 var mofPageFault_V2 = &MofClassDef{
 	Name: "PageFault_V2",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 2,
 }
@@ -547,7 +528,6 @@ type MofPageFault_HeapRangeRundown_V3 struct {
 var mofPageFault_HeapRangeRundown_V3 = &MofClassDef{
 	Name: "PageFault_HeapRangeRundown_V3",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: 3,
 	EventTypes: []uint8{ 100 },
@@ -581,7 +561,6 @@ type MofPageFault_HardFault struct {
 var mofPageFault_HardFault = &MofClassDef{
 	Name: "PageFault_HardFault",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 32 },
@@ -615,7 +594,6 @@ type MofPageFault_VirtualAllocRundown struct {
 var mofPageFault_VirtualAllocRundown = &MofClassDef{
 	Name: "PageFault_VirtualAllocRundown",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 128,  129 },
@@ -646,7 +624,6 @@ type MofPageFault_VirtualAlloc struct {
 var mofPageFault_VirtualAlloc = &MofClassDef{
 	Name: "PageFault_VirtualAlloc",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 98,  99 },
@@ -673,7 +650,6 @@ type MofPageFault_MemReset struct {
 var mofPageFault_MemReset = &MofClassDef{
 	Name: "PageFault_MemReset",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 134 },
@@ -702,7 +678,6 @@ type MofPageFault_HeapRangeRundown_V2 struct {
 var mofPageFault_HeapRangeRundown_V2 = &MofClassDef{
 	Name: "PageFault_HeapRangeRundown_V2",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 100 },
@@ -726,7 +701,6 @@ type MofPageFault_HeapRangeDestroy struct {
 var mofPageFault_HeapRangeDestroy = &MofClassDef{
 	Name: "PageFault_HeapRangeDestroy",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 104 },
@@ -749,7 +723,6 @@ type MofPageFault_TypeGroup1 struct {
 var mofPageFault_TypeGroup1 = &MofClassDef{
 	Name: "PageFault_TypeGroup1",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14, 
@@ -778,7 +751,6 @@ type MofPageFault_ImageLoadBacked struct {
 var mofPageFault_ImageLoadBacked = &MofClassDef{
 	Name: "PageFault_ImageLoadBacked",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 105 },
@@ -806,7 +778,6 @@ type MofPageFault_HeapRangeTypeGroup struct {
 var mofPageFault_HeapRangeTypeGroup = &MofClassDef{
 	Name: "PageFault_HeapRangeTypeGroup",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 102,  103 },
@@ -833,7 +804,6 @@ type MofPageFault_HeapRangeCreate struct {
 var mofPageFault_HeapRangeCreate = &MofClassDef{
 	Name: "PageFault_HeapRangeCreate",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 101 },
@@ -858,7 +828,6 @@ type MofPageFault_VirtualRotate struct {
 var mofPageFault_VirtualRotate = &MofClassDef{
 	Name: "PageFault_VirtualRotate",
 	Base: "PageFault_V2",
-	
 	GUID: mofPageFault_V2.GUID,
 	Version: mofPageFault_V2.Version,
 	EventTypes: []uint8{ 127 },
@@ -874,7 +843,6 @@ var mofPageFault_VirtualRotate = &MofClassDef{
 var mofPerfInfo_V2 = &MofClassDef{
 	Name: "PerfInfo_V2",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}"),
 	Version: 2,
 }
@@ -894,7 +862,6 @@ type MofFinalizeKTimer2 struct {
 var mofFinalizeKTimer2 = &MofClassDef{
 	Name: "FinalizeKTimer2",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 108 },
@@ -916,7 +883,6 @@ type MofWDF_ISR struct {
 var mofWDF_ISR = &MofClassDef{
 	Name: "WDF_ISR",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 96,  97 },
@@ -936,7 +902,6 @@ type MofWDF_DPC struct {
 var mofWDF_DPC = &MofClassDef{
 	Name: "WDF_DPC",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 98 },
@@ -956,7 +921,6 @@ type MofISR_Unexpected struct {
 var mofISR_Unexpected = &MofClassDef{
 	Name: "ISR_Unexpected",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 92 },
@@ -982,7 +946,6 @@ type MofSampledProfile struct {
 var mofSampledProfile = &MofClassDef{
 	Name: "SampledProfile",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 46 },
@@ -1005,7 +968,6 @@ type MofCancelKTimer2 struct {
 var mofCancelKTimer2 = &MofClassDef{
 	Name: "CancelKTimer2",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 106 },
@@ -1031,7 +993,6 @@ type MofPmcCounterProfile struct {
 var mofPmcCounterProfile = &MofClassDef{
 	Name: "PmcCounterProfile",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 47 },
@@ -1060,7 +1021,6 @@ type MofPmcCounterConfig_V2 struct {
 var mofPmcCounterConfig_V2 = &MofClassDef{
 	Name: "PmcCounterConfig_V2",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 48 },
@@ -1081,7 +1041,6 @@ type MofSysCallExit struct {
 var mofSysCallExit = &MofClassDef{
 	Name: "SysCallExit",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 52 },
@@ -1111,7 +1070,6 @@ type MofISR_MSI struct {
 var mofISR_MSI = &MofClassDef{
 	Name: "ISR_MSI",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 50 },
@@ -1142,7 +1100,6 @@ type MofDisableKTimer2 struct {
 var mofDisableKTimer2 = &MofClassDef{
 	Name: "DisableKTimer2",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 107 },
@@ -1178,7 +1135,6 @@ type MofSetOrExpireKTimer2 struct {
 var mofSetOrExpireKTimer2 = &MofClassDef{
 	Name: "SetOrExpireKTimer2",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 104,  105 },
@@ -1212,7 +1168,6 @@ type MofISR struct {
 var mofISR = &MofClassDef{
 	Name: "ISR",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 67,  95 },
@@ -1241,7 +1196,6 @@ type MofPmcCounterCorruption_V2 struct {
 var mofPmcCounterCorruption_V2 = &MofClassDef{
 	Name: "PmcCounterCorruption_V2",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 49 },
@@ -1263,7 +1217,6 @@ type MofSysCallEnter struct {
 var mofSysCallEnter = &MofClassDef{
 	Name: "SysCallEnter",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 51 },
@@ -1285,7 +1238,6 @@ type MofIoTimerEvent struct {
 var mofIoTimerEvent = &MofClassDef{
 	Name: "IoTimerEvent",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 93,  94 },
@@ -1306,7 +1258,6 @@ type MofWDF_WorkItem struct {
 var mofWDF_WorkItem = &MofClassDef{
 	Name: "WDF_WorkItem",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 103 },
@@ -1323,7 +1274,6 @@ type MofDebuggerEnabled struct {
 var mofDebuggerEnabled = &MofClassDef{
 	Name: "DebuggerEnabled",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 58 },
@@ -1345,7 +1295,6 @@ type MofSampledProfileInterval_V2 struct {
 var mofSampledProfileInterval_V2 = &MofClassDef{
 	Name: "SampledProfileInterval_V2",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 72,  73,  74 },
@@ -1371,7 +1320,6 @@ type MofHV_Hypercall struct {
 var mofHV_Hypercall = &MofClassDef{
 	Name: "HV_Hypercall",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 114 },
@@ -1395,7 +1343,6 @@ type MofDPC struct {
 var mofDPC = &MofClassDef{
 	Name: "DPC",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 66,  68,  69,  70 },
@@ -1420,7 +1367,6 @@ type MofSpinLockConfig_V2 struct {
 var mofSpinLockConfig_V2 = &MofClassDef{
 	Name: "SpinLockConfig_V2",
 	Base: "PerfInfo_V2",
-	
 	GUID: mofPerfInfo_V2.GUID,
 	Version: mofPerfInfo_V2.Version,
 	EventTypes: []uint8{ 75,  76 },
@@ -1437,7 +1383,6 @@ var mofSpinLockConfig_V2 = &MofClassDef{
 var mofUdpIp = &MofClassDef{
 	Name: "UdpIp",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}"),
 	Version: 2,
 }
@@ -1455,7 +1400,6 @@ type MofUdpIp_Fail struct {
 var mofUdpIp_Fail = &MofClassDef{
 	Name: "UdpIp_Fail",
 	Base: "UdpIp",
-	
 	GUID: mofUdpIp.GUID,
 	Version: mofUdpIp.Version,
 	EventTypes: []uint8{ 17 },
@@ -1490,7 +1434,6 @@ type MofUdpIp_TypeGroup2 struct {
 var mofUdpIp_TypeGroup2 = &MofClassDef{
 	Name: "UdpIp_TypeGroup2",
 	Base: "UdpIp",
-	
 	GUID: mofUdpIp.GUID,
 	Version: mofUdpIp.Version,
 	EventTypes: []uint8{ 26,  27 },
@@ -1531,7 +1474,6 @@ type MofUdpIp_TypeGroup1 struct {
 var mofUdpIp_TypeGroup1 = &MofClassDef{
 	Name: "UdpIp_TypeGroup1",
 	Base: "UdpIp",
-	
 	GUID: mofUdpIp.GUID,
 	Version: mofUdpIp.Version,
 	EventTypes: []uint8{ 10,  11 },
@@ -1553,7 +1495,6 @@ var mofUdpIp_TypeGroup1 = &MofClassDef{
 var mofThread_V2 = &MofClassDef{
 	Name: "Thread_V2",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 2,
 }
@@ -1573,7 +1514,6 @@ type MofAutoBoostClearFloor struct {
 var mofAutoBoostClearFloor = &MofClassDef{
 	Name: "AutoBoostClearFloor",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 67 },
@@ -1599,7 +1539,6 @@ type MofWorkerThread struct {
 var mofWorkerThread = &MofClassDef{
 	Name: "WorkerThread",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 57 },
@@ -1623,7 +1562,6 @@ type MofKernelQueueEnqueue struct {
 var mofKernelQueueEnqueue = &MofClassDef{
 	Name: "KernelQueueEnqueue",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 62 },
@@ -1666,7 +1604,6 @@ type MofCSwitch_V2 struct {
 var mofCSwitch_V2 = &MofClassDef{
 	Name: "CSwitch_V2",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 36 },
@@ -1699,7 +1636,6 @@ type MofSubProcessTagChanged struct {
 var mofSubProcessTagChanged = &MofClassDef{
 	Name: "SubProcessTagChanged",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 69 },
@@ -1742,7 +1678,6 @@ type MofSpinLock struct {
 var mofSpinLock = &MofClassDef{
 	Name: "SpinLock",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 41 },
@@ -1783,7 +1718,6 @@ type MofThreadMigration struct {
 var mofThreadMigration = &MofClassDef{
 	Name: "ThreadMigration",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 61 },
@@ -1812,7 +1746,6 @@ type MofKernelQueueDequeue struct {
 var mofKernelQueueDequeue = &MofClassDef{
 	Name: "KernelQueueDequeue",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 63 },
@@ -1844,7 +1777,6 @@ type MofAutoBoostSetFloor struct {
 var mofAutoBoostSetFloor = &MofClassDef{
 	Name: "AutoBoostSetFloor",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 66 },
@@ -1875,7 +1807,6 @@ type MofThreadAffinity struct {
 var mofThreadAffinity = &MofClassDef{
 	Name: "ThreadAffinity",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 53 },
@@ -1899,7 +1830,6 @@ type MofWorkerThread_StartStop_V2 struct {
 var mofWorkerThread_StartStop_V2 = &MofClassDef{
 	Name: "WorkerThread_StartStop_V2",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 64,  65 },
@@ -1926,7 +1856,6 @@ type MofThreadSetName struct {
 var mofThreadSetName = &MofClassDef{
 	Name: "ThreadSetName",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 72 },
@@ -1945,7 +1874,6 @@ type MofCompCS struct {
 var mofCompCS = &MofClassDef{
 	Name: "CompCS",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 37 },
@@ -1964,7 +1892,6 @@ type MofAutoBoostEntryExhaustion struct {
 var mofAutoBoostEntryExhaustion = &MofClassDef{
 	Name: "AutoBoostEntryExhaustion",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 68 },
@@ -1993,7 +1920,6 @@ type MofReadyThread struct {
 var mofReadyThread = &MofClassDef{
 	Name: "ReadyThread",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 50 },
@@ -2023,7 +1949,6 @@ type MofAntiStarvationBoost struct {
 var mofAntiStarvationBoost = &MofClassDef{
 	Name: "AntiStarvationBoost",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 60 },
@@ -2065,7 +1990,6 @@ type MofThread_V2_TypeGroup1 struct {
 var mofThread_V2_TypeGroup1 = &MofClassDef{
 	Name: "Thread_V2_TypeGroup1",
 	Base: "Thread_V2",
-	
 	GUID: mofThread_V2.GUID,
 	Version: mofThread_V2.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
@@ -2089,7 +2013,6 @@ var mofThread_V2_TypeGroup1 = &MofClassDef{
 var mofUdpIp_V0 = &MofClassDef{
 	Name: "UdpIp_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}"),
 	Version: 0,
 }
@@ -2117,7 +2040,6 @@ type MofUdpIp_V0_TypeGroup1 struct {
 var mofUdpIp_V0_TypeGroup1 = &MofClassDef{
 	Name: "UdpIp_V0_TypeGroup1",
 	Base: "UdpIp_V0",
-	
 	GUID: mofUdpIp_V0.GUID,
 	Version: mofUdpIp_V0.Version,
 	EventTypes: []uint8{ 10,  11 },
@@ -2138,7 +2060,6 @@ var mofUdpIp_V0_TypeGroup1 = &MofClassDef{
 var mofStackWalk = &MofClassDef{
 	Name: "StackWalk",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{def2fe46-7bd6-4b80-bd94-f57fe20d0ce3}"),
 	Version: 2,
 }
@@ -2157,7 +2078,6 @@ type MofStackWalk_TypeGroup1 struct {
 var mofStackWalk_TypeGroup1 = &MofClassDef{
 	Name: "StackWalk_TypeGroup1",
 	Base: "StackWalk",
-	
 	GUID: mofStackWalk.GUID,
 	Version: mofStackWalk.Version,
 	EventTypes: []uint8{ 34,  35,  36 },
@@ -2184,7 +2104,6 @@ type MofStackWalk_Key struct {
 var mofStackWalk_Key = &MofClassDef{
 	Name: "StackWalk_Key",
 	Base: "StackWalk",
-	
 	GUID: mofStackWalk.GUID,
 	Version: mofStackWalk.Version,
 	EventTypes: []uint8{ 37,  38 },
@@ -2275,7 +2194,6 @@ type MofStackWalk_Event struct {
 var mofStackWalk_Event = &MofClassDef{
 	Name: "StackWalk_Event",
 	Base: "StackWalk",
-	
 	GUID: mofStackWalk.GUID,
 	Version: mofStackWalk.Version,
 	EventTypes: []uint8{ 32 },
@@ -2324,7 +2242,6 @@ var mofStackWalk_Event = &MofClassDef{
 var mofDiskIo_V1 = &MofClassDef{
 	Name: "DiskIo_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 1,
 }
@@ -2343,7 +2260,6 @@ type MofV1_DriverMajorFunctionReturn struct {
 var mofV1_DriverMajorFunctionReturn = &MofClassDef{
 	Name: "V1_DriverMajorFunctionReturn",
 	Base: "DiskIo_V1",
-	
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 35 },
@@ -2368,7 +2284,6 @@ type MofV1_DriverCompleteRequest struct {
 var mofV1_DriverCompleteRequest = &MofClassDef{
 	Name: "V1_DriverCompleteRequest",
 	Base: "DiskIo_V1",
-	
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 52 },
@@ -2393,7 +2308,6 @@ type MofV1_DriverCompleteRequestReturn struct {
 var mofV1_DriverCompleteRequestReturn = &MofClassDef{
 	Name: "V1_DriverCompleteRequestReturn",
 	Base: "DiskIo_V1",
-	
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 53 },
@@ -2426,7 +2340,6 @@ type MofDiskIo_V1_TypeGroup1 struct {
 var mofDiskIo_V1_TypeGroup1 = &MofClassDef{
 	Name: "DiskIo_V1_TypeGroup1",
 	Base: "DiskIo_V1",
-	
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 10,  11 },
@@ -2463,7 +2376,6 @@ type MofV1_DriverMajorFunctionCall struct {
 var mofV1_DriverMajorFunctionCall = &MofClassDef{
 	Name: "V1_DriverMajorFunctionCall",
 	Base: "DiskIo_V1",
-	
 	GUID: mofDiskIo_V1.GUID,
 	Version: mofDiskIo_V1.Version,
 	EventTypes: []uint8{ 34 },
@@ -2483,7 +2395,6 @@ var mofV1_DriverMajorFunctionCall = &MofClassDef{
 var mofUmsEvent = &MofClassDef{
 	Name: "UmsEvent",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{9aec974b-5b8e-4118-9b92-3186d8002ce5}"),
 	Version: 2,
 }
@@ -2507,7 +2418,6 @@ type MofUmsContextSwitch struct {
 var mofUmsContextSwitch = &MofClassDef{
 	Name: "UmsContextSwitch",
 	Base: "UmsEvent",
-	
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 36 },
@@ -2537,7 +2447,6 @@ type MofUmsDirectedSwitchEnd struct {
 var mofUmsDirectedSwitchEnd = &MofClassDef{
 	Name: "UmsDirectedSwitchEnd",
 	Base: "UmsEvent",
-	
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 33 },
@@ -2564,7 +2473,6 @@ type MofUmsScheduledPark struct {
 var mofUmsScheduledPark = &MofClassDef{
 	Name: "UmsScheduledPark",
 	Base: "UmsEvent",
-	
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 34 },
@@ -2594,7 +2502,6 @@ type MofUmsDisassociate struct {
 var mofUmsDisassociate = &MofClassDef{
 	Name: "UmsDisassociate",
 	Base: "UmsEvent",
-	
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 35 },
@@ -2624,7 +2531,6 @@ type MofUmsDirectedSwitchStart struct {
 var mofUmsDirectedSwitchStart = &MofClassDef{
 	Name: "UmsDirectedSwitchStart",
 	Base: "UmsEvent",
-	
 	GUID: mofUmsEvent.GUID,
 	Version: mofUmsEvent.Version,
 	EventTypes: []uint8{ 32 },
@@ -2642,7 +2548,6 @@ var mofUmsDirectedSwitchStart = &MofClassDef{
 var mofPerfInfo = &MofClassDef{
 	Name: "PerfInfo",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}"),
 	Version: 3,
 }
@@ -2668,7 +2573,6 @@ type MofSampledProfileInterval_V3 struct {
 var mofSampledProfileInterval_V3 = &MofClassDef{
 	Name: "SampledProfileInterval_V3",
 	Base: "PerfInfo",
-	
 	GUID: mofPerfInfo.GUID,
 	Version: mofPerfInfo.Version,
 	EventTypes: []uint8{ 73,  74 },
@@ -2697,7 +2601,6 @@ type MofSpinLockConfig_V3 struct {
 var mofSpinLockConfig_V3 = &MofClassDef{
 	Name: "SpinLockConfig_V3",
 	Base: "PerfInfo",
-	
 	GUID: mofPerfInfo.GUID,
 	Version: mofPerfInfo.Version,
 	EventTypes: []uint8{ 75,  76 },
@@ -2715,7 +2618,6 @@ var mofSpinLockConfig_V3 = &MofClassDef{
 var mofTcpIp_V1 = &MofClassDef{
 	Name: "TcpIp_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}"),
 	Version: 1,
 }
@@ -2731,7 +2633,6 @@ type MofTcpIp_V1_Fail struct {
 var mofTcpIp_V1_Fail = &MofClassDef{
 	Name: "TcpIp_V1_Fail",
 	Base: "TcpIp_V1",
-	
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 17 },
@@ -2766,7 +2667,6 @@ type MofTcpIp_V1_TypeGroup3 struct {
 var mofTcpIp_V1_TypeGroup3 = &MofClassDef{
 	Name: "TcpIp_V1_TypeGroup3",
 	Base: "TcpIp_V1",
-	
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 18,  19,  20,  21,  22 },
@@ -2811,7 +2711,6 @@ type MofTcpIp_V1_Send struct {
 var mofTcpIp_V1_Send = &MofClassDef{
 	Name: "TcpIp_V1_Send",
 	Base: "TcpIp_V1",
-	
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 10 },
@@ -2855,7 +2754,6 @@ type MofTcpIp_V1_TypeGroup1 struct {
 var mofTcpIp_V1_TypeGroup1 = &MofClassDef{
 	Name: "TcpIp_V1_TypeGroup1",
 	Base: "TcpIp_V1",
-	
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 13,  14,  16 },
@@ -2910,7 +2808,6 @@ type MofTcpIp_V1_TypeGroup2 struct {
 var mofTcpIp_V1_TypeGroup2 = &MofClassDef{
 	Name: "TcpIp_V1_TypeGroup2",
 	Base: "TcpIp_V1",
-	
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 12,  15 },
@@ -2958,7 +2855,6 @@ type MofTcpIp_V1_Receive struct {
 var mofTcpIp_V1_Receive = &MofClassDef{
 	Name: "TcpIp_V1_Receive",
 	Base: "TcpIp_V1",
-	
 	GUID: mofTcpIp_V1.GUID,
 	Version: mofTcpIp_V1.Version,
 	EventTypes: []uint8{ 11 },
@@ -2980,7 +2876,6 @@ var mofTcpIp_V1_Receive = &MofClassDef{
 var mofEventTraceEvent = &MofClassDef{
 	Name: "EventTraceEvent",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{68fdd900-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 2,
 }
@@ -2998,7 +2893,6 @@ type MofHeader_BuildInfo_TypeGroup struct {
 var mofHeader_BuildInfo_TypeGroup = &MofClassDef{
 	Name: "Header_BuildInfo_TypeGroup",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 66 },
@@ -3023,7 +2917,6 @@ type MofHeader_DbgIdRSDS_TypeGroup struct {
 var mofHeader_DbgIdRSDS_TypeGroup = &MofClassDef{
 	Name: "Header_DbgIdRSDS_TypeGroup",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 64 },
@@ -3063,7 +2956,6 @@ type MofHeader_PartitionInfoExtensionV2_TypeGroup struct {
 var mofHeader_PartitionInfoExtensionV2_TypeGroup = &MofClassDef{
 	Name: "Header_PartitionInfoExtensionV2_TypeGroup",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: 2,
 	EventTypes: []uint8{ 80 },
@@ -3105,7 +2997,6 @@ type MofHeader_Extension_TypeGroup struct {
 var mofHeader_Extension_TypeGroup = &MofClassDef{
 	Name: "Header_Extension_TypeGroup",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 5,  32 },
@@ -3138,7 +3029,6 @@ type MofHeader_LastDroppedTimes_TypeGroup struct {
 var mofHeader_LastDroppedTimes_TypeGroup = &MofClassDef{
 	Name: "Header_LastDroppedTimes_TypeGroup",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 82 },
@@ -3172,7 +3062,6 @@ type MofHeader_PartitionInfoExtension_TypeGroup struct {
 var mofHeader_PartitionInfoExtension_TypeGroup = &MofClassDef{
 	Name: "Header_PartitionInfoExtension_TypeGroup",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: 0,
 	EventTypes: []uint8{ 80 },
@@ -3248,7 +3137,6 @@ type MofEventTrace_Header struct {
 var mofEventTrace_Header = &MofClassDef{
 	Name: "EventTrace_Header",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 0 },
@@ -3298,7 +3186,6 @@ type MofHeader_ProviderBinaryPath_TypeGroup struct {
 var mofHeader_ProviderBinaryPath_TypeGroup = &MofClassDef{
 	Name: "Header_ProviderBinaryPath_TypeGroup",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 67 },
@@ -3317,7 +3204,6 @@ type MofRDComplete struct {
 var mofRDComplete = &MofClassDef{
 	Name: "RDComplete",
 	Base: "EventTraceEvent",
-	
 	GUID: mofEventTraceEvent.GUID,
 	Version: mofEventTraceEvent.Version,
 	EventTypes: []uint8{ 8 },
@@ -3329,7 +3215,6 @@ var mofRDComplete = &MofClassDef{
 var mofMMCSSTrace = &MofClassDef{
 	Name: "MMCSSTrace",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{f8f10121-b617-4a56-868b-9df1b27fe32c}"),
 	Version: 0,
 }
@@ -3351,7 +3236,6 @@ type MofMMCSSEvent struct {
 var mofMMCSSEvent = &MofClassDef{
 	Name: "MMCSSEvent",
 	Base: "MMCSSTrace",
-	
 	GUID: mofMMCSSTrace.GUID,
 	Version: mofMMCSSTrace.Version,
 	EventTypes: []uint8{ 34 },
@@ -3374,7 +3258,6 @@ type MofMMCSSWakeup struct {
 var mofMMCSSWakeup = &MofClassDef{
 	Name: "MMCSSWakeup",
 	Base: "MMCSSTrace",
-	
 	GUID: mofMMCSSTrace.GUID,
 	Version: mofMMCSSTrace.Version,
 	EventTypes: []uint8{ 35 },
@@ -3392,7 +3275,6 @@ type MofMMCSS_TypeGroup struct {
 var mofMMCSS_TypeGroup = &MofClassDef{
 	Name: "MMCSS_TypeGroup",
 	Base: "MMCSSTrace",
-	
 	GUID: mofMMCSSTrace.GUID,
 	Version: mofMMCSSTrace.Version,
 	EventTypes: []uint8{ 32,  33,  36,  37 },
@@ -3404,7 +3286,6 @@ var mofMMCSS_TypeGroup = &MofClassDef{
 var mofSystemConfig_V1 = &MofClassDef{
 	Name: "SystemConfig_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 1,
 }
@@ -3449,7 +3330,6 @@ type MofSystemConfig_V1_LogDisk struct {
 var mofSystemConfig_V1_LogDisk = &MofClassDef{
 	Name: "SystemConfig_V1_LogDisk",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 12 },
@@ -3512,7 +3392,6 @@ type MofSystemConfig_V1_PhyDisk struct {
 var mofSystemConfig_V1_PhyDisk = &MofClassDef{
 	Name: "SystemConfig_V1_PhyDisk",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 11 },
@@ -3556,7 +3435,6 @@ type MofSystemConfig_V1_IRQ struct {
 var mofSystemConfig_V1_IRQ = &MofClassDef{
 	Name: "SystemConfig_V1_IRQ",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 21 },
@@ -3594,7 +3472,6 @@ type MofSystemConfig_V1_CPU struct {
 var mofSystemConfig_V1_CPU = &MofClassDef{
 	Name: "SystemConfig_V1_CPU",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 10 },
@@ -3636,7 +3513,6 @@ type MofSystemConfig_V1_Power struct {
 var mofSystemConfig_V1_Power = &MofClassDef{
 	Name: "SystemConfig_V1_Power",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 16 },
@@ -3684,7 +3560,6 @@ type MofSystemConfig_V1_Video struct {
 var mofSystemConfig_V1_Video = &MofClassDef{
 	Name: "SystemConfig_V1_Video",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 14 },
@@ -3721,7 +3596,6 @@ type MofSystemConfig_V1_Services struct {
 var mofSystemConfig_V1_Services = &MofClassDef{
 	Name: "SystemConfig_V1_Services",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 15 },
@@ -3764,7 +3638,6 @@ type MofSystemConfig_V1_PnP struct {
 var mofSystemConfig_V1_PnP = &MofClassDef{
 	Name: "SystemConfig_V1_PnP",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 22 },
@@ -3820,7 +3693,6 @@ type MofSystemConfig_V1_NIC struct {
 var mofSystemConfig_V1_NIC = &MofClassDef{
 	Name: "SystemConfig_V1_NIC",
 	Base: "SystemConfig_V1",
-	
 	GUID: mofSystemConfig_V1.GUID,
 	Version: mofSystemConfig_V1.Version,
 	EventTypes: []uint8{ 13 },
@@ -3850,7 +3722,6 @@ var mofSystemConfig_V1_NIC = &MofClassDef{
 var mofRegistry = &MofClassDef{
 	Name: "Registry",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}"),
 	Version: 2,
 }
@@ -3873,7 +3744,6 @@ type MofRegistry_HiveDirty struct {
 var mofRegistry_HiveDirty = &MofClassDef{
 	Name: "Registry_HiveDirty",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 40 },
@@ -3895,7 +3765,6 @@ type MofRegistry_Config struct {
 var mofRegistry_Config = &MofClassDef{
 	Name: "Registry_Config",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 35 },
@@ -3925,7 +3794,6 @@ type MofRegistry_HiveDestroy struct {
 var mofRegistry_HiveDestroy = &MofClassDef{
 	Name: "Registry_HiveDestroy",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 37 },
@@ -3967,7 +3835,6 @@ type MofRegistry_Counters struct {
 var mofRegistry_Counters = &MofClassDef{
 	Name: "Registry_Counters",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 34 },
@@ -4012,7 +3879,6 @@ type MofRegistry_TypeGroup1 struct {
 var mofRegistry_TypeGroup1 = &MofClassDef{
 	Name: "Registry_TypeGroup1",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14,  15,  16,  17,  18,  19, 
@@ -4048,7 +3914,6 @@ type MofRegistry_HiveInitialize struct {
 var mofRegistry_HiveInitialize = &MofClassDef{
 	Name: "Registry_HiveInitialize",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 36 },
@@ -4083,7 +3948,6 @@ type MofRegistry_TxR struct {
 var mofRegistry_TxR = &MofClassDef{
 	Name: "Registry_TxR",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 30,  31,  32 },
@@ -4121,7 +3985,6 @@ type MofRegistry_HiveRundown struct {
 var mofRegistry_HiveRundown = &MofClassDef{
 	Name: "Registry_HiveRundown",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 39 },
@@ -4154,7 +4017,6 @@ type MofRegistry_ChangeNotification struct {
 var mofRegistry_ChangeNotification = &MofClassDef{
 	Name: "Registry_ChangeNotification",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 48 },
@@ -4183,7 +4045,6 @@ type MofRegistry_HiveLink struct {
 var mofRegistry_HiveLink = &MofClassDef{
 	Name: "Registry_HiveLink",
 	Base: "Registry",
-	
 	GUID: mofRegistry.GUID,
 	Version: mofRegistry.Version,
 	EventTypes: []uint8{ 38 },
@@ -4199,7 +4060,6 @@ var mofRegistry_HiveLink = &MofClassDef{
 var mofPageFault = &MofClassDef{
 	Name: "PageFault",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d3-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 3,
 }
@@ -4224,7 +4084,6 @@ type MofPageFault_HeapRangeRundown_V4 struct {
 var mofPageFault_HeapRangeRundown_V4 = &MofClassDef{
 	Name: "PageFault_HeapRangeRundown_V4",
 	Base: "PageFault",
-	
 	GUID: mofPageFault.GUID,
 	Version: 4,
 	EventTypes: []uint8{ 100 },
@@ -4243,7 +4102,6 @@ var mofPageFault_HeapRangeRundown_V4 = &MofClassDef{
 var mofEventTraceEvent_V0 = &MofClassDef{
 	Name: "EventTraceEvent_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{68fdd900-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 0,
 }
@@ -4256,7 +4114,6 @@ type MofRDComplete_V0 struct {
 var mofRDComplete_V0 = &MofClassDef{
 	Name: "RDComplete_V0",
 	Base: "EventTraceEvent_V0",
-	
 	GUID: mofEventTraceEvent_V0.GUID,
 	Version: mofEventTraceEvent_V0.Version,
 	EventTypes: []uint8{ 8 },
@@ -4288,7 +4145,6 @@ type MofHeader_Extension_V0_TypeGroup struct {
 var mofHeader_Extension_V0_TypeGroup = &MofClassDef{
 	Name: "Header_Extension_V0_TypeGroup",
 	Base: "EventTraceEvent_V0",
-	
 	GUID: mofEventTraceEvent_V0.GUID,
 	Version: mofEventTraceEvent_V0.Version,
 	EventTypes: []uint8{ 5,  32 },
@@ -4367,7 +4223,6 @@ type MofEventTrace_V0_Header struct {
 var mofEventTrace_V0_Header = &MofClassDef{
 	Name: "EventTrace_V0_Header",
 	Base: "EventTraceEvent_V0",
-	
 	GUID: mofEventTraceEvent_V0.GUID,
 	Version: mofEventTraceEvent_V0.Version,
 	EventTypes: []uint8{ 0 },
@@ -4404,7 +4259,6 @@ var mofEventTrace_V0_Header = &MofClassDef{
 var mofProcess_V1 = &MofClassDef{
 	Name: "Process_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 1,
 }
@@ -4434,7 +4288,6 @@ type MofProcess_V1_TypeGroup1 struct {
 var mofProcess_V1_TypeGroup1 = &MofClassDef{
 	Name: "Process_V1_TypeGroup1",
 	Base: "Process_V1",
-	
 	GUID: mofProcess_V1.GUID,
 	Version: mofProcess_V1.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
@@ -4455,7 +4308,6 @@ var mofProcess_V1_TypeGroup1 = &MofClassDef{
 var mofPerfInfo_V1 = &MofClassDef{
 	Name: "PerfInfo_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{ce1dbfb4-137e-4da6-87b0-3f59aa102cbc}"),
 	Version: 1,
 }
@@ -4475,7 +4327,6 @@ type MofSampledProfile_V1 struct {
 var mofSampledProfile_V1 = &MofClassDef{
 	Name: "SampledProfile_V1",
 	Base: "PerfInfo_V1",
-	
 	GUID: mofPerfInfo_V1.GUID,
 	Version: mofPerfInfo_V1.Version,
 	EventTypes: []uint8{ 46 },
@@ -4499,7 +4350,6 @@ type MofDPC_V1 struct {
 var mofDPC_V1 = &MofClassDef{
 	Name: "DPC_V1",
 	Base: "PerfInfo_V1",
-	
 	GUID: mofPerfInfo_V1.GUID,
 	Version: mofPerfInfo_V1.Version,
 	EventTypes: []uint8{ 68,  69 },
@@ -4524,7 +4374,6 @@ type MofISR_V1 struct {
 var mofISR_V1 = &MofClassDef{
 	Name: "ISR_V1",
 	Base: "PerfInfo_V1",
-	
 	GUID: mofPerfInfo_V1.GUID,
 	Version: mofPerfInfo_V1.Version,
 	EventTypes: []uint8{ 67,  95 },
@@ -4541,7 +4390,6 @@ var mofISR_V1 = &MofClassDef{
 var mofImage_V2 = &MofClassDef{
 	Name: "Image_V2",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}"),
 	Version: 2,
 }
@@ -4557,7 +4405,6 @@ type MofKernelImageBase struct {
 var mofKernelImageBase = &MofClassDef{
 	Name: "KernelImageBase",
 	Base: "Image_V2",
-	
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 33 },
@@ -4575,7 +4422,6 @@ type MofLoaderBasicEvent struct {
 var mofLoaderBasicEvent = &MofClassDef{
 	Name: "LoaderBasicEvent",
 	Base: "Image_V2",
-	
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 128,  129,  130,  131,  132,  133,  134, 
@@ -4603,7 +4449,6 @@ type MofLoaderCodedEvent struct {
 var mofLoaderCodedEvent = &MofClassDef{
 	Name: "LoaderCodedEvent",
 	Base: "Image_V2",
-	
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 160,  161,  162,  163,  164 },
@@ -4627,7 +4472,6 @@ type MofLoaderBaseEvent struct {
 var mofLoaderBaseEvent = &MofClassDef{
 	Name: "LoaderBaseEvent",
 	Base: "Image_V2",
-	
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 144,  145,  146,  147,  148,  149, 
@@ -4673,7 +4517,6 @@ type MofImage_Load_V2 struct {
 var mofImage_Load_V2 = &MofClassDef{
 	Name: "Image_Load_V2",
 	Base: "Image_V2",
-	
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 10,  2,  3,  4 },
@@ -4704,7 +4547,6 @@ type MofHypercallPage struct {
 var mofHypercallPage = &MofClassDef{
 	Name: "HypercallPage",
 	Base: "Image_V2",
-	
 	GUID: mofImage_V2.GUID,
 	Version: mofImage_V2.Version,
 	EventTypes: []uint8{ 34 },
@@ -4719,7 +4561,6 @@ var mofHypercallPage = &MofClassDef{
 var mofUdpIp_V1 = &MofClassDef{
 	Name: "UdpIp_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{bf3a50c5-a9c9-4988-a005-2df0b7c80f80}"),
 	Version: 1,
 }
@@ -4745,7 +4586,6 @@ type MofUdpIp_V1_TypeGroup1 struct {
 var mofUdpIp_V1_TypeGroup1 = &MofClassDef{
 	Name: "UdpIp_V1_TypeGroup1",
 	Base: "UdpIp_V1",
-	
 	GUID: mofUdpIp_V1.GUID,
 	Version: mofUdpIp_V1.Version,
 	EventTypes: []uint8{ 10,  11 },
@@ -4765,7 +4605,6 @@ var mofUdpIp_V1_TypeGroup1 = &MofClassDef{
 var mofRegistry_V0 = &MofClassDef{
 	Name: "Registry_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}"),
 	Version: 0,
 }
@@ -4791,7 +4630,6 @@ type MofRegistry_V0_TypeGroup1 struct {
 var mofRegistry_V0_TypeGroup1 = &MofClassDef{
 	Name: "Registry_V0_TypeGroup1",
 	Base: "Registry_V0",
-	
 	GUID: mofRegistry_V0.GUID,
 	Version: mofRegistry_V0.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20, 
@@ -4810,7 +4648,6 @@ var mofRegistry_V0_TypeGroup1 = &MofClassDef{
 var mofProcess_V0 = &MofClassDef{
 	Name: "Process_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 0,
 }
@@ -4834,7 +4671,6 @@ type MofProcess_V0_TypeGroup1 struct {
 var mofProcess_V0_TypeGroup1 = &MofClassDef{
 	Name: "Process_V0_TypeGroup1",
 	Base: "Process_V0",
-	
 	GUID: mofProcess_V0.GUID,
 	Version: mofProcess_V0.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
@@ -4852,7 +4688,6 @@ var mofProcess_V0_TypeGroup1 = &MofClassDef{
 var mofFileIo = &MofClassDef{
 	Name: "FileIo",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 3,
 }
@@ -4880,7 +4715,6 @@ type MofFileIo_ReadWrite struct {
 var mofFileIo_ReadWrite = &MofClassDef{
 	Name: "FileIo_ReadWrite",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 67,  68 },
@@ -4921,7 +4755,6 @@ type MofFileIo_Create struct {
 var mofFileIo_Create = &MofClassDef{
 	Name: "FileIo_Create",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 64 },
@@ -4957,7 +4790,6 @@ type MofFltIoInit struct {
 var mofFltIoInit = &MofClassDef{
 	Name: "FltIoInit",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 96,  97 },
@@ -4994,7 +4826,6 @@ type MofFltIoFailure struct {
 var mofFltIoFailure = &MofClassDef{
 	Name: "FltIoFailure",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 100,  101 },
@@ -5025,7 +4856,6 @@ type MofFileIo_Name struct {
 var mofFileIo_Name = &MofClassDef{
 	Name: "FileIo_Name",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 0,  32,  35,  36 },
@@ -5056,7 +4886,6 @@ type MofFileIo_Info struct {
 var mofFileIo_Info = &MofClassDef{
 	Name: "FileIo_Info",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 69,  70,  71,  74,  75 },
@@ -5087,7 +4916,6 @@ type MofFileIo_SimpleOp struct {
 var mofFileIo_SimpleOp = &MofClassDef{
 	Name: "FileIo_SimpleOp",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 65,  66,  73 },
@@ -5122,7 +4950,6 @@ type MofFltIoCompletion struct {
 var mofFltIoCompletion = &MofClassDef{
 	Name: "FltIoCompletion",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 98,  99 },
@@ -5165,7 +4992,6 @@ type MofFileIo_DirEnum struct {
 var mofFileIo_DirEnum = &MofClassDef{
 	Name: "FileIo_DirEnum",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 72,  77 },
@@ -5208,7 +5034,6 @@ type MofFileIo_PathOperation struct {
 var mofFileIo_PathOperation = &MofClassDef{
 	Name: "FileIo_PathOperation",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 79,  80,  81 },
@@ -5238,7 +5063,6 @@ type MofFileIo_OpEnd struct {
 var mofFileIo_OpEnd = &MofClassDef{
 	Name: "FileIo_OpEnd",
 	Base: "FileIo",
-	
 	GUID: mofFileIo.GUID,
 	Version: mofFileIo.Version,
 	EventTypes: []uint8{ 76 },
@@ -5256,7 +5080,6 @@ var mofFileIo_OpEnd = &MofClassDef{
 var mofSplitIo = &MofClassDef{
 	Name: "SplitIo",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{d837ca92-12b9-44a5-ad6a-3a65b3578aa8}"),
 	Version: 2,
 }
@@ -5275,7 +5098,6 @@ type MofSplitIo_Info struct {
 var mofSplitIo_Info = &MofClassDef{
 	Name: "SplitIo_Info",
 	Base: "SplitIo",
-	
 	GUID: mofSplitIo.GUID,
 	Version: mofSplitIo.Version,
 	EventTypes: []uint8{ 32 },
@@ -5291,7 +5113,6 @@ var mofSplitIo_Info = &MofClassDef{
 var mofTcpIp = &MofClassDef{
 	Name: "TcpIp",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}"),
 	Version: 2,
 }
@@ -5322,7 +5143,6 @@ type MofTcpIp_TypeGroup3 struct {
 var mofTcpIp_TypeGroup3 = &MofClassDef{
 	Name: "TcpIp_TypeGroup3",
 	Base: "TcpIp",
-	
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 27,  29,  30,  32,  34 },
@@ -5367,7 +5187,6 @@ type MofTcpIp_SendIPV4 struct {
 var mofTcpIp_SendIPV4 = &MofClassDef{
 	Name: "TcpIp_SendIPV4",
 	Base: "TcpIp",
-	
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 10 },
@@ -5398,7 +5217,6 @@ type MofTcpIp_Fail struct {
 var mofTcpIp_Fail = &MofClassDef{
 	Name: "TcpIp_Fail",
 	Base: "TcpIp",
-	
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 17 },
@@ -5447,7 +5265,6 @@ type MofTcpIp_TypeGroup2 struct {
 var mofTcpIp_TypeGroup2 = &MofClassDef{
 	Name: "TcpIp_TypeGroup2",
 	Base: "TcpIp",
-	
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 12,  15 },
@@ -5499,7 +5316,6 @@ type MofTcpIp_SendIPV6 struct {
 var mofTcpIp_SendIPV6 = &MofClassDef{
 	Name: "TcpIp_SendIPV6",
 	Base: "TcpIp",
-	
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 26 },
@@ -5543,7 +5359,6 @@ type MofTcpIp_TypeGroup1 struct {
 var mofTcpIp_TypeGroup1 = &MofClassDef{
 	Name: "TcpIp_TypeGroup1",
 	Base: "TcpIp",
-	
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 11,  13,  14,  16,  18 },
@@ -5598,7 +5413,6 @@ type MofTcpIp_TypeGroup4 struct {
 var mofTcpIp_TypeGroup4 = &MofClassDef{
 	Name: "TcpIp_TypeGroup4",
 	Base: "TcpIp",
-	
 	GUID: mofTcpIp.GUID,
 	Version: mofTcpIp.Version,
 	EventTypes: []uint8{ 28,  31 },
@@ -5627,7 +5441,6 @@ var mofTcpIp_TypeGroup4 = &MofClassDef{
 var mofThread_V0 = &MofClassDef{
 	Name: "Thread_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 0,
 }
@@ -5646,7 +5459,6 @@ type MofThread_V0_TypeGroup1 struct {
 var mofThread_V0_TypeGroup1 = &MofClassDef{
 	Name: "Thread_V0_TypeGroup1",
 	Base: "Thread_V0",
-	
 	GUID: mofThread_V0.GUID,
 	Version: mofThread_V0.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
@@ -5662,7 +5474,6 @@ var mofThread_V0_TypeGroup1 = &MofClassDef{
 var mofRegistry_V1 = &MofClassDef{
 	Name: "Registry_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{ae53722e-c863-11d2-8659-00c04fa321a1}"),
 	Version: 1,
 }
@@ -5690,7 +5501,6 @@ type MofRegistry_V1_TypeGroup1 struct {
 var mofRegistry_V1_TypeGroup1 = &MofClassDef{
 	Name: "Registry_V1_TypeGroup1",
 	Base: "Registry_V1",
-	
 	GUID: mofRegistry_V1.GUID,
 	Version: mofRegistry_V1.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21, 
@@ -5710,7 +5520,6 @@ var mofRegistry_V1_TypeGroup1 = &MofClassDef{
 var mofImage_V0 = &MofClassDef{
 	Name: "Image_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}"),
 	Version: 0,
 }
@@ -5733,7 +5542,6 @@ type MofImage_V0_Load struct {
 var mofImage_V0_Load = &MofClassDef{
 	Name: "Image_V0_Load",
 	Base: "Image_V0",
-	
 	GUID: mofImage_V0.GUID,
 	Version: mofImage_V0.Version,
 	EventTypes: []uint8{ 10 },
@@ -5750,7 +5558,6 @@ var mofImage_V0_Load = &MofClassDef{
 var mofSystemConfig_V4 = &MofClassDef{
 	Name: "SystemConfig_V4",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 4,
 }
@@ -5800,7 +5607,6 @@ type MofSystemConfig_V4_MobilePlatform struct {
 var mofSystemConfig_V4_MobilePlatform = &MofClassDef{
 	Name: "SystemConfig_V4_MobilePlatform",
 	Base: "SystemConfig_V4",
-	
 	GUID: mofSystemConfig_V4.GUID,
 	Version: mofSystemConfig_V4.Version,
 	EventTypes: []uint8{ 32 },
@@ -5868,7 +5674,6 @@ type MofSystemConfig_V4_PnP struct {
 var mofSystemConfig_V4_PnP = &MofClassDef{
 	Name: "SystemConfig_V4_PnP",
 	Base: "SystemConfig_V4",
-	
 	GUID: mofSystemConfig_V4.GUID,
 	Version: mofSystemConfig_V4.Version,
 	EventTypes: []uint8{ 22 },
@@ -5892,7 +5697,6 @@ var mofSystemConfig_V4_PnP = &MofClassDef{
 var mofImage_V1 = &MofClassDef{
 	Name: "Image_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}"),
 	Version: 1,
 }
@@ -5917,7 +5721,6 @@ type MofImage_V1_Load struct {
 var mofImage_V1_Load = &MofClassDef{
 	Name: "Image_V1_Load",
 	Base: "Image_V1",
-	
 	GUID: mofImage_V1.GUID,
 	Version: mofImage_V1.Version,
 	EventTypes: []uint8{ 10 },
@@ -5935,7 +5738,6 @@ var mofImage_V1_Load = &MofClassDef{
 var mofThread_V3 = &MofClassDef{
 	Name: "Thread_V3",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 3,
 }
@@ -5978,7 +5780,6 @@ type MofThread_V3_TypeGroup1 struct {
 var mofThread_V3_TypeGroup1 = &MofClassDef{
 	Name: "Thread_V3_TypeGroup1",
 	Base: "Thread_V3",
-	
 	GUID: mofThread_V3.GUID,
 	Version: mofThread_V3.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
@@ -6018,7 +5819,6 @@ type MofThreadPriority struct {
 var mofThreadPriority = &MofClassDef{
 	Name: "ThreadPriority",
 	Base: "Thread_V3",
-	
 	GUID: mofThread_V3.GUID,
 	Version: mofThread_V3.Version,
 	EventTypes: []uint8{ 48,  49,  51,  52 },
@@ -6063,7 +5863,6 @@ type MofCSwitch_V3 struct {
 var mofCSwitch_V3 = &MofClassDef{
 	Name: "CSwitch_V3",
 	Base: "Thread_V3",
-	
 	GUID: mofThread_V3.GUID,
 	Version: mofThread_V3.Version,
 	EventTypes: []uint8{ 36 },
@@ -6089,7 +5888,6 @@ var mofCSwitch_V3 = &MofClassDef{
 var mofSystemConfig_V3 = &MofClassDef{
 	Name: "SystemConfig_V3",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 3,
 }
@@ -6164,7 +5962,6 @@ type MofSystemConfig_V3_MobilePlatform struct {
 var mofSystemConfig_V3_MobilePlatform = &MofClassDef{
 	Name: "SystemConfig_V3_MobilePlatform",
 	Base: "SystemConfig_V3",
-	
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 32 },
@@ -6225,7 +6022,6 @@ type MofSystemConfig_V3_Services struct {
 var mofSystemConfig_V3_Services = &MofClassDef{
 	Name: "SystemConfig_V3_Services",
 	Base: "SystemConfig_V3",
-	
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 15 },
@@ -6266,7 +6062,6 @@ type MofSystemConfig_V3_IRQ struct {
 var mofSystemConfig_V3_IRQ = &MofClassDef{
 	Name: "SystemConfig_V3_IRQ",
 	Base: "SystemConfig_V3",
-	
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 21 },
@@ -6320,7 +6115,6 @@ type MofSystemConfig_V3_CPU struct {
 var mofSystemConfig_V3_CPU = &MofClassDef{
 	Name: "SystemConfig_V3_CPU",
 	Base: "SystemConfig_V3",
-	
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 10 },
@@ -6379,7 +6173,6 @@ type MofSystemConfig_V3_PnP struct {
 var mofSystemConfig_V3_PnP = &MofClassDef{
 	Name: "SystemConfig_V3_PnP",
 	Base: "SystemConfig_V3",
-	
 	GUID: mofSystemConfig_V3.GUID,
 	Version: mofSystemConfig_V3.Version,
 	EventTypes: []uint8{ 22 },
@@ -6400,7 +6193,6 @@ var mofSystemConfig_V3_PnP = &MofClassDef{
 var mofFileIo_V0 = &MofClassDef{
 	Name: "FileIo_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 0,
 }
@@ -6421,7 +6213,6 @@ type MofFileIo_V0_Name struct {
 var mofFileIo_V0_Name = &MofClassDef{
 	Name: "FileIo_V0_Name",
 	Base: "FileIo_V0",
-	
 	GUID: mofFileIo_V0.GUID,
 	Version: mofFileIo_V0.Version,
 	EventTypes: []uint8{ 0 },
@@ -6437,7 +6228,6 @@ var mofFileIo_V0_Name = &MofClassDef{
 var mofThread_V4 = &MofClassDef{
 	Name: "Thread_V4",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 4,
 }
@@ -6485,7 +6275,6 @@ type MofThread_TypeGroup1 struct {
 var mofThread_TypeGroup1 = &MofClassDef{
 	Name: "Thread_TypeGroup1",
 	Base: "Thread_V4",
-	
 	GUID: mofThread_V4.GUID,
 	Version: mofThread_V4.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4 },
@@ -6541,7 +6330,6 @@ type MofCSwitch_V4 struct {
 var mofCSwitch_V4 = &MofClassDef{
 	Name: "CSwitch_V4",
 	Base: "Thread_V4",
-	
 	GUID: mofThread_V4.GUID,
 	Version: mofThread_V4.Version,
 	EventTypes: []uint8{ 36 },
@@ -6567,7 +6355,6 @@ var mofCSwitch_V4 = &MofClassDef{
 var mofDiskIo_V0 = &MofClassDef{
 	Name: "DiskIo_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 0,
 }
@@ -6593,7 +6380,6 @@ type MofDiskIo_V0_TypeGroup1 struct {
 var mofDiskIo_V0_TypeGroup1 = &MofClassDef{
 	Name: "DiskIo_V0_TypeGroup1",
 	Base: "DiskIo_V0",
-	
 	GUID: mofDiskIo_V0.GUID,
 	Version: mofDiskIo_V0.Version,
 	EventTypes: []uint8{ 10,  11 },
@@ -6613,7 +6399,6 @@ var mofDiskIo_V0_TypeGroup1 = &MofClassDef{
 var mofSystemConfig = &MofClassDef{
 	Name: "SystemConfig",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 5,
 }
@@ -6674,7 +6459,6 @@ type MofSystemConfig_PnP struct {
 var mofSystemConfig_PnP = &MofClassDef{
 	Name: "SystemConfig_PnP",
 	Base: "SystemConfig",
-	
 	GUID: mofSystemConfig.GUID,
 	Version: mofSystemConfig.Version,
 	EventTypes: []uint8{ 22 },
@@ -6700,7 +6484,6 @@ var mofSystemConfig_PnP = &MofClassDef{
 var mofProcess = &MofClassDef{
 	Name: "Process",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 5,
 }
@@ -6750,7 +6533,6 @@ type MofProcess_Defunct_TypeGroup1 struct {
 var mofProcess_Defunct_TypeGroup1 = &MofClassDef{
 	Name: "Process_Defunct_TypeGroup1",
 	Base: "Process",
-	
 	GUID: mofProcess.GUID,
 	Version: mofProcess.Version,
 	EventTypes: []uint8{ 39 },
@@ -6777,7 +6559,6 @@ var mofProcess_Defunct_TypeGroup1 = &MofClassDef{
 var mofPoolTrace = &MofClassDef{
 	Name: "PoolTrace",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{0268a8b6-74fd-4302-9dd0-6e8f1795c0cf}"),
 	Version: 2,
 }
@@ -6799,7 +6580,6 @@ type MofPoolAllocFree struct {
 var mofPoolAllocFree = &MofClassDef{
 	Name: "PoolAllocFree",
 	Base: "PoolTrace",
-	
 	GUID: mofPoolTrace.GUID,
 	Version: mofPoolTrace.Version,
 	EventTypes: []uint8{ 32,  34 },
@@ -6830,7 +6610,6 @@ type MofSessionPoolAllocFree struct {
 var mofSessionPoolAllocFree = &MofClassDef{
 	Name: "SessionPoolAllocFree",
 	Base: "PoolTrace",
-	
 	GUID: mofPoolTrace.GUID,
 	Version: mofPoolTrace.Version,
 	EventTypes: []uint8{ 33,  35 },
@@ -6852,7 +6631,6 @@ type MofPoolSnapshot struct {
 var mofPoolSnapshot = &MofClassDef{
 	Name: "PoolSnapshot",
 	Base: "PoolTrace",
-	
 	GUID: mofPoolTrace.GUID,
 	Version: mofPoolTrace.Version,
 	EventTypes: []uint8{ 40,  41,  42,  43,  44,  45,  46, 
@@ -6865,7 +6643,6 @@ var mofPoolSnapshot = &MofClassDef{
 var mofDiskIo = &MofClassDef{
 	Name: "DiskIo",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 3,
 }
@@ -6884,7 +6661,6 @@ type MofDiskIo_TypeGroup2 struct {
 var mofDiskIo_TypeGroup2 = &MofClassDef{
 	Name: "DiskIo_TypeGroup2",
 	Base: "DiskIo",
-	
 	GUID: mofDiskIo.GUID,
 	Version: mofDiskIo.Version,
 	EventTypes: []uint8{ 12,  13,  15,  58,  59,  60 },
@@ -6922,7 +6698,6 @@ type MofDiskIo_TypeGroup1 struct {
 var mofDiskIo_TypeGroup1 = &MofClassDef{
 	Name: "DiskIo_TypeGroup1",
 	Base: "DiskIo",
-	
 	GUID: mofDiskIo.GUID,
 	Version: mofDiskIo.Version,
 	EventTypes: []uint8{ 10,  11,  55,  56 },
@@ -6958,7 +6733,6 @@ type MofDiskIo_TypeGroup3 struct {
 var mofDiskIo_TypeGroup3 = &MofClassDef{
 	Name: "DiskIo_TypeGroup3",
 	Base: "DiskIo",
-	
 	GUID: mofDiskIo.GUID,
 	Version: mofDiskIo.Version,
 	EventTypes: []uint8{ 14,  57 },
@@ -6977,7 +6751,6 @@ var mofDiskIo_TypeGroup3 = &MofClassDef{
 var mofLost_Event = &MofClassDef{
 	Name: "Lost_Event",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{6a399ae0-4bc6-4de9-870b-3657f8947e7e}"),
 	Version: 0,
 }
@@ -6990,7 +6763,6 @@ type MofRT_LostEvent struct {
 var mofRT_LostEvent = &MofClassDef{
 	Name: "RT_LostEvent",
 	Base: "Lost_Event",
-	
 	GUID: mofLost_Event.GUID,
 	Version: mofLost_Event.Version,
 	EventTypes: []uint8{ 32,  33,  34 },
@@ -7002,7 +6774,6 @@ var mofRT_LostEvent = &MofClassDef{
 var mofFileIo_V1 = &MofClassDef{
 	Name: "FileIo_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{90cbdc39-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 1,
 }
@@ -7023,7 +6794,6 @@ type MofFileIo_V1_Name struct {
 var mofFileIo_V1_Name = &MofClassDef{
 	Name: "FileIo_V1_Name",
 	Base: "FileIo_V1",
-	
 	GUID: mofFileIo_V1.GUID,
 	Version: mofFileIo_V1.Version,
 	EventTypes: []uint8{ 0,  32 },
@@ -7039,7 +6809,6 @@ var mofFileIo_V1_Name = &MofClassDef{
 var mofEventTraceEvent_V1 = &MofClassDef{
 	Name: "EventTraceEvent_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{68fdd900-4a3e-11d1-84f4-0000f80464e3}"),
 	Version: 1,
 }
@@ -7107,7 +6876,6 @@ type MofEventTrace_V1_Header struct {
 var mofEventTrace_V1_Header = &MofClassDef{
 	Name: "EventTrace_V1_Header",
 	Base: "EventTraceEvent_V1",
-	
 	GUID: mofEventTraceEvent_V1.GUID,
 	Version: mofEventTraceEvent_V1.Version,
 	EventTypes: []uint8{ 0 },
@@ -7146,7 +6914,6 @@ type MofRDComplete_V1 struct {
 var mofRDComplete_V1 = &MofClassDef{
 	Name: "RDComplete_V1",
 	Base: "EventTraceEvent_V1",
-	
 	GUID: mofEventTraceEvent_V1.GUID,
 	Version: mofEventTraceEvent_V1.Version,
 	EventTypes: []uint8{ 8 },
@@ -7178,7 +6945,6 @@ type MofHeader_Extension_V1_TypeGroup struct {
 var mofHeader_Extension_V1_TypeGroup = &MofClassDef{
 	Name: "Header_Extension_V1_TypeGroup",
 	Base: "EventTraceEvent_V1",
-	
 	GUID: mofEventTraceEvent_V1.GUID,
 	Version: mofEventTraceEvent_V1.Version,
 	EventTypes: []uint8{ 5,  32 },
@@ -7200,7 +6966,6 @@ var mofHeader_Extension_V1_TypeGroup = &MofClassDef{
 var mofDebugger = &MofClassDef{
 	Name: "Debugger",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{13976d09-a327-438c-950b-7f03192815c7}"),
 	Version: 2,
 }
@@ -7220,7 +6985,6 @@ type MofDebugPrint_Event struct {
 var mofDebugPrint_Event = &MofClassDef{
 	Name: "DebugPrint_Event",
 	Base: "Debugger",
-	
 	GUID: mofDebugger.GUID,
 	Version: mofDebugger.Version,
 	EventTypes: []uint8{ 32 },
@@ -7237,7 +7001,6 @@ var mofDebugPrint_Event = &MofClassDef{
 var mofDiskIo_V2 = &MofClassDef{
 	Name: "DiskIo_V2",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d4-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 2,
 }
@@ -7267,7 +7030,6 @@ type MofDiskIo_V2_TypeGroup1 struct {
 var mofDiskIo_V2_TypeGroup1 = &MofClassDef{
 	Name: "DiskIo_V2_TypeGroup1",
 	Base: "DiskIo_V2",
-	
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 10,  11 },
@@ -7297,7 +7059,6 @@ type MofDriverMajorFunctionReturn struct {
 var mofDriverMajorFunctionReturn = &MofClassDef{
 	Name: "DriverMajorFunctionReturn",
 	Base: "DiskIo_V2",
-	
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 35 },
@@ -7322,7 +7083,6 @@ type MofDriverCompletionRoutine struct {
 var mofDriverCompletionRoutine = &MofClassDef{
 	Name: "DriverCompletionRoutine",
 	Base: "DiskIo_V2",
-	
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 37 },
@@ -7354,7 +7114,6 @@ type MofDriverMajorFunctionCall struct {
 var mofDriverMajorFunctionCall = &MofClassDef{
 	Name: "DriverMajorFunctionCall",
 	Base: "DiskIo_V2",
-	
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 34 },
@@ -7382,7 +7141,6 @@ type MofDriverCompleteRequestReturn struct {
 var mofDriverCompleteRequestReturn = &MofClassDef{
 	Name: "DriverCompleteRequestReturn",
 	Base: "DiskIo_V2",
-	
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 53 },
@@ -7409,7 +7167,6 @@ type MofDiskIo_V2_TypeGroup3 struct {
 var mofDiskIo_V2_TypeGroup3 = &MofClassDef{
 	Name: "DiskIo_V2_TypeGroup3",
 	Base: "DiskIo_V2",
-	
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 14 },
@@ -7433,7 +7190,6 @@ type MofDiskIo_V2_TypeGroup2 struct {
 var mofDiskIo_V2_TypeGroup2 = &MofClassDef{
 	Name: "DiskIo_V2_TypeGroup2",
 	Base: "DiskIo_V2",
-	
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 12,  13,  15 },
@@ -7457,7 +7213,6 @@ type MofDriverCompleteRequest struct {
 var mofDriverCompleteRequest = &MofClassDef{
 	Name: "DriverCompleteRequest",
 	Base: "DiskIo_V2",
-	
 	GUID: mofDiskIo_V2.GUID,
 	Version: mofDiskIo_V2.Version,
 	EventTypes: []uint8{ 52 },
@@ -7474,7 +7229,6 @@ var mofDriverCompleteRequest = &MofClassDef{
 var mofSystemConfig_V0 = &MofClassDef{
 	Name: "SystemConfig_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 0,
 }
@@ -7500,7 +7254,6 @@ type MofSystemConfig_V0_IRQ struct {
 var mofSystemConfig_V0_IRQ = &MofClassDef{
 	Name: "SystemConfig_V0_IRQ",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 21 },
@@ -7538,7 +7291,6 @@ type MofSystemConfig_V0_CPU struct {
 var mofSystemConfig_V0_CPU = &MofClassDef{
 	Name: "SystemConfig_V0_CPU",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 10 },
@@ -7572,7 +7324,6 @@ type MofSystemConfig_V0_Services struct {
 var mofSystemConfig_V0_Services = &MofClassDef{
 	Name: "SystemConfig_V0_Services",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 15 },
@@ -7624,7 +7375,6 @@ type MofSystemConfig_V0_LogDisk struct {
 var mofSystemConfig_V0_LogDisk = &MofClassDef{
 	Name: "SystemConfig_V0_LogDisk",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 12 },
@@ -7679,7 +7429,6 @@ type MofSystemConfig_V0_Video struct {
 var mofSystemConfig_V0_Video = &MofClassDef{
 	Name: "SystemConfig_V0_Video",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 14 },
@@ -7738,7 +7487,6 @@ type MofSystemConfig_V0_PhyDisk struct {
 var mofSystemConfig_V0_PhyDisk = &MofClassDef{
 	Name: "SystemConfig_V0_PhyDisk",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 11 },
@@ -7787,7 +7535,6 @@ type MofSystemConfig_V0_Power struct {
 var mofSystemConfig_V0_Power = &MofClassDef{
 	Name: "SystemConfig_V0_Power",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 16 },
@@ -7834,7 +7581,6 @@ type MofSystemConfig_V0_PnP struct {
 var mofSystemConfig_V0_PnP = &MofClassDef{
 	Name: "SystemConfig_V0_PnP",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 22 },
@@ -7890,7 +7636,6 @@ type MofSystemConfig_V0_NIC struct {
 var mofSystemConfig_V0_NIC = &MofClassDef{
 	Name: "SystemConfig_V0_NIC",
 	Base: "SystemConfig_V0",
-	
 	GUID: mofSystemConfig_V0.GUID,
 	Version: mofSystemConfig_V0.Version,
 	EventTypes: []uint8{ 13 },
@@ -7920,7 +7665,6 @@ var mofSystemConfig_V0_NIC = &MofClassDef{
 var mofSystemConfig_V2 = &MofClassDef{
 	Name: "SystemConfig_V2",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{01853a65-418f-4f36-aefc-dc0f1d2fd235}"),
 	Version: 2,
 }
@@ -7939,7 +7683,6 @@ type MofSystemConfig_V2_NumaNode struct {
 var mofSystemConfig_V2_NumaNode = &MofClassDef{
 	Name: "SystemConfig_V2_NumaNode",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 24 },
@@ -7980,7 +7723,6 @@ type MofSystemConfig_V2_PnP struct {
 var mofSystemConfig_V2_PnP = &MofClassDef{
 	Name: "SystemConfig_V2_PnP",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 22 },
@@ -8006,7 +7748,6 @@ type MofSystemConfig_V2_CodeIntegrity struct {
 var mofSystemConfig_V2_CodeIntegrity = &MofClassDef{
 	Name: "SystemConfig_V2_CodeIntegrity",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 29 },
@@ -8057,7 +7798,6 @@ type MofSystemConfig_V2_LogDisk struct {
 var mofSystemConfig_V2_LogDisk = &MofClassDef{
 	Name: "SystemConfig_V2_LogDisk",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 12 },
@@ -8099,7 +7839,6 @@ type MofSystemConfig_Virtualization struct {
 var mofSystemConfig_Virtualization = &MofClassDef{
 	Name: "SystemConfig_Virtualization",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 36 },
@@ -8134,7 +7873,6 @@ type MofSystemConfig_V2_IDEChannel struct {
 var mofSystemConfig_V2_IDEChannel = &MofClassDef{
 	Name: "SystemConfig_V2_IDEChannel",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 23 },
@@ -8168,7 +7906,6 @@ type MofSystemConfig_Boot struct {
 var mofSystemConfig_Boot = &MofClassDef{
 	Name: "SystemConfig_Boot",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 37 },
@@ -8196,7 +7933,6 @@ type MofSystemConfig_V2_DPI struct {
 var mofSystemConfig_V2_DPI = &MofClassDef{
 	Name: "SystemConfig_V2_DPI",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 28 },
@@ -8239,7 +7975,6 @@ type MofSystemConfig_V2_NIC struct {
 var mofSystemConfig_V2_NIC = &MofClassDef{
 	Name: "SystemConfig_V2_NIC",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 13 },
@@ -8280,7 +8015,6 @@ type MofSystemConfig_V2_CPU struct {
 var mofSystemConfig_V2_CPU = &MofClassDef{
 	Name: "SystemConfig_V2_CPU",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 10 },
@@ -8312,7 +8046,6 @@ type MofSystemConfig_V2_DeviceFamily struct {
 var mofSystemConfig_V2_DeviceFamily = &MofClassDef{
 	Name: "SystemConfig_V2_DeviceFamily",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 33 },
@@ -8381,7 +8114,6 @@ type MofSystemConfig_V2_OpticalMedia struct {
 var mofSystemConfig_V2_OpticalMedia = &MofClassDef{
 	Name: "SystemConfig_V2_OpticalMedia",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 18 },
@@ -8422,7 +8154,6 @@ type MofSystemConfig_V2_ProcNumber struct {
 var mofSystemConfig_V2_ProcNumber = &MofClassDef{
 	Name: "SystemConfig_V2_ProcNumber",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 27 },
@@ -8464,7 +8195,6 @@ type MofSystemConfig_V2_Video struct {
 var mofSystemConfig_V2_Video = &MofClassDef{
 	Name: "SystemConfig_V2_Video",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 14 },
@@ -8501,7 +8231,6 @@ type MofSystemConfig_V2_Network struct {
 var mofSystemConfig_V2_Network = &MofClassDef{
 	Name: "SystemConfig_V2_Network",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 17 },
@@ -8604,7 +8333,6 @@ type MofSystemConfig_V2_Defrag struct {
 var mofSystemConfig_V2_Defrag = &MofClassDef{
 	Name: "SystemConfig_V2_Defrag",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 31 },
@@ -8673,7 +8401,6 @@ type MofSystemConfig_V2_Processors struct {
 var mofSystemConfig_V2_Processors = &MofClassDef{
 	Name: "SystemConfig_V2_Processors",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 35 },
@@ -8717,7 +8444,6 @@ type MofSystemConfig_V2_Platform struct {
 var mofSystemConfig_V2_Platform = &MofClassDef{
 	Name: "SystemConfig_V2_Platform",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 25 },
@@ -8744,7 +8470,6 @@ type MofSystemConfig_V2_ProcGroup struct {
 var mofSystemConfig_V2_ProcGroup = &MofClassDef{
 	Name: "SystemConfig_V2_ProcGroup",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 26 },
@@ -8785,7 +8510,6 @@ type MofSystemConfig_V2_Services struct {
 var mofSystemConfig_V2_Services = &MofClassDef{
 	Name: "SystemConfig_V2_Services",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 15 },
@@ -8839,7 +8563,6 @@ type MofSystemConfig_V2_PhyDisk struct {
 var mofSystemConfig_V2_PhyDisk = &MofClassDef{
 	Name: "SystemConfig_V2_PhyDisk",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 11 },
@@ -8888,7 +8611,6 @@ type MofSystemConfig_V2_Power struct {
 var mofSystemConfig_V2_Power = &MofClassDef{
 	Name: "SystemConfig_V2_Power",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 16 },
@@ -8924,7 +8646,6 @@ type MofSystemConfig_V2_FlightIds struct {
 var mofSystemConfig_V2_FlightIds = &MofClassDef{
 	Name: "SystemConfig_V2_FlightIds",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 34 },
@@ -9019,7 +8740,6 @@ type MofSystemConfig_V2_MobilePlatform struct {
 var mofSystemConfig_V2_MobilePlatform = &MofClassDef{
 	Name: "SystemConfig_V2_MobilePlatform",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 32 },
@@ -9054,7 +8774,6 @@ type MofSystemConfig_V2_TelemetryInfo struct {
 var mofSystemConfig_V2_TelemetryInfo = &MofClassDef{
 	Name: "SystemConfig_V2_TelemetryInfo",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 30 },
@@ -9084,7 +8803,6 @@ type MofSystemConfig_V2_IRQ struct {
 var mofSystemConfig_V2_IRQ = &MofClassDef{
 	Name: "SystemConfig_V2_IRQ",
 	Base: "SystemConfig_V2",
-	
 	GUID: mofSystemConfig_V2.GUID,
 	Version: mofSystemConfig_V2.Version,
 	EventTypes: []uint8{ 21 },
@@ -9102,7 +8820,6 @@ var mofSystemConfig_V2_IRQ = &MofClassDef{
 var mofThread_V1 = &MofClassDef{
 	Name: "Thread_V1",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 1,
 }
@@ -9120,7 +8837,6 @@ type MofThread_V1_TypeGroup2 struct {
 var mofThread_V1_TypeGroup2 = &MofClassDef{
 	Name: "Thread_V1_TypeGroup2",
 	Base: "Thread_V1",
-	
 	GUID: mofThread_V1.GUID,
 	Version: mofThread_V1.Version,
 	EventTypes: []uint8{ 2 },
@@ -9158,7 +8874,6 @@ type MofThread_V1_TypeGroup1 struct {
 var mofThread_V1_TypeGroup1 = &MofClassDef{
 	Name: "Thread_V1_TypeGroup1",
 	Base: "Thread_V1",
-	
 	GUID: mofThread_V1.GUID,
 	Version: mofThread_V1.Version,
 	EventTypes: []uint8{ 1,  3,  4 },
@@ -9204,7 +8919,6 @@ type MofCSwitch_V1 struct {
 var mofCSwitch_V1 = &MofClassDef{
 	Name: "CSwitch_V1",
 	Base: "Thread_V1",
-	
 	GUID: mofThread_V1.GUID,
 	Version: mofThread_V1.Version,
 	EventTypes: []uint8{ 36 },
@@ -9237,7 +8951,6 @@ type MofWorkerThread_V1 struct {
 var mofWorkerThread_V1 = &MofClassDef{
 	Name: "WorkerThread_V1",
 	Base: "Thread_V1",
-	
 	GUID: mofThread_V1.GUID,
 	Version: mofThread_V1.Version,
 	EventTypes: []uint8{ 57 },
@@ -9254,7 +8967,6 @@ var mofWorkerThread_V1 = &MofClassDef{
 var mofTcpIp_V0 = &MofClassDef{
 	Name: "TcpIp_V0",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{9a280ac0-c8e0-11d1-84e2-00c04fb998a2}"),
 	Version: 0,
 }
@@ -9281,7 +8993,6 @@ type MofTcpIp_V0_TypeGroup1 struct {
 var mofTcpIp_V0_TypeGroup1 = &MofClassDef{
 	Name: "TcpIp_V0_TypeGroup1",
 	Base: "TcpIp_V0",
-	
 	GUID: mofTcpIp_V0.GUID,
 	Version: mofTcpIp_V0.Version,
 	EventTypes: []uint8{ 10,  11,  12,  13,  14, 
@@ -9302,7 +9013,6 @@ var mofTcpIp_V0_TypeGroup1 = &MofClassDef{
 var mofProcess_V2 = &MofClassDef{
 	Name: "Process_V2",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 2,
 }
@@ -9319,7 +9029,6 @@ type MofProcess_V2_TypeGroup5 struct {
 var mofProcess_V2_TypeGroup5 = &MofClassDef{
 	Name: "Process_V2_TypeGroup5",
 	Base: "Process_V2",
-	
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 96,  97,  98,  99 },
@@ -9347,7 +9056,6 @@ type MofProcess_V2_TypeGroup4 struct {
 var mofProcess_V2_TypeGroup4 = &MofClassDef{
 	Name: "Process_V2_TypeGroup4",
 	Base: "Process_V2",
-	
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 48,  49,  50,  51,  52,  64,  65,  66,  67,  68,  80,  81, 
@@ -9400,7 +9108,6 @@ type MofProcess_V2_TypeGroup2 struct {
 var mofProcess_V2_TypeGroup2 = &MofClassDef{
 	Name: "Process_V2_TypeGroup2",
 	Base: "Process_V2",
-	
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 32,  33 },
@@ -9453,7 +9160,6 @@ type MofProcess_V2_TypeGroup1 struct {
 var mofProcess_V2_TypeGroup1 = &MofClassDef{
 	Name: "Process_V2_TypeGroup1",
 	Base: "Process_V2",
-	
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4,  39 },
@@ -9481,7 +9187,6 @@ type MofProcess_Terminate_TypeGroup1 struct {
 var mofProcess_Terminate_TypeGroup1 = &MofClassDef{
 	Name: "Process_Terminate_TypeGroup1",
 	Base: "Process_V2",
-	
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 11 },
@@ -9503,7 +9208,6 @@ type MofProcess_V2_TypeGroup3 struct {
 var mofProcess_V2_TypeGroup3 = &MofClassDef{
 	Name: "Process_V2_TypeGroup3",
 	Base: "Process_V2",
-	
 	GUID: mofProcess_V2.GUID,
 	Version: mofProcess_V2.Version,
 	EventTypes: []uint8{ 35 },
@@ -9519,7 +9223,6 @@ var mofProcess_V2_TypeGroup3 = &MofClassDef{
 var mofProcess_V4 = &MofClassDef{
 	Name: "Process_V4",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 4,
 }
@@ -9568,7 +9271,6 @@ type MofProcess_V4_TypeGroup1 struct {
 var mofProcess_V4_TypeGroup1 = &MofClassDef{
 	Name: "Process_V4_TypeGroup1",
 	Base: "Process_V4",
-	
 	GUID: mofProcess_V4.GUID,
 	Version: mofProcess_V4.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4,  39 },
@@ -9594,7 +9296,6 @@ var mofProcess_V4_TypeGroup1 = &MofClassDef{
 var mofPowerEvents = &MofClassDef{
 	Name: "PowerEvents",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{e43445e0-0903-48c3-b878-ff0fccebdd04}"),
 	Version: 2,
 }
@@ -9616,7 +9317,6 @@ type MofIdleExitLatency struct {
 var mofIdleExitLatency = &MofClassDef{
 	Name: "IdleExitLatency",
 	Base: "PowerEvents",
-	
 	GUID: mofPowerEvents.GUID,
 	Version: mofPowerEvents.Version,
 	EventTypes: []uint8{ 60 },
@@ -9634,7 +9334,6 @@ var mofIdleExitLatency = &MofClassDef{
 var mofProcess_V3 = &MofClassDef{
 	Name: "Process_V3",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c}"),
 	Version: 3,
 }
@@ -9671,7 +9370,6 @@ type MofProcess_V3_TypeGroup1 struct {
 var mofProcess_V3_TypeGroup1 = &MofClassDef{
 	Name: "Process_V3_TypeGroup1",
 	Base: "Process_V3",
-	
 	GUID: mofProcess_V3.GUID,
 	Version: mofProcess_V3.Version,
 	EventTypes: []uint8{ 1,  2,  3,  4,  39 },
@@ -9694,7 +9392,6 @@ var mofProcess_V3_TypeGroup1 = &MofClassDef{
 var mofALPC = &MofClassDef{
 	Name: "ALPC",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{45d8cccd-539f-4b72-a8b7-5c683142609a}"),
 	Version: 2,
 }
@@ -9710,7 +9407,6 @@ type MofALPC_Receive_Message struct {
 var mofALPC_Receive_Message = &MofClassDef{
 	Name: "ALPC_Receive_Message",
 	Base: "ALPC",
-	
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 34 },
@@ -9730,7 +9426,6 @@ type MofALPC_Wait_For_Reply struct {
 var mofALPC_Wait_For_Reply = &MofClassDef{
 	Name: "ALPC_Wait_For_Reply",
 	Base: "ALPC",
-	
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 35 },
@@ -9750,7 +9445,6 @@ type MofALPC_Send_Message struct {
 var mofALPC_Send_Message = &MofClassDef{
 	Name: "ALPC_Send_Message",
 	Base: "ALPC",
-	
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 33 },
@@ -9770,7 +9464,6 @@ type MofALPC_Unwait struct {
 var mofALPC_Unwait = &MofClassDef{
 	Name: "ALPC_Unwait",
 	Base: "ALPC",
-	
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 37 },
@@ -9795,7 +9488,6 @@ type MofALPC_Wait_For_New_Message struct {
 var mofALPC_Wait_For_New_Message = &MofClassDef{
 	Name: "ALPC_Wait_For_New_Message",
 	Base: "ALPC",
-	
 	GUID: mofALPC.GUID,
 	Version: mofALPC.Version,
 	EventTypes: []uint8{ 36 },
@@ -9811,7 +9503,6 @@ var mofALPC_Wait_For_New_Message = &MofClassDef{
 var mofImage = &MofClassDef{
 	Name: "Image",
 	Base: "MSNT_SystemTrace",
-	
 	GUID: *MustParseGUID("{2cb15d1d-5fc1-11d2-abe1-00a0c911f518}"),
 	Version: 3,
 }
@@ -9856,7 +9547,6 @@ type MofImage_Load struct {
 var mofImage_Load = &MofClassDef{
 	Name: "Image_Load",
 	Base: "Image",
-	
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 10,  2,  3,  4 },
@@ -9900,7 +9590,6 @@ type MofLoaderDllSearchResults struct {
 var mofLoaderDllSearchResults = &MofClassDef{
 	Name: "LoaderDllSearchResults",
 	Base: "Image",
-	
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 212 },
@@ -9933,7 +9622,6 @@ type MofLoaderNewDllEvent struct {
 var mofLoaderNewDllEvent = &MofClassDef{
 	Name: "LoaderNewDllEvent",
 	Base: "Image",
-	
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 176,  177 },
@@ -9970,7 +9658,6 @@ type MofLoaderCodedEventPath struct {
 var mofLoaderCodedEventPath = &MofClassDef{
 	Name: "LoaderCodedEventPath",
 	Base: "Image",
-	
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 192,  193 },
@@ -10005,7 +9692,6 @@ type MofLoaderCodedEventStatus struct {
 var mofLoaderCodedEventStatus = &MofClassDef{
 	Name: "LoaderCodedEventStatus",
 	Base: "Image",
-	
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 165,  166,  167,  168,  169,  170,  171,  172,  173,  174, 
@@ -10049,7 +9735,6 @@ type MofLoaderPathSearchResults struct {
 var mofLoaderPathSearchResults = &MofClassDef{
 	Name: "LoaderPathSearchResults",
 	Base: "Image",
-	
 	GUID: mofImage.GUID,
 	Version: mofImage.Version,
 	EventTypes: []uint8{ 213 },
