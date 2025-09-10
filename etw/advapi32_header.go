@@ -1560,6 +1560,72 @@ func (e *EventRecord) MofClassVersion() uint8 {
 	return e.EventHeader.EventDescriptor.Version
 }
 
+// GetSIDAt reads a SID structure from the UserData buffer at a specific byte offset.
+//
+//  etw.ConvertSidToStringSidGO(sid) // Use to convert the SID to a go string (it's fast).
+//
+// If hasTokenUser is true, it assumes the SID is preceded by a TOKEN_USER structure,
+// as is uncommon for the 'Sid' MOF extension qualifier. In this case, it first checks
+// a 4-byte presence indicator and then calculates the SID's actual position by
+// skipping the TOKEN_USER structure.
+//
+// If hasTokenUser is false, it assumes the offset points directly to the SID structure.
+// Most of the time this the correct choice, even on MOF events.
+//
+// Returns a pointer to the SID within the event's data buffer and nil on success.
+// The returned pointer is only valid for the lifetime of the EventRecord.
+func (e *EventRecord) GetSIDAt(offset uintptr, hasTokenUser bool) (*SID, error) {
+	sidOffset := offset
+
+	if hasTokenUser {
+		// The first 4 bytes indicate presence. Check if we can read them.
+		if offset+4 > uintptr(e.UserDataLength) {
+			return nil, fmt.Errorf("offset %d is out of bounds for UserData length %d to "+
+				"check for SID presence", offset, e.UserDataLength)
+		}
+
+		// Per documentation, if the first 4 bytes are zero, no SID is present.
+		presenceIndicator := *(*uint32)(unsafe.Pointer(e.UserData + offset))
+		if presenceIndicator == 0 {
+			return nil, nil // No SID present, not an error.
+		}
+
+		// The blob contains a TOKEN_USER structure followed by the SID.
+		// The size of TOKEN_USER is effectively two pointers.
+		pointerSize := uintptr(e.PointerSize())
+		tokenUserSize := pointerSize * 2
+
+		// Calculate the start of the SID data by skipping the TOKEN_USER.
+		sidOffset = offset + tokenUserSize
+	}
+
+	// Check if the SID header can fit in the remaining buffer.
+	// A SID header is at least 8 bytes (Revision, SubAuthorityCount, IdentifierAuthority).
+	if sidOffset+8 > uintptr(e.UserDataLength) {
+		return nil, fmt.Errorf("offset %d for SID header is out of bounds for UserData "+
+			"length %d", sidOffset+8, e.UserDataLength)
+	}
+
+	// Get a pointer to the SID structure.
+	sid := (*SID)(unsafe.Pointer(e.UserData + sidOffset))
+
+	// Validate the SID's own reported length.
+	// SeLengthSid(Sid) = (8 + (4 * Sid->SubAuthorityCount))
+	if sid.SubAuthorityCount > 15 { // SID_MAX_SUB_AUTHORITIES
+		return nil, fmt.Errorf("invalid SID at offset %d: SubAuthorityCount %d exceeds "+
+			"maximum of 15", sidOffset, sid.SubAuthorityCount)
+	}
+	sidLength := 8 + (4 * uintptr(sid.SubAuthorityCount))
+
+	// Final bounds check with the calculated length.
+	if sidOffset+sidLength > uintptr(e.UserDataLength) {
+		return nil, fmt.Errorf("calculated SID length %d at offset %d exceeds UserData "+
+			"length %d", sidLength, sidOffset, e.UserDataLength)
+	}
+
+	return sid, nil
+}
+
 // GetAnsiStringAt reads an ANSI string from the UserData buffer at a specific
 // byte offset. If count is -1, the string is assumed to be null-terminated.
 // Otherwise, it reads exactly 'count' bytes.

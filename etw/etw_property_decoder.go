@@ -8,6 +8,7 @@ package etw
 
 // Very useful link:
 // https://learn.microsoft.com/en-us/windows/win32/etw/event-tracing-mof-qualifiers#property-qualifiers
+// https://learn.microsoft.com/en-us/windows/win32/etw/using-tdhgetproperty-to-consume-event-data
 
 import (
 	"fmt"
