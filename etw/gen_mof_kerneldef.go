@@ -4281,7 +4281,7 @@ type MofProcess_V1_TypeGroup1 struct {
 	ParentId uint32
 	SessionId uint32
 	ExitStatus int32
-	UserSID SID
+	UserSID uintptr
 	ImageFileName uintptr
 }
 // mofProcess_V1_TypeGroup1 class definition
@@ -4664,7 +4664,7 @@ var mofProcess_V0 = &MofClassDef{
 type MofProcess_V0_TypeGroup1 struct {
 	ProcessId uintptr
 	ParentId uintptr
-	UserSID SID
+	UserSID uintptr
 	ImageFileName uintptr
 }
 // mofProcess_V0_TypeGroup1 class definition
@@ -6522,7 +6522,7 @@ type MofProcess_Defunct_TypeGroup1 struct {
 	ExitStatus int32
 	DirectoryTableBase uintptr
 	Flags uint32
-	UserSID SID
+	UserSID uintptr
 	ImageFileName uintptr
 	CommandLine uintptr
 	PackageFullName uintptr
@@ -9152,7 +9152,7 @@ type MofProcess_V2_TypeGroup1 struct {
 	ParentId uint32
 	SessionId uint32
 	ExitStatus int32
-	UserSID SID
+	UserSID uintptr
 	ImageFileName uintptr
 	CommandLine uintptr
 }
@@ -9261,7 +9261,7 @@ type MofProcess_V4_TypeGroup1 struct {
 	ExitStatus int32
 	DirectoryTableBase uintptr
 	Flags uint32
-	UserSID SID
+	UserSID uintptr
 	ImageFileName uintptr
 	CommandLine uintptr
 	PackageFullName uintptr
@@ -9362,7 +9362,7 @@ type MofProcess_V3_TypeGroup1 struct {
 	SessionId uint32
 	ExitStatus int32
 	DirectoryTableBase uintptr
-	UserSID SID
+	UserSID uintptr
 	ImageFileName uintptr
 	CommandLine uintptr
 }
