@@ -122,6 +122,16 @@ func (l *SampledLogger) SampledWarnWithErrSig(key string, err ...error) *plog.En
 	return l.Sampled(plog.WarnLevel, key, true, err...)
 }
 
+// SampledDebug starts a new sampled log event with Debug level.
+func (l *SampledLogger) SampledDebug(key string) *plog.Entry {
+	return l.Sampled(plog.DebugLevel, key, false)
+}
+
+// SampledDebugWithErrSig is like SampledDebug but uses the error's content for sampling.
+func (l *SampledLogger) SampledDebugWithErrSig(key string, err ...error) *plog.Entry {
+	return l.Sampled(plog.DebugLevel, key, true, err...)
+}
+
 // SampledTrace starts a new sampled log event with Trace level.
 func (l *SampledLogger) SampledTrace(key string) *plog.Entry {
 	return l.Sampled(plog.TraceLevel, key, false)
