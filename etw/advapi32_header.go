@@ -1565,12 +1565,11 @@ func (e *EventRecord) MofClassVersion() uint8 {
 //  etw.ConvertSidToStringSidGO(sid) // Use to convert the SID to a go string (it's fast).
 //
 // If hasTokenUser is true, it assumes the SID is preceded by a TOKEN_USER structure,
-// as is uncommon for the 'Sid' MOF extension qualifier. In this case, it first checks
+// as is common for the 'Sid' MOF extension qualifier. In this case, it first checks
 // a 4-byte presence indicator and then calculates the SID's actual position by
 // skipping the TOKEN_USER structure.
 //
 // If hasTokenUser is false, it assumes the offset points directly to the SID structure.
-// Most of the time this the correct choice, even on MOF events.
 //
 // Returns a pointer to the SID within the event's data buffer and nil on success.
 // The returned pointer is only valid for the lifetime of the EventRecord.

@@ -71,10 +71,10 @@ var formatMap = map[string]string{
 var extensionMap = map[string][2]string{
 	"Port":     {"TDH_INTYPE_UINT16", "TDH_OUTTYPE_PORT"},
 	"IPAddrV6": {"TDH_INTYPE_BINARY", "TDH_OUTTYPE_IPV6"},
-	"IPAddrV4": {"TDH_INTYPE_UINT32", "TDH_OUTTYPE_IPV4"},
+	"IPAddrV4": {"TDH_INTYPE_UINT32", "TDH_OUTTYPE_IPV4"}, // unsigned long is uint32 for the microsoft compiler
 	"IPAddr":   {"TDH_INTYPE_UINT32", "TDH_OUTTYPE_IPV4"},
-	"SizeT":    {"TDH_INTYPE_POINTER", "TDH_OUTTYPE_NULL"}, // instad of deprecated TDH_INTYPE_SIZET
-	"Sid":      {"TDH_INTYPE_SID", "TDH_OUTTYPE_STRING"},
+	"SizeT":    {"TDH_INTYPE_POINTER", "TDH_OUTTYPE_NULL"},   // instad of deprecated TDH_INTYPE_SIZET
+	"Sid":      {"TDH_INTYPE_WBEMSID", "TDH_OUTTYPE_STRING"}, // Sid are TDH_INTYPE_WBEMSID isntead of TDH_INTYPE_SID in MOF according to doc.
 	"GUID":     {"TDH_INTYPE_GUID", "TDH_OUTTYPE_GUID"},
 	"WmiTime":  {"TDH_INTYPE_UINT64", "TDH_OUTTYPE_DATETIME"},
 	// Special cases, not used for kernel MOFs.
