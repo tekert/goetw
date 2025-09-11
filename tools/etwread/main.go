@@ -190,6 +190,8 @@ func run() error {
 			return fmt.Errorf("no valid kernel providers found for '%s'", kernelProviders)
 		}
 
+		flags |= etw.NoSysConfig
+
 		s = etw.NewKernelRealTimeSession(flags)
 
 	case len(providers) > 0:
@@ -217,20 +219,17 @@ func run() error {
 		c = etw.NewConsumer(ctx).FromSessions(s)
 	}
 
-	// 5. Event Processing Goroutine
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		_ = c.ProcessEvents(func(e *etw.Event) error {
-			b, err := json.Marshal(e)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshaling event: %v\n", err)
-				return nil // Continue processing other events
-			}
-			fmt.Println(string(b))
-			return nil
-		})
-	}()
+	// 5. Event Processing
+	c.EventCallback = func(e *etw.Event) error {
+		b, err := json.Marshal(e)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error marshaling event: %v\n", err)
+			return nil // Continue processing other events
+		}
+		fmt.Println(string(b))
+		fmt.Println("--------------------------")
+		return nil
+	}
 
 	// 6. Setup Callbacks based on flags
 	// Kernel Event ID Filtering
@@ -268,8 +267,10 @@ func run() error {
 				fmt.Println("--- DEBUG TraceEventInfo ---")
 				infoBytes, _ := json.MarshalIndent(h.TraceInfo, "", "  ")
 				fmt.Println(string(infoBytes))
-				fmt.Println("--------------------------")
+			default:
+				fmt.Println("---- EVENT ----")
 			}
+
 			return nil
 		}
 	}
@@ -295,7 +296,7 @@ func run() error {
 
 	// 9. Stop and Print Stats
 	c.Stop() // Signal consumer to stop processing.
-	<-done   // Wait for the event processing goroutine to finish flushing events.
+	//<-done   // Wait for the event processing goroutine to finish flushing events.
 
 	fmt.Println("\n--- ETW Statistics ---")
 	printStats(c, traces)
