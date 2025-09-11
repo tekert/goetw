@@ -1,15 +1,16 @@
 package mofgen
 
 type mofParsedProperty struct {
-	ID         string // WmiDataId
-	Name       string
-	InType     string // string constant
-	OutType    string // string constant
-	Extension  string // e.g., "SizeT", "IPAddr"
-	IsArray    string // "true" if is array.
-	ArraySize  string // MAX(n)
-	SizeFromID string // WmiSizeIs property ID
-	GoType     string // Go type for struct generation
+	ID                string // WmiDataId
+	Name              string
+	InType            string // string constant
+	OutType           string // string constant
+	Extension         string // e.g., "SizeT", "IPAddr"
+	IsArray           string // "true" if is array.
+	ArraySize         string // MAX(n)
+	SizeFromID        string // WmiSizeIs property ID
+	GoType            string // Go type for struct generation
+	QualifiersComment string // Formatted qualifiers for comments
 }
 
 type mofParsedClass struct {
@@ -76,7 +77,7 @@ var extensionMap = map[string][2]string{
 	"SizeT":    {"TDH_INTYPE_POINTER", "TDH_OUTTYPE_NULL"},   // instad of deprecated TDH_INTYPE_SIZET
 	"Sid":      {"TDH_INTYPE_WBEMSID", "TDH_OUTTYPE_STRING"}, // Sid are TDH_INTYPE_WBEMSID isntead of TDH_INTYPE_SID in MOF according to doc.
 	"GUID":     {"TDH_INTYPE_GUID", "TDH_OUTTYPE_GUID"},
-	"WmiTime":  {"TDH_INTYPE_UINT64", "TDH_OUTTYPE_DATETIME"},
+	"WmiTime":  {"TDH_INTYPE_UINT64", "TDH_OUTTYPE_DATETIME"}, // This one is the resolution of the WnodeHeader.ClientContext of the session.
 	// Special cases, not used for kernel MOFs.
 	"NoPrint":  {"TDH_INTYPE_BINARY", "TDH_OUTTYPE_NULL"},
 	"RString":  {"TDH_INTYPE_ANSISTRING", "TDH_OUTTYPE_STRING"},
@@ -86,7 +87,12 @@ var extensionMap = map[string][2]string{
 
 // Mappings for extension qualifiers to Go types
 var goExtensionTypeMap = map[string]string{
-	"SizeT": "uintptr",
-	"GUID":  "GUID",    // Assumes etw.GUID is available in the generated code's package
-	"Sid":   "uintptr", // SIDs are variable length and are represented as an offset.
+	"Port":     "uint16",   // big endian need convert
+	"IPAddrV6": "[16]byte", // IPAddrV6 is a 16-byte array IN6_ADDR
+	"IPAddrV4": "[4]byte",   // IPAddrV4 is a uint32
+	"IPAddr":   "[4]byte",   // IPAddr is a uint32
+	"SizeT":    "uintptr",
+	"Sid":      "uintptr", // SIDs are variable length with USER_TOKEN and are represented as an offset.
+	"GUID":     "GUID",    // Assumes etw.GUID is available in the generated code's package
+	"WmiTime":  "uint64",  // FILETIME or session Wnode.ClientContext resolution if raw timestamps
 }

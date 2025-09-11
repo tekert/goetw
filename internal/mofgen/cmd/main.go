@@ -10,6 +10,7 @@ WindowsKernelTrace.mof file taken from:
 https://gist.github.com/jdu2600/a2b03e4e9cf19282a41ad766388c9856
 
 Usage:
+
 	go run main.go || go generate
 
 The tool will:
@@ -97,5 +98,12 @@ func main() {
 		log.Fatalf("Failed to write output file: %v", err)
 	}
 
-	//log.Printf("Successfully generated %s", outPath)
+	// Breaks formatting, i dont like these optionated crap formatters.
+	// Format the generated file using "go fmt"
+	// cmd := exec.Command("go", "fmt", outPath)
+	// if err := cmd.Run(); err != nil {
+	// 	log.Fatalf("Failed to format generated file: %v", err)
+	// }
+
+	//log.Printf("Successfully generated and formatted %s", outPath)
 }
