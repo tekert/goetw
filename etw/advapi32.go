@@ -102,7 +102,7 @@ func ProcessTrace(handleArray *syscall.Handle,
 	handleCount uint32,
 	startTime *FileTime,
 	endTime *FileTime) error {
-	//r1, _, _ := syscall.SyscallN(processTrace.Addr(),
+	//r1, _, _ := syscall.SyscallN(processTrace.Addr(), // not stable benchmarks for some reason
 	r1, _, _ := processTrace.Call(
 		uintptr(unsafe.Pointer(handleArray)),
 		uintptr(handleCount),
@@ -298,6 +298,7 @@ func ConvertSidToStringSidW(sid *SID) (string, error) {
 	var stringSid uint16
 	pStringSid := &stringSid
 
+	//rc, _, err := syscall.SyscallN(convertSidToStringSidW.Addr(), // 15% faster
 	rc, _, err := convertSidToStringSidW.Call(
 		uintptr(unsafe.Pointer(sid)),
 		uintptr(unsafe.Pointer(&pStringSid)))
