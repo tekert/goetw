@@ -3,6 +3,7 @@ package mofgen
 import (
 	"fmt"
 	"log"
+	"net"
 	"regexp"
 	"strings"
 )
@@ -19,11 +20,11 @@ func stringToUint16SliceLiteral(s string) string {
 		if i > 0 {
 			builder.WriteString(", ")
 		}
-		 if r < 128 && r >= 32 { // printable ASCII
-            builder.WriteString(fmt.Sprintf("'%c'", r))
-        } else {
-            builder.WriteString(fmt.Sprintf("%d", r))
-        }
+		if r < 128 && r >= 32 { // printable ASCII
+			builder.WriteString(fmt.Sprintf("'%c'", r))
+		} else {
+			builder.WriteString(fmt.Sprintf("%d", r))
+		}
 	}
 	builder.WriteString(", 0}") // Null terminator
 	return builder.String()
@@ -170,9 +171,49 @@ func (c *mofParsedClass) parseProperties(body string) {
 		typeName := match[3]
 		qualifiers := match[2]
 
+		prop.QualifiersComment = formatQualifiersForComment(qualifiers, match[4])
 		prop.parseType(typeName, qualifiers, idMap)
 		c.Properties = append(c.Properties, prop)
 	}
+}
+
+// formatQualifiersForComment cleans and formats the raw qualifiers string for use as a Go comment.
+// It filters out unneeded qualifiers like "read" and joins the rest with commas.
+func formatQualifiersForComment(qualifiers string, name string) string {
+	// Qualifiers are comma-separated, e.g., ", extension("WmiTime"), read"
+	parts := strings.Split(qualifiers, ",")
+	var relevantParts []string
+
+	var a [4]byte = [4]byte{1, 1, 1, 1}
+	ip := net.IP(a[:])
+	_ = ip
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed == "" ||
+			strings.ToLower(trimmed) == "read" ||
+			strings.ToLower(trimmed) == "pointer" {
+			continue
+		}
+		if strings.Contains(trimmed, "IPAddrV4") ||
+			strings.Contains(trimmed, "IPAddr") ||
+			strings.Contains(trimmed, "IPAddrV6") {
+			trimmed = "use: ip := net.IP(" + name + "[:])"
+		}
+		if strings.Contains(trimmed, "Port") {
+			trimmed = "big endian: port = etw.Swap16(" + name + ")"
+		}
+		if strings.Contains(trimmed, "PointerType") {
+			trimmed = trimmed + " this is not a valid pointer!"
+		}
+		relevantParts = append(relevantParts, trimmed)
+	}
+
+	if len(relevantParts) > 0 {
+		return "// " + strings.Join(relevantParts, ", ")
+	}
+
+	return ""
 }
 
 // processInheritance sets inherited metadata from the immediate base class.
