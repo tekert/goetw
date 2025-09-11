@@ -476,6 +476,34 @@ func buildTraceInfoFromMof(er *EventRecord, teiBuffer *[]byte) (tei *TraceEventI
 	return tei, nil
 }
 
+// UnsafeCast performs a direct, high-performance cast of an event's UserData
+// to a pointer of the specified generic type `T`.
+//
+// # WARNING: This function is unsafe
+//
+// It performs only one check: whether the event's `UserDataLength` is sufficient
+// to hold the struct `T`. It does **not** validate the event's provider GUID,
+// version, or opcode.
+//
+// The caller is **responsible** for performing all necessary validation before
+// calling this function. Incorrect use can lead to memory corruption or panics.
+// This function is intended for performance-critical paths where the event's
+// identity has already been confirmed.
+//
+// # Important
+//
+// The returned pointer is only valid within the scope of the ETW callback
+// function, as it points directly into the ETW buffer.
+func UnsafeCast[T any](e *EventRecord) (*T, bool) {
+	// This is the most efficient way to get the size of a generic type `T`.
+	// The compiler is very effective at optimizing this.
+	var zero T
+	if e.UserDataLength < uint16(unsafe.Sizeof(zero)) {
+		return nil, false
+	}
+	return (*T)(unsafe.Pointer(e.UserData)), true
+}
+
 // Loads custom kernel MOF classes into the global registry (only for parsing purposes)
 func init() {
 
