@@ -1255,6 +1255,15 @@ func (e *EventRecord) ExtTerminalSessionID() (uint32, bool) {
 // The boolean return value indicates whether the start key was present in the event's extended data.
 // Enabled by using the EVENT_ENABLE_PROPERTY_PROCESS_START_KEY flag on EnableProvider config.
 // Enabled by default for XML-based events.
+//
+// CallingProcessStartKey
+// This field represents a locally unique identifier for the process.
+// It was designed as a more robust version of process ID that is resistant to being repeated.
+// Process start key was introduced in Windows 10 1507 and is derived from
+// _KUSER_SHARED_DATA.BootId and EPROCESS.SequenceNumber, both of which increment and are
+// unlikely to overflow. It is an unsigned 64-bit value that is derived using the following
+// logic: (BootId << 30) | SequenceNumber. Kernel drivers can retrieve the process start key
+// for a process by calling the PsGetProcessStartKey export in ntoskrnl.exe
 func (e *EventRecord) ExtProcessStartKey() (uint64, bool) {
 	for i := uint16(0); i < e.ExtendedDataCount; i++ {
 		item, err := e.ExtendedDataItem(i)
@@ -1562,7 +1571,7 @@ func (e *EventRecord) MofClassVersion() uint8 {
 
 // GetSIDAt reads a SID structure from the UserData buffer at a specific byte offset.
 //
-//  etw.ConvertSidToStringSidGO(sid) // Use to convert the SID to a go string (it's fast).
+//	etw.ConvertSidToStringSidGO(sid) // Use to convert the SID to a go string (it's fast).
 //
 // If hasTokenUser is true, it assumes the SID is preceded by a TOKEN_USER structure,
 // as is common for the 'Sid' MOF extension qualifier. In this case, it first checks
