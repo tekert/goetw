@@ -98,7 +98,7 @@ package etw
 // Go struct for event data
 type Mof{{.Name}} struct {
 {{- range .Properties}}
-	{{.Name}} {{.GoType}}
+	{{.Name}} {{.GoType}} {{.QualifiersComment}}
 {{- end}}
 }
 {{- end}}

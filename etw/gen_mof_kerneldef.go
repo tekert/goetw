@@ -28,11 +28,11 @@ var mofFileIo_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V2_MapFile struct {
-	ViewBase uintptr
-	FileObject uintptr
-	MiscInfo uint64
-	ViewSize uintptr
-	ProcessId uint32
+	ViewBase uintptr 
+	FileObject uintptr 
+	MiscInfo uint64 // format("x")
+	ViewSize uintptr // extension("SizeT")
+	ProcessId uint32 
 }
 // mofFileIo_V2_MapFile class definition
 var mofFileIo_V2_MapFile = &MofClassDef{
@@ -65,14 +65,14 @@ var mofFileIo_V2_MapFile = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V2_DirEnum struct {
-	IrpPtr uintptr
-	TTID uintptr
-	FileObject uintptr
-	FileKey uintptr
-	Length uint32
-	InfoClass uint32
-	FileIndex uint32
-	FileName uintptr
+	IrpPtr uintptr 
+	TTID uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
+	Length uint32 
+	InfoClass uint32 
+	FileIndex uint32 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_V2_DirEnum class definition
 var mofFileIo_V2_DirEnum = &MofClassDef{
@@ -100,9 +100,9 @@ var mofFileIo_V2_DirEnum = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V2_OpEnd struct {
-	IrpPtr uintptr
-	ExtraInfo uintptr
-	NtStatus uint32
+	IrpPtr uintptr 
+	ExtraInfo uintptr 
+	NtStatus uint32 
 }
 // mofFileIo_V2_OpEnd class definition
 var mofFileIo_V2_OpEnd = &MofClassDef{
@@ -127,10 +127,10 @@ var mofFileIo_V2_OpEnd = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V2_SimpleOp struct {
-	IrpPtr uintptr
-	TTID uintptr
-	FileObject uintptr
-	FileKey uintptr
+	IrpPtr uintptr 
+	TTID uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
 }
 // mofFileIo_V2_SimpleOp class definition
 var mofFileIo_V2_SimpleOp = &MofClassDef{
@@ -158,13 +158,13 @@ var mofFileIo_V2_SimpleOp = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V2_ReadWrite struct {
-	Offset uint64
-	IrpPtr uintptr
-	TTID uintptr
-	FileObject uintptr
-	FileKey uintptr
-	IoSize uint32
-	IoFlags uint32
+	Offset uint64 
+	IrpPtr uintptr 
+	TTID uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
+	IoSize uint32 
+	IoFlags uint32 
 }
 // mofFileIo_V2_ReadWrite class definition
 var mofFileIo_V2_ReadWrite = &MofClassDef{
@@ -195,12 +195,12 @@ var mofFileIo_V2_ReadWrite = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V2_Info struct {
-	IrpPtr uintptr
-	TTID uintptr
-	FileObject uintptr
-	FileKey uintptr
-	ExtraInfo uintptr
-	InfoClass uint32
+	IrpPtr uintptr 
+	TTID uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
+	ExtraInfo uintptr 
+	InfoClass uint32 
 }
 // mofFileIo_V2_Info class definition
 var mofFileIo_V2_Info = &MofClassDef{
@@ -229,8 +229,8 @@ var mofFileIo_V2_Info = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V2_Name struct {
-	FileObject uintptr
-	FileName uintptr
+	FileObject uintptr 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_V2_Name class definition
 var mofFileIo_V2_Name = &MofClassDef{
@@ -259,13 +259,13 @@ var mofFileIo_V2_Name = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V2_Create struct {
-	IrpPtr uintptr
-	TTID uintptr
-	FileObject uintptr
-	CreateOptions uint32
-	FileAttributes uint32
-	ShareAccess uint32
-	OpenPath uintptr
+	IrpPtr uintptr 
+	TTID uintptr 
+	FileObject uintptr 
+	CreateOptions uint32 
+	FileAttributes uint32 
+	ShareAccess uint32 
+	OpenPath uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_V2_Create class definition
 var mofFileIo_V2_Create = &MofClassDef{
@@ -301,8 +301,8 @@ var mofPerfInfo_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofMark_V0 struct {
-	Message uintptr
-	Padding [1]uint16
+	Message uintptr // StringTermination("NullTerminated")
+	Padding [1]uint16 // MAX(1)
 }
 // mofMark_V0 class definition
 var mofMark_V0 = &MofClassDef{
@@ -334,9 +334,9 @@ var mofObTrace = &MofClassDef{
 // };
 // Go struct for event data
 type MofObReferenceEvent struct {
-	Object uintptr
-	Tag uint32
-	Count uint32
+	Object uintptr // format("x")
+	Tag uint32 // format("x")
+	Count uint32 
 }
 // mofObReferenceEvent class definition
 var mofObReferenceEvent = &MofClassDef{
@@ -362,9 +362,9 @@ var mofObReferenceEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofObTypeEvent struct {
-	ObjectType uint16
-	Reserved uint16
-	TypeName uintptr
+	ObjectType uint16 
+	Reserved uint16 
+	TypeName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofObTypeEvent class definition
 var mofObTypeEvent = &MofClassDef{
@@ -392,11 +392,11 @@ var mofObTypeEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofObHandleRundownEvent struct {
-	Object uintptr
-	ProcessId uint32
-	Handle uint32
-	ObjectType uint16
-	ObjectName uintptr
+	Object uintptr // format("x")
+	ProcessId uint32 // format("x")
+	Handle uint32 // format("x")
+	ObjectType uint16 
+	ObjectName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofObHandleRundownEvent class definition
 var mofObHandleRundownEvent = &MofClassDef{
@@ -420,8 +420,8 @@ var mofObHandleRundownEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofObObjectEvent struct {
-	Object uintptr
-	ObjectType uint16
+	Object uintptr // format("x")
+	ObjectType uint16 
 }
 // mofObObjectEvent class definition
 var mofObObjectEvent = &MofClassDef{
@@ -445,11 +445,11 @@ var mofObObjectEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofObHandleDuplicateEvent struct {
-	Object uintptr
-	SourceHandle uint32
-	TargetHandle uint32
-	TargetProcessId uint32
-	ObjectType uint16
+	Object uintptr // format("x")
+	SourceHandle uint32 // format("x")
+	TargetHandle uint32 // format("x")
+	TargetProcessId uint32 // format("x")
+	ObjectType uint16 
 }
 // mofObHandleDuplicateEvent class definition
 var mofObHandleDuplicateEvent = &MofClassDef{
@@ -478,10 +478,10 @@ var mofObHandleDuplicateEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofObHandleEvent struct {
-	Object uintptr
-	Handle uint32
-	ObjectType uint16
-	ObjectName uintptr
+	Object uintptr // format("x")
+	Handle uint32 // format("x")
+	ObjectType uint16 
+	ObjectName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofObHandleEvent class definition
 var mofObHandleEvent = &MofClassDef{
@@ -518,11 +518,11 @@ var mofPageFault_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_HeapRangeRundown_V3 struct {
-	HeapHandle uintptr
-	HRFlags uint32
-	HRPid uint32
-	HRRangeCount uint32
-	Reserved uint32
+	HeapHandle uintptr 
+	HRFlags uint32 // format("x")
+	HRPid uint32 // format("x")
+	HRRangeCount uint32 
+	Reserved uint32 
 }
 // mofPageFault_HeapRangeRundown_V3 class definition
 var mofPageFault_HeapRangeRundown_V3 = &MofClassDef{
@@ -550,12 +550,12 @@ var mofPageFault_HeapRangeRundown_V3 = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_HardFault struct {
-	InitialTime uintptr
-	ReadOffset uint64
-	VirtualAddress uintptr
-	FileObject uintptr
-	TThreadId uint32
-	ByteCount uint32
+	InitialTime uint64 // extension("WmiTime")
+	ReadOffset uint64 // format("x")
+	VirtualAddress uintptr 
+	FileObject uintptr 
+	TThreadId uint32 // format("x")
+	ByteCount uint32 
 }
 // mofPageFault_HardFault class definition
 var mofPageFault_HardFault = &MofClassDef{
@@ -584,11 +584,11 @@ var mofPageFault_HardFault = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_VirtualAllocRundown struct {
-	BaseAddress uintptr
-	RegionSize uintptr
-	ProcessId uint32
-	Flags uint32
-	CommitSizeInBytes uintptr
+	BaseAddress uintptr 
+	RegionSize uintptr // extension("SizeT")
+	ProcessId uint32 
+	Flags uint32 // format("x")
+	CommitSizeInBytes uintptr // extension("SizeT")
 }
 // mofPageFault_VirtualAllocRundown class definition
 var mofPageFault_VirtualAllocRundown = &MofClassDef{
@@ -615,10 +615,10 @@ var mofPageFault_VirtualAllocRundown = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_VirtualAlloc struct {
-	BaseAddress uintptr
-	RegionSize uintptr
-	ProcessId uint32
-	Flags uint32
+	BaseAddress uintptr 
+	RegionSize uintptr // extension("SizeT")
+	ProcessId uint32 
+	Flags uint32 // format("x")
 }
 // mofPageFault_VirtualAlloc class definition
 var mofPageFault_VirtualAlloc = &MofClassDef{
@@ -642,9 +642,9 @@ var mofPageFault_VirtualAlloc = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_MemReset struct {
-	BaseAddress uintptr
-	SizeInBytes uintptr
-	Flags uint32
+	BaseAddress uintptr 
+	SizeInBytes uintptr // extension("SizeT")
+	Flags uint32 // format("x")
 }
 // mofPageFault_MemReset class definition
 var mofPageFault_MemReset = &MofClassDef{
@@ -669,10 +669,10 @@ var mofPageFault_MemReset = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_HeapRangeRundown_V2 struct {
-	HeapHandle uintptr
-	HRFlags uint32
-	HRPid uint32
-	HRRangeCount uint32
+	HeapHandle uintptr 
+	HRFlags uint32 // format("x")
+	HRPid uint32 // format("x")
+	HRRangeCount uint32 
 }
 // mofPageFault_HeapRangeRundown_V2 class definition
 var mofPageFault_HeapRangeRundown_V2 = &MofClassDef{
@@ -695,7 +695,7 @@ var mofPageFault_HeapRangeRundown_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_HeapRangeDestroy struct {
-	HeapHandle uintptr
+	HeapHandle uintptr 
 }
 // mofPageFault_HeapRangeDestroy class definition
 var mofPageFault_HeapRangeDestroy = &MofClassDef{
@@ -716,8 +716,8 @@ var mofPageFault_HeapRangeDestroy = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_TypeGroup1 struct {
-	VirtualAddress uintptr
-	ProgramCounter uintptr
+	VirtualAddress uintptr 
+	ProgramCounter uintptr 
 }
 // mofPageFault_TypeGroup1 class definition
 var mofPageFault_TypeGroup1 = &MofClassDef{
@@ -742,10 +742,10 @@ var mofPageFault_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_ImageLoadBacked struct {
-	FileObject uintptr
-	DeviceChar uint32
-	FileChar uint16
-	LoadFlags uint16
+	FileObject uintptr 
+	DeviceChar uint32 // format("x")
+	FileChar uint16 // format("x")
+	LoadFlags uint16 // format("x")
 }
 // mofPageFault_ImageLoadBacked class definition
 var mofPageFault_ImageLoadBacked = &MofClassDef{
@@ -770,9 +770,9 @@ var mofPageFault_ImageLoadBacked = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_HeapRangeTypeGroup struct {
-	HeapHandle uintptr
-	HRAddress uintptr
-	HRSize uintptr
+	HeapHandle uintptr 
+	HRAddress uintptr 
+	HRSize uintptr // extension("SizeT")
 }
 // mofPageFault_HeapRangeTypeGroup class definition
 var mofPageFault_HeapRangeTypeGroup = &MofClassDef{
@@ -796,9 +796,9 @@ var mofPageFault_HeapRangeTypeGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_HeapRangeCreate struct {
-	HeapHandle uintptr
-	FirstRangeSize uintptr
-	HRCreateFlags uint32
+	HeapHandle uintptr 
+	FirstRangeSize uintptr // extension("SizeT")
+	HRCreateFlags uint32 // format("x")
 }
 // mofPageFault_HeapRangeCreate class definition
 var mofPageFault_HeapRangeCreate = &MofClassDef{
@@ -821,8 +821,8 @@ var mofPageFault_HeapRangeCreate = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_VirtualRotate struct {
-	BaseAddress uintptr
-	SizeInBytes uintptr
+	BaseAddress uintptr 
+	SizeInBytes uintptr // extension("SizeT")
 }
 // mofPageFault_VirtualRotate class definition
 var mofPageFault_VirtualRotate = &MofClassDef{
@@ -854,9 +854,9 @@ var mofPerfInfo_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofFinalizeKTimer2 struct {
-	Timer uintptr
-	DisableCallback uintptr
-	DisableContext uintptr
+	Timer uintptr 
+	DisableCallback uintptr 
+	DisableContext uintptr 
 }
 // mofFinalizeKTimer2 class definition
 var mofFinalizeKTimer2 = &MofClassDef{
@@ -877,7 +877,7 @@ var mofFinalizeKTimer2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofWDF_ISR struct {
-	Routine uintptr
+	Routine uintptr 
 }
 // mofWDF_ISR class definition
 var mofWDF_ISR = &MofClassDef{
@@ -896,7 +896,7 @@ var mofWDF_ISR = &MofClassDef{
 // };
 // Go struct for event data
 type MofWDF_DPC struct {
-	Routine uintptr
+	Routine uintptr 
 }
 // mofWDF_DPC class definition
 var mofWDF_DPC = &MofClassDef{
@@ -915,7 +915,7 @@ var mofWDF_DPC = &MofClassDef{
 // };
 // Go struct for event data
 type MofISR_Unexpected struct {
-	Vector uint16
+	Vector uint16 
 }
 // mofISR_Unexpected class definition
 var mofISR_Unexpected = &MofClassDef{
@@ -937,10 +937,10 @@ var mofISR_Unexpected = &MofClassDef{
 // };
 // Go struct for event data
 type MofSampledProfile struct {
-	InstructionPointer uintptr
-	ThreadId uint32
-	Count uint16
-	Reserved uint16
+	InstructionPointer uintptr 
+	ThreadId uint32 
+	Count uint16 
+	Reserved uint16 
 }
 // mofSampledProfile class definition
 var mofSampledProfile = &MofClassDef{
@@ -962,7 +962,7 @@ var mofSampledProfile = &MofClassDef{
 // };
 // Go struct for event data
 type MofCancelKTimer2 struct {
-	Timer uintptr
+	Timer uintptr 
 }
 // mofCancelKTimer2 class definition
 var mofCancelKTimer2 = &MofClassDef{
@@ -984,10 +984,10 @@ var mofCancelKTimer2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofPmcCounterProfile struct {
-	InstructionPointer uintptr
-	ThreadId uint32
-	ProfileSource uint16
-	Reserved uint16
+	InstructionPointer uintptr 
+	ThreadId uint32 
+	ProfileSource uint16 
+	Reserved uint16 
 }
 // mofPmcCounterProfile class definition
 var mofPmcCounterProfile = &MofClassDef{
@@ -1014,8 +1014,8 @@ var mofPmcCounterProfile = &MofClassDef{
 // };
 // Go struct for event data
 type MofPmcCounterConfig_V2 struct {
-	CounterCount uint32
-	CounterName uintptr
+	CounterCount uint32 
+	CounterName uintptr // StringTermination("NullTerminated"), format("w"), WmiSizeIs("CounterCount")
 }
 // mofPmcCounterConfig_V2 class definition
 var mofPmcCounterConfig_V2 = &MofClassDef{
@@ -1035,7 +1035,7 @@ var mofPmcCounterConfig_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSysCallExit struct {
-	SysCallNtStatus uint32
+	SysCallNtStatus uint32 // format("x")
 }
 // mofSysCallExit class definition
 var mofSysCallExit = &MofClassDef{
@@ -1059,12 +1059,12 @@ var mofSysCallExit = &MofClassDef{
 // };
 // Go struct for event data
 type MofISR_MSI struct {
-	InitialTime uintptr
-	Routine uintptr
-	ReturnValue uint8
-	Vector uint16
-	Reserved uint8
-	MessageNumber uint32
+	InitialTime uint64 // extension("WmiTime")
+	Routine uintptr 
+	ReturnValue uint8 
+	Vector uint16 
+	Reserved uint8 
+	MessageNumber uint32 
 }
 // mofISR_MSI class definition
 var mofISR_MSI = &MofClassDef{
@@ -1091,10 +1091,10 @@ var mofISR_MSI = &MofClassDef{
 // };
 // Go struct for event data
 type MofDisableKTimer2 struct {
-	Timer uintptr
-	DisableCallback uintptr
-	DisableContext uintptr
-	TimerFlags uint8
+	Timer uintptr 
+	DisableCallback uintptr 
+	DisableContext uintptr 
+	TimerFlags uint8 
 }
 // mofDisableKTimer2 class definition
 var mofDisableKTimer2 = &MofClassDef{
@@ -1123,13 +1123,13 @@ var mofDisableKTimer2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSetOrExpireKTimer2 struct {
-	DueTime uint64
-	MaximumDueTime uint64
-	Period uint64
-	Timer uintptr
-	Callback uintptr
-	CallbackContext uintptr
-	TimerFlags uint8
+	DueTime uint64 
+	MaximumDueTime uint64 
+	Period uint64 
+	Timer uintptr 
+	Callback uintptr 
+	CallbackContext uintptr 
+	TimerFlags uint8 
 }
 // mofSetOrExpireKTimer2 class definition
 var mofSetOrExpireKTimer2 = &MofClassDef{
@@ -1158,11 +1158,11 @@ var mofSetOrExpireKTimer2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofISR struct {
-	InitialTime uintptr
-	Routine uintptr
-	ReturnValue uint8
-	Vector uint16
-	Reserved uint8
+	InitialTime uint64 // extension("WmiTime")
+	Routine uintptr 
+	ReturnValue uint8 
+	Vector uint16 
+	Reserved uint8 
 }
 // mofISR class definition
 var mofISR = &MofClassDef{
@@ -1188,9 +1188,9 @@ var mofISR = &MofClassDef{
 // };
 // Go struct for event data
 type MofPmcCounterCorruption_V2 struct {
-	ProcessorNumber uint32
-	CounterCount uint32
-	CounterStatus uintptr
+	ProcessorNumber uint32 
+	CounterCount uint32 
+	CounterStatus uintptr // WmiSizeIs("CounterCount")
 }
 // mofPmcCounterCorruption_V2 class definition
 var mofPmcCounterCorruption_V2 = &MofClassDef{
@@ -1211,7 +1211,7 @@ var mofPmcCounterCorruption_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSysCallEnter struct {
-	SysCallAddress uintptr
+	SysCallAddress uintptr 
 }
 // mofSysCallEnter class definition
 var mofSysCallEnter = &MofClassDef{
@@ -1231,8 +1231,8 @@ var mofSysCallEnter = &MofClassDef{
 // };
 // Go struct for event data
 type MofIoTimerEvent struct {
-	DeviceObject uintptr
-	TimerRoutine uintptr
+	DeviceObject uintptr 
+	TimerRoutine uintptr 
 }
 // mofIoTimerEvent class definition
 var mofIoTimerEvent = &MofClassDef{
@@ -1252,7 +1252,7 @@ var mofIoTimerEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofWDF_WorkItem struct {
-	Routine uintptr
+	Routine uintptr 
 }
 // mofWDF_WorkItem class definition
 var mofWDF_WorkItem = &MofClassDef{
@@ -1287,9 +1287,9 @@ var mofDebuggerEnabled = &MofClassDef{
 // };
 // Go struct for event data
 type MofSampledProfileInterval_V2 struct {
-	Source uint32
-	NewInterval uint32
-	OldInterval uint32
+	Source uint32 
+	NewInterval uint32 
+	OldInterval uint32 
 }
 // mofSampledProfileInterval_V2 class definition
 var mofSampledProfileInterval_V2 = &MofClassDef{
@@ -1312,9 +1312,9 @@ var mofSampledProfileInterval_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofHV_Hypercall struct {
-	CallCode uint32
-	IsFast uint8
-	IsNested uint8
+	CallCode uint32 
+	IsFast uint8 
+	IsNested uint8 
 }
 // mofHV_Hypercall class definition
 var mofHV_Hypercall = &MofClassDef{
@@ -1336,8 +1336,8 @@ var mofHV_Hypercall = &MofClassDef{
 // };
 // Go struct for event data
 type MofDPC struct {
-	InitialTime uintptr
-	Routine uintptr
+	InitialTime uint64 // extension("WmiTime")
+	Routine uintptr 
 }
 // mofDPC class definition
 var mofDPC = &MofClassDef{
@@ -1359,9 +1359,9 @@ var mofDPC = &MofClassDef{
 // };
 // Go struct for event data
 type MofSpinLockConfig_V2 struct {
-	SpinLockSpinThreshold uint32
-	SpinLockContentionSampleRate uint32
-	SpinLockAcquireSampleRate uint32
+	SpinLockSpinThreshold uint32 
+	SpinLockContentionSampleRate uint32 
+	SpinLockAcquireSampleRate uint32 
 }
 // mofSpinLockConfig_V2 class definition
 var mofSpinLockConfig_V2 = &MofClassDef{
@@ -1393,8 +1393,8 @@ var mofUdpIp = &MofClassDef{
 // };
 // Go struct for event data
 type MofUdpIp_Fail struct {
-	Proto uint16
-	FailureCode uint16
+	Proto uint16 
+	FailureCode uint16 
 }
 // mofUdpIp_Fail class definition
 var mofUdpIp_Fail = &MofClassDef{
@@ -1421,14 +1421,14 @@ var mofUdpIp_Fail = &MofClassDef{
 // };
 // Go struct for event data
 type MofUdpIp_TypeGroup2 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	seqnum uint32
-	connid uintptr
+	PID uint32 
+	size uint32 
+	daddr [16]byte // use: ip := net.IP(daddr[:])
+	saddr [16]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	seqnum uint32 
+	connid uintptr // PointerType this is not a valid pointer!
 }
 // mofUdpIp_TypeGroup2 class definition
 var mofUdpIp_TypeGroup2 = &MofClassDef{
@@ -1461,14 +1461,14 @@ var mofUdpIp_TypeGroup2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofUdpIp_TypeGroup1 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	seqnum uint32
-	connid uintptr
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	seqnum uint32 
+	connid uintptr // PointerType this is not a valid pointer!
 }
 // mofUdpIp_TypeGroup1 class definition
 var mofUdpIp_TypeGroup1 = &MofClassDef{
@@ -1506,9 +1506,9 @@ var mofThread_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofAutoBoostClearFloor struct {
-	LockAddress uintptr
-	ThreadId uint32
-	BoostBitmap uint32
+	LockAddress uintptr 
+	ThreadId uint32 // format("x")
+	BoostBitmap uint32 
 }
 // mofAutoBoostClearFloor class definition
 var mofAutoBoostClearFloor = &MofClassDef{
@@ -1531,9 +1531,9 @@ var mofAutoBoostClearFloor = &MofClassDef{
 // };
 // Go struct for event data
 type MofWorkerThread struct {
-	TThreadId uint32
-	StartTime uint64
-	ThreadRoutine uintptr
+	TThreadId uint32 // format("x")
+	StartTime uint64 
+	ThreadRoutine uintptr 
 }
 // mofWorkerThread class definition
 var mofWorkerThread = &MofClassDef{
@@ -1555,8 +1555,8 @@ var mofWorkerThread = &MofClassDef{
 // };
 // Go struct for event data
 type MofKernelQueueEnqueue struct {
-	Entry uintptr
-	ThreadId uint32
+	Entry uintptr 
+	ThreadId uint32 // format("x")
 }
 // mofKernelQueueEnqueue class definition
 var mofKernelQueueEnqueue = &MofClassDef{
@@ -1587,18 +1587,18 @@ var mofKernelQueueEnqueue = &MofClassDef{
 // };
 // Go struct for event data
 type MofCSwitch_V2 struct {
-	NewThreadId uint32
-	OldThreadId uint32
-	NewThreadPriority int8
-	OldThreadPriority int8
-	PreviousCState uint8
-	SpareByte int8
-	OldThreadWaitReason int8
-	OldThreadWaitMode int8
-	OldThreadState int8
-	OldThreadWaitIdealProcessor int8
-	NewThreadWaitTime uint32
-	Reserved uint32
+	NewThreadId uint32 // format("x")
+	OldThreadId uint32 // format("x")
+	NewThreadPriority int8 
+	OldThreadPriority int8 
+	PreviousCState uint8 
+	SpareByte int8 
+	OldThreadWaitReason int8 
+	OldThreadWaitMode int8 
+	OldThreadState int8 
+	OldThreadWaitIdealProcessor int8 
+	NewThreadWaitTime uint32 // format("x")
+	Reserved uint32 
 }
 // mofCSwitch_V2 class definition
 var mofCSwitch_V2 = &MofClassDef{
@@ -1629,8 +1629,8 @@ var mofCSwitch_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSubProcessTagChanged struct {
-	OldTag uint32
-	NewTag uint32
+	OldTag uint32 // format("x")
+	NewTag uint32 // format("x")
 }
 // mofSubProcessTagChanged class definition
 var mofSubProcessTagChanged = &MofClassDef{
@@ -1661,18 +1661,18 @@ var mofSubProcessTagChanged = &MofClassDef{
 // };
 // Go struct for event data
 type MofSpinLock struct {
-	SpinLockAddress uintptr
-	CallerAddress uintptr
-	AcquireTime uint64
-	ReleaseTime uint64
-	WaitTimeInCycles uint32
-	SpinCount uint32
-	ThreadId uint32
-	InterruptCount uint32
-	Irql uint8
-	AcquireDepth uint8
-	Flag uint8
-	Reserved [5]uint8
+	SpinLockAddress uintptr 
+	CallerAddress uintptr 
+	AcquireTime uint64 
+	ReleaseTime uint64 
+	WaitTimeInCycles uint32 
+	SpinCount uint32 
+	ThreadId uint32 
+	InterruptCount uint32 
+	Irql uint8 
+	AcquireDepth uint8 
+	Flag uint8 
+	Reserved [5]uint8 // MAX(5)
 }
 // mofSpinLock class definition
 var mofSpinLock = &MofClassDef{
@@ -1707,12 +1707,12 @@ var mofSpinLock = &MofClassDef{
 // };
 // Go struct for event data
 type MofThreadMigration struct {
-	ThreadId uint32
-	SourceProcessorIndex uint16
-	TargetProcessorIndex uint16
-	Priority uint8
-	IdealProcessorAdjust uint32
-	OldIdealProcessorIndex uint16
+	ThreadId uint32 // format("x")
+	SourceProcessorIndex uint16 
+	TargetProcessorIndex uint16 
+	Priority uint8 
+	IdealProcessorAdjust uint32 
+	OldIdealProcessorIndex uint16 
 }
 // mofThreadMigration class definition
 var mofThreadMigration = &MofClassDef{
@@ -1738,9 +1738,9 @@ var mofThreadMigration = &MofClassDef{
 // };
 // Go struct for event data
 type MofKernelQueueDequeue struct {
-	ThreadId uint32
-	EntryCount uint32
-	Entries uintptr
+	ThreadId uint32 // format("x")
+	EntryCount uint32 
+	Entries uintptr // WmiSizeIs("EntryCount")
 }
 // mofKernelQueueDequeue class definition
 var mofKernelQueueDequeue = &MofClassDef{
@@ -1766,12 +1766,12 @@ var mofKernelQueueDequeue = &MofClassDef{
 // };
 // Go struct for event data
 type MofAutoBoostSetFloor struct {
-	Lock uintptr
-	ThreadId uint32
-	NewCpuPriorityFloor uint8
-	OldCpuPriority uint8
-	IoPriorities uint8
-	BoostFlags uint8
+	Lock uintptr 
+	ThreadId uint32 // format("x")
+	NewCpuPriorityFloor uint8 
+	OldCpuPriority uint8 
+	IoPriorities uint8 
+	BoostFlags uint8 
 }
 // mofAutoBoostSetFloor class definition
 var mofAutoBoostSetFloor = &MofClassDef{
@@ -1798,10 +1798,10 @@ var mofAutoBoostSetFloor = &MofClassDef{
 // };
 // Go struct for event data
 type MofThreadAffinity struct {
-	Affinity uintptr
-	ThreadId uint32
-	Group uint16
-	Reserved uint16
+	Affinity uintptr 
+	ThreadId uint32 // format("x")
+	Group uint16 
+	Reserved uint16 
 }
 // mofThreadAffinity class definition
 var mofThreadAffinity = &MofClassDef{
@@ -1824,7 +1824,7 @@ var mofThreadAffinity = &MofClassDef{
 // };
 // Go struct for event data
 type MofWorkerThread_StartStop_V2 struct {
-	CallbackRoutine uintptr
+	CallbackRoutine uintptr 
 }
 // mofWorkerThread_StartStop_V2 class definition
 var mofWorkerThread_StartStop_V2 = &MofClassDef{
@@ -1848,9 +1848,9 @@ var mofWorkerThread_StartStop_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofThreadSetName struct {
-	ProcessId uint32
-	ThreadId uint32
-	ThreadName uintptr
+	ProcessId uint32 // format("x")
+	ThreadId uint32 // format("x")
+	ThreadName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofThreadSetName class definition
 var mofThreadSetName = &MofClassDef{
@@ -1885,8 +1885,8 @@ var mofCompCS = &MofClassDef{
 // };
 // Go struct for event data
 type MofAutoBoostEntryExhaustion struct {
-	LockAddress uintptr
-	ThreadId uint32
+	LockAddress uintptr 
+	ThreadId uint32 // format("x")
 }
 // mofAutoBoostEntryExhaustion class definition
 var mofAutoBoostEntryExhaustion = &MofClassDef{
@@ -1910,11 +1910,11 @@ var mofAutoBoostEntryExhaustion = &MofClassDef{
 // };
 // Go struct for event data
 type MofReadyThread struct {
-	TThreadId uint32
-	AdjustReason int8
-	AdjustIncrement int8
-	Flag int8
-	Reserved int8
+	TThreadId uint32 // format("x")
+	AdjustReason int8 
+	AdjustIncrement int8 
+	Flag int8 
+	Reserved int8 
 }
 // mofReadyThread class definition
 var mofReadyThread = &MofClassDef{
@@ -1940,10 +1940,10 @@ var mofReadyThread = &MofClassDef{
 // };
 // Go struct for event data
 type MofAntiStarvationBoost struct {
-	ThreadId uint32
-	ProcessorIndex uint16
-	Priority uint8
-	Reserved uint8
+	ThreadId uint32 // format("x")
+	ProcessorIndex uint16 
+	Priority uint8 
+	Reserved uint8 
 }
 // mofAntiStarvationBoost class definition
 var mofAntiStarvationBoost = &MofClassDef{
@@ -1975,16 +1975,16 @@ var mofAntiStarvationBoost = &MofClassDef{
 // };
 // Go struct for event data
 type MofThread_V2_TypeGroup1 struct {
-	ProcessId uint32
-	TThreadId uint32
-	StackBase uintptr
-	StackLimit uintptr
-	UserStackBase uintptr
-	UserStackLimit uintptr
-	StartAddr uintptr
-	Win32StartAddr uintptr
-	TebBase uintptr
-	SubProcessTag uint32
+	ProcessId uint32 // format("x")
+	TThreadId uint32 // format("x")
+	StackBase uintptr 
+	StackLimit uintptr 
+	UserStackBase uintptr 
+	UserStackLimit uintptr 
+	StartAddr uintptr 
+	Win32StartAddr uintptr 
+	TebBase uintptr 
+	SubProcessTag uint32 // format("x")
 }
 // mofThread_V2_TypeGroup1 class definition
 var mofThread_V2_TypeGroup1 = &MofClassDef{
@@ -2028,13 +2028,13 @@ var mofUdpIp_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofUdpIp_V0_TypeGroup1 struct {
-	context uintptr
-	saddr uintptr
-	sport uintptr
-	size uint16
-	daddr uintptr
-	dport uintptr
-	dsize uint16
+	context uintptr 
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	size uint16 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	dsize uint16 
 }
 // mofUdpIp_V0_TypeGroup1 class definition
 var mofUdpIp_V0_TypeGroup1 = &MofClassDef{
@@ -2071,8 +2071,8 @@ var mofStackWalk = &MofClassDef{
 // };
 // Go struct for event data
 type MofStackWalk_TypeGroup1 struct {
-	key uintptr
-	StackFrame uintptr
+	key uintptr 
+	StackFrame uintptr // MAX(192)
 }
 // mofStackWalk_TypeGroup1 class definition
 var mofStackWalk_TypeGroup1 = &MofClassDef{
@@ -2095,10 +2095,10 @@ var mofStackWalk_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofStackWalk_Key struct {
-	EventTimeStamp uint64
-	StackProcess uint32
-	StackThread uint32
-	StackKey uintptr
+	EventTimeStamp uint64 
+	StackProcess uint32 // format("x")
+	StackThread uint32 
+	StackKey uintptr 
 }
 // mofStackWalk_Key class definition
 var mofStackWalk_Key = &MofClassDef{
@@ -2154,41 +2154,41 @@ var mofStackWalk_Key = &MofClassDef{
 // };
 // Go struct for event data
 type MofStackWalk_Event struct {
-	EventTimeStamp uint64
-	StackProcess uint32
-	StackThread uint32
-	Stack1 uintptr
-	Stack2 uintptr
-	Stack3 uintptr
-	Stack4 uintptr
-	Stack5 uintptr
-	Stack6 uintptr
-	Stack7 uintptr
-	Stack8 uintptr
-	Stack9 uintptr
-	Stack10 uintptr
-	Stack11 uintptr
-	Stack12 uintptr
-	Stack13 uintptr
-	Stack14 uintptr
-	Stack15 uintptr
-	Stack16 uintptr
-	Stack17 uintptr
-	Stack18 uintptr
-	Stack19 uintptr
-	Stack20 uintptr
-	Stack21 uintptr
-	Stack22 uintptr
-	Stack23 uintptr
-	Stack24 uintptr
-	Stack25 uintptr
-	Stack26 uintptr
-	Stack27 uintptr
-	Stack28 uintptr
-	Stack29 uintptr
-	Stack30 uintptr
-	Stack31 uintptr
-	Stack32 uintptr
+	EventTimeStamp uint64 
+	StackProcess uint32 // format("x")
+	StackThread uint32 
+	Stack1 uintptr 
+	Stack2 uintptr 
+	Stack3 uintptr 
+	Stack4 uintptr 
+	Stack5 uintptr 
+	Stack6 uintptr 
+	Stack7 uintptr 
+	Stack8 uintptr 
+	Stack9 uintptr 
+	Stack10 uintptr 
+	Stack11 uintptr 
+	Stack12 uintptr 
+	Stack13 uintptr 
+	Stack14 uintptr 
+	Stack15 uintptr 
+	Stack16 uintptr 
+	Stack17 uintptr 
+	Stack18 uintptr 
+	Stack19 uintptr 
+	Stack20 uintptr 
+	Stack21 uintptr 
+	Stack22 uintptr 
+	Stack23 uintptr 
+	Stack24 uintptr 
+	Stack25 uintptr 
+	Stack26 uintptr 
+	Stack27 uintptr 
+	Stack28 uintptr 
+	Stack29 uintptr 
+	Stack30 uintptr 
+	Stack31 uintptr 
+	Stack32 uintptr 
 }
 // mofStackWalk_Event class definition
 var mofStackWalk_Event = &MofClassDef{
@@ -2253,8 +2253,8 @@ var mofDiskIo_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofV1_DriverMajorFunctionReturn struct {
-	UniqMatchId uint32
-	Irp uintptr
+	UniqMatchId uint32 
+	Irp uintptr 
 }
 // mofV1_DriverMajorFunctionReturn class definition
 var mofV1_DriverMajorFunctionReturn = &MofClassDef{
@@ -2276,9 +2276,9 @@ var mofV1_DriverMajorFunctionReturn = &MofClassDef{
 // };
 // Go struct for event data
 type MofV1_DriverCompleteRequest struct {
-	RoutineAddr uintptr
-	Irp uintptr
-	UniqMatchId uint32
+	RoutineAddr uintptr 
+	Irp uintptr 
+	UniqMatchId uint32 
 }
 // mofV1_DriverCompleteRequest class definition
 var mofV1_DriverCompleteRequest = &MofClassDef{
@@ -2301,8 +2301,8 @@ var mofV1_DriverCompleteRequest = &MofClassDef{
 // };
 // Go struct for event data
 type MofV1_DriverCompleteRequestReturn struct {
-	Irp uintptr
-	UniqMatchId uint32
+	Irp uintptr 
+	UniqMatchId uint32 
 }
 // mofV1_DriverCompleteRequestReturn class definition
 var mofV1_DriverCompleteRequestReturn = &MofClassDef{
@@ -2328,13 +2328,13 @@ var mofV1_DriverCompleteRequestReturn = &MofClassDef{
 // };
 // Go struct for event data
 type MofDiskIo_V1_TypeGroup1 struct {
-	DiskNumber uint32
-	IrpFlags uint32
-	TransferSize uint32
-	ResponseTime uint32
-	ByteOffset uint64
-	FileObject uintptr
-	HighResResponseTime uint64
+	DiskNumber uint32 
+	IrpFlags uint32 // format("x")
+	TransferSize uint32 
+	ResponseTime uint32 
+	ByteOffset uint64 
+	FileObject uintptr 
+	HighResResponseTime uint64 
 }
 // mofDiskIo_V1_TypeGroup1 class definition
 var mofDiskIo_V1_TypeGroup1 = &MofClassDef{
@@ -2365,12 +2365,12 @@ var mofDiskIo_V1_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofV1_DriverMajorFunctionCall struct {
-	UniqMatchId uint32
-	RoutineAddr uintptr
-	Irp uintptr
-	MajorFunction uint32
-	MinorFunction uint32
-	FileObject uintptr
+	UniqMatchId uint32 
+	RoutineAddr uintptr 
+	Irp uintptr 
+	MajorFunction uint32 
+	MinorFunction uint32 
+	FileObject uintptr 
 }
 // mofV1_DriverMajorFunctionCall class definition
 var mofV1_DriverMajorFunctionCall = &MofClassDef{
@@ -2408,11 +2408,11 @@ var mofUmsEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofUmsContextSwitch struct {
-	ScheduledThreadId uint32
-	SwitchCount uint32
-	KernelYieldCount uint32
-	MixedYieldCount uint32
-	YieldCount uint32
+	ScheduledThreadId uint32 // format("x")
+	SwitchCount uint32 
+	KernelYieldCount uint32 
+	MixedYieldCount uint32 
+	YieldCount uint32 
 }
 // mofUmsContextSwitch class definition
 var mofUmsContextSwitch = &MofClassDef{
@@ -2438,10 +2438,10 @@ var mofUmsContextSwitch = &MofClassDef{
 // };
 // Go struct for event data
 type MofUmsDirectedSwitchEnd struct {
-	ProcessId uint32
-	ScheduledThreadId uint32
-	PrimaryThreadId uint32
-	SwitchFlags uint32
+	ProcessId uint32 // format("x")
+	ScheduledThreadId uint32 // format("x")
+	PrimaryThreadId uint32 // format("x")
+	SwitchFlags uint32 // format("x")
 }
 // mofUmsDirectedSwitchEnd class definition
 var mofUmsDirectedSwitchEnd = &MofClassDef{
@@ -2465,9 +2465,9 @@ var mofUmsDirectedSwitchEnd = &MofClassDef{
 // };
 // Go struct for event data
 type MofUmsScheduledPark struct {
-	ProcessId uint32
-	ScheduledThreadId uint32
-	ParkFlags uint32
+	ProcessId uint32 // format("x")
+	ScheduledThreadId uint32 // format("x")
+	ParkFlags uint32 // format("x")
 }
 // mofUmsScheduledPark class definition
 var mofUmsScheduledPark = &MofClassDef{
@@ -2492,11 +2492,11 @@ var mofUmsScheduledPark = &MofClassDef{
 // };
 // Go struct for event data
 type MofUmsDisassociate struct {
-	ProcessId uint32
-	ScheduledThreadId uint32
-	PrimaryThreadId uint32
-	UmsApcControlFlags uint32
-	Status uint32
+	ProcessId uint32 // format("x")
+	ScheduledThreadId uint32 // format("x")
+	PrimaryThreadId uint32 // format("x")
+	UmsApcControlFlags uint32 // format("x")
+	Status uint32 // format("x")
 }
 // mofUmsDisassociate class definition
 var mofUmsDisassociate = &MofClassDef{
@@ -2522,10 +2522,10 @@ var mofUmsDisassociate = &MofClassDef{
 // };
 // Go struct for event data
 type MofUmsDirectedSwitchStart struct {
-	ProcessId uint32
-	ScheduledThreadId uint32
-	PrimaryThreadId uint32
-	SwitchFlags uint32
+	ProcessId uint32 // format("x")
+	ScheduledThreadId uint32 // format("x")
+	PrimaryThreadId uint32 // format("x")
+	SwitchFlags uint32 // format("x")
 }
 // mofUmsDirectedSwitchStart class definition
 var mofUmsDirectedSwitchStart = &MofClassDef{
@@ -2564,10 +2564,10 @@ var mofPerfInfo = &MofClassDef{
 // };
 // Go struct for event data
 type MofSampledProfileInterval_V3 struct {
-	Source uint32
-	NewInterval uint32
-	OldInterval uint32
-	SourceName uintptr
+	Source uint32 
+	NewInterval uint32 
+	OldInterval uint32 
+	SourceName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSampledProfileInterval_V3 class definition
 var mofSampledProfileInterval_V3 = &MofClassDef{
@@ -2592,10 +2592,10 @@ var mofSampledProfileInterval_V3 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSpinLockConfig_V3 struct {
-	SpinLockSpinThreshold uint32
-	SpinLockContentionSampleRate uint32
-	SpinLockAcquireSampleRate uint32
-	SpinLockHoldThreshold uint32
+	SpinLockSpinThreshold uint32 
+	SpinLockContentionSampleRate uint32 
+	SpinLockAcquireSampleRate uint32 
+	SpinLockHoldThreshold uint32 
 }
 // mofSpinLockConfig_V3 class definition
 var mofSpinLockConfig_V3 = &MofClassDef{
@@ -2627,7 +2627,7 @@ var mofTcpIp_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_V1_Fail struct {
-	Proto uint32
+	Proto uint32 
 }
 // mofTcpIp_V1_Fail class definition
 var mofTcpIp_V1_Fail = &MofClassDef{
@@ -2654,14 +2654,14 @@ var mofTcpIp_V1_Fail = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_V1_TypeGroup3 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	connid uintptr
-	seqnum uint32
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	connid uintptr // PointerType this is not a valid pointer!
+	seqnum uint32 
 }
 // mofTcpIp_V1_TypeGroup3 class definition
 var mofTcpIp_V1_TypeGroup3 = &MofClassDef{
@@ -2696,16 +2696,16 @@ var mofTcpIp_V1_TypeGroup3 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_V1_Send struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	startime uint32
-	endtime uint32
-	connid uintptr
-	seqnum uint32
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	startime uint32 
+	endtime uint32 
+	connid uintptr // PointerType this is not a valid pointer!
+	seqnum uint32 
 }
 // mofTcpIp_V1_Send class definition
 var mofTcpIp_V1_Send = &MofClassDef{
@@ -2741,14 +2741,14 @@ var mofTcpIp_V1_Send = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_V1_TypeGroup1 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	connid uintptr
-	seqnum uint32
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	connid uintptr // PointerType this is not a valid pointer!
+	seqnum uint32 
 }
 // mofTcpIp_V1_TypeGroup1 class definition
 var mofTcpIp_V1_TypeGroup1 = &MofClassDef{
@@ -2788,21 +2788,21 @@ var mofTcpIp_V1_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_V1_TypeGroup2 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	mss uint16
-	sackopt uint16
-	tsopt uint16
-	wsopt uint16
-	rcvwin uint32
-	rcvwinscale int16
-	sndwinscale int16
-	connid uintptr
-	seqnum uint32
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	mss uint16 
+	sackopt uint16 
+	tsopt uint16 
+	wsopt uint16 
+	rcvwin uint32 
+	rcvwinscale int16 
+	sndwinscale int16 
+	connid uintptr // PointerType this is not a valid pointer!
+	seqnum uint32 
 }
 // mofTcpIp_V1_TypeGroup2 class definition
 var mofTcpIp_V1_TypeGroup2 = &MofClassDef{
@@ -2842,14 +2842,14 @@ var mofTcpIp_V1_TypeGroup2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_V1_Receive struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	connid uintptr
-	seqnum uint32
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	connid uintptr // PointerType this is not a valid pointer!
+	seqnum uint32 
 }
 // mofTcpIp_V1_Receive class definition
 var mofTcpIp_V1_Receive = &MofClassDef{
@@ -2887,7 +2887,7 @@ var mofEventTraceEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_BuildInfo_TypeGroup struct {
-	BuildString uintptr
+	BuildString uintptr // StringTermination("NullTerminated")
 }
 // mofHeader_BuildInfo_TypeGroup class definition
 var mofHeader_BuildInfo_TypeGroup = &MofClassDef{
@@ -2909,9 +2909,9 @@ var mofHeader_BuildInfo_TypeGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_DbgIdRSDS_TypeGroup struct {
-	Guid GUID
-	Age uint32
-	PdbName uintptr
+	Guid GUID // extension("GUID")
+	Age uint32 
+	PdbName uintptr // StringTermination("NullTerminated")
 }
 // mofHeader_DbgIdRSDS_TypeGroup class definition
 var mofHeader_DbgIdRSDS_TypeGroup = &MofClassDef{
@@ -2945,12 +2945,12 @@ var mofHeader_DbgIdRSDS_TypeGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_PartitionInfoExtensionV2_TypeGroup struct {
-	EventVersion uint16
-	Reserved uint16
-	PartitionType uint32
-	QpcOffsetFromRoot int64
-	PartitionId uintptr
-	ParentId uintptr
+	EventVersion uint16 
+	Reserved uint16 
+	PartitionType uint32 
+	QpcOffsetFromRoot int64 
+	PartitionId uintptr // StringTermination("NullTerminated"), format("w")
+	ParentId uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofHeader_PartitionInfoExtensionV2_TypeGroup class definition
 var mofHeader_PartitionInfoExtensionV2_TypeGroup = &MofClassDef{
@@ -2983,15 +2983,15 @@ var mofHeader_PartitionInfoExtensionV2_TypeGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_Extension_TypeGroup struct {
-	GroupMask1 uint32
-	GroupMask2 uint32
-	GroupMask3 uint32
-	GroupMask4 uint32
-	GroupMask5 uint32
-	GroupMask6 uint32
-	GroupMask7 uint32
-	GroupMask8 uint32
-	KernelEventVersion uint32
+	GroupMask1 uint32 // format("x")
+	GroupMask2 uint32 // format("x")
+	GroupMask3 uint32 // format("x")
+	GroupMask4 uint32 // format("x")
+	GroupMask5 uint32 // format("x")
+	GroupMask6 uint32 // format("x")
+	GroupMask7 uint32 // format("x")
+	GroupMask8 uint32 // format("x")
+	KernelEventVersion uint32 // format("x")
 }
 // mofHeader_Extension_TypeGroup class definition
 var mofHeader_Extension_TypeGroup = &MofClassDef{
@@ -3021,9 +3021,9 @@ var mofHeader_Extension_TypeGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_LastDroppedTimes_TypeGroup struct {
-	TimeStampCount uint32
-	Padding uint32
-	TimeStamp uintptr
+	TimeStampCount uint32 
+	Padding uint32 
+	TimeStamp uintptr // WmiSizeIs("TimeStampCount")
 }
 // mofHeader_LastDroppedTimes_TypeGroup class definition
 var mofHeader_LastDroppedTimes_TypeGroup = &MofClassDef{
@@ -3051,12 +3051,12 @@ var mofHeader_LastDroppedTimes_TypeGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_PartitionInfoExtension_TypeGroup struct {
-	EventVersion uint16
-	Reserved uint16
-	PartitionType uint32
-	QpcOffsetFromRoot int64
-	PartitionId GUID
-	ParentId GUID
+	EventVersion uint16 
+	Reserved uint16 
+	PartitionType uint32 
+	QpcOffsetFromRoot int64 
+	PartitionId GUID // extension("GUID")
+	ParentId GUID // extension("GUID")
 }
 // mofHeader_PartitionInfoExtension_TypeGroup class definition
 var mofHeader_PartitionInfoExtension_TypeGroup = &MofClassDef{
@@ -3109,29 +3109,29 @@ var mofHeader_PartitionInfoExtension_TypeGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofEventTrace_Header struct {
-	BufferSize uint32
-	Version uint32
-	ProviderVersion uint32
-	NumberOfProcessors uint32
-	EndTime uint64
-	TimerResolution uint32
-	MaxFileSize uint32
-	LogFileMode uint32
-	BuffersWritten uint32
-	StartBuffers uint32
-	PointerSize uint32
-	EventsLost uint32
-	CPUSpeed uint32
-	LoggerName uintptr
-	LogFileName uintptr
-	TimeZoneInformation [176]uint8
-	BootTime uint64
-	PerfFreq uint64
-	StartTime uint64
-	ReservedFlags uint32
-	BuffersLost uint32
-	SessionNameString uintptr
-	LogFileNameString uintptr
+	BufferSize uint32 
+	Version uint32 
+	ProviderVersion uint32 
+	NumberOfProcessors uint32 
+	EndTime uint64 
+	TimerResolution uint32 
+	MaxFileSize uint32 
+	LogFileMode uint32 // format("x")
+	BuffersWritten uint32 
+	StartBuffers uint32 
+	PointerSize uint32 
+	EventsLost uint32 
+	CPUSpeed uint32 
+	LoggerName uintptr 
+	LogFileName uintptr 
+	TimeZoneInformation [176]uint8 // extension("NoPrint"), MAX(176)
+	BootTime uint64 
+	PerfFreq uint64 
+	StartTime uint64 
+	ReservedFlags uint32 // format("x")
+	BuffersLost uint32 
+	SessionNameString uintptr // StringTermination("NullTerminated"), format("w")
+	LogFileNameString uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofEventTrace_Header class definition
 var mofEventTrace_Header = &MofClassDef{
@@ -3178,9 +3178,9 @@ var mofEventTrace_Header = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_ProviderBinaryPath_TypeGroup struct {
-	GuidCount uint32
-	Guid uintptr
-	BinaryPath uintptr
+	GuidCount uint32 
+	Guid uintptr // extension("GUID"), WmiSizeIs("GuidCount")
+	BinaryPath uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofHeader_ProviderBinaryPath_TypeGroup class definition
 var mofHeader_ProviderBinaryPath_TypeGroup = &MofClassDef{
@@ -3227,10 +3227,10 @@ var mofMMCSSTrace = &MofClassDef{
 // };
 // Go struct for event data
 type MofMMCSSEvent struct {
-	ScheduledPID uint32
-	ScheduledTID uint32
-	SchedulingPriority uint32
-	TaskIndex uint32
+	ScheduledPID uint32 // format("x")
+	ScheduledTID uint32 // format("x")
+	SchedulingPriority uint32 
+	TaskIndex uint32 
 }
 // mofMMCSSEvent class definition
 var mofMMCSSEvent = &MofClassDef{
@@ -3252,7 +3252,7 @@ var mofMMCSSEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofMMCSSWakeup struct {
-	Reason uint32
+	Reason uint32 // format("x")
 }
 // mofMMCSSWakeup class definition
 var mofMMCSSWakeup = &MofClassDef{
@@ -3310,21 +3310,21 @@ var mofSystemConfig_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_LogDisk struct {
-	StartOffset uint64
-	PartitionSize uint64
-	DiskNumber uint32
-	Size uint32
-	DriveType uint32
-	DriveLetterString [4]uint16
-	Pad1 uint32
-	PartitionNumber uint32
-	SectorsPerCluster uint32
-	BytesPerSector uint32
-	Pad2 uint32
-	NumberOfFreeClusters int64
-	TotalNumberOfClusters int64
-	FileSystem [16]uint16
-	VolumeExt uint32
+	StartOffset uint64 
+	PartitionSize uint64 
+	DiskNumber uint32 
+	Size uint32 
+	DriveType uint32 
+	DriveLetterString [4]uint16 // MAX(4)
+	Pad1 uint32 
+	PartitionNumber uint32 
+	SectorsPerCluster uint32 
+	BytesPerSector uint32 
+	Pad2 uint32 
+	NumberOfFreeClusters int64 
+	TotalNumberOfClusters int64 
+	FileSystem [16]uint16 // MAX(16)
+	VolumeExt uint32 
 }
 // mofSystemConfig_V1_LogDisk class definition
 var mofSystemConfig_V1_LogDisk = &MofClassDef{
@@ -3372,21 +3372,21 @@ var mofSystemConfig_V1_LogDisk = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_PhyDisk struct {
-	DiskNumber uint32
-	BytesPerSector uint32
-	SectorsPerTrack uint32
-	TracksPerCylinder uint32
-	Cylinders uint64
-	SCSIPort uint32
-	SCSIPath uint32
-	SCSITarget uint32
-	SCSILun uint32
-	Manufacturer [256]uint16
-	PartitionCount uint32
-	WriteCacheEnabled uint8
-	Pad uint8
-	BootDriveLetter [3]uint16
-	Spare [2]uint16
+	DiskNumber uint32 
+	BytesPerSector uint32 
+	SectorsPerTrack uint32 
+	TracksPerCylinder uint32 
+	Cylinders uint64 
+	SCSIPort uint32 
+	SCSIPath uint32 
+	SCSITarget uint32 
+	SCSILun uint32 
+	Manufacturer [256]uint16 // MAX(256)
+	PartitionCount uint32 
+	WriteCacheEnabled uint8 
+	Pad uint8 
+	BootDriveLetter [3]uint16 // MAX(3)
+	Spare [2]uint16 // MAX(2)
 }
 // mofSystemConfig_V1_PhyDisk class definition
 var mofSystemConfig_V1_PhyDisk = &MofClassDef{
@@ -3426,10 +3426,10 @@ var mofSystemConfig_V1_PhyDisk = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_IRQ struct {
-	IRQAffinity uint64
-	IRQNum uint32
-	DeviceDescriptionLen uint32
-	DeviceDescription uintptr
+	IRQAffinity uint64 // format("x")
+	IRQNum uint32 
+	DeviceDescriptionLen uint32 
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V1_IRQ class definition
 var mofSystemConfig_V1_IRQ = &MofClassDef{
@@ -3459,14 +3459,14 @@ var mofSystemConfig_V1_IRQ = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_CPU struct {
-	MHz uint32
-	NumberOfProcessors uint32
-	MemSize uint32
-	PageSize uint32
-	AllocationGranularity uint32
-	ComputerName [256]uint16
-	DomainName [132]uint16
-	HyperThreadingFlag uintptr
+	MHz uint32 
+	NumberOfProcessors uint32 
+	MemSize uint32 
+	PageSize uint32 
+	AllocationGranularity uint32 
+	ComputerName [256]uint16 // MAX(256)
+	DomainName [132]uint16 // MAX(132)
+	HyperThreadingFlag uintptr 
 }
 // mofSystemConfig_V1_CPU class definition
 var mofSystemConfig_V1_CPU = &MofClassDef{
@@ -3500,14 +3500,14 @@ var mofSystemConfig_V1_CPU = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_Power struct {
-	S1 uint8
-	S2 uint8
-	S3 uint8
-	S4 uint8
-	S5 uint8
-	Pad1 uint8
-	Pad2 uint8
-	Pad3 uint8
+	S1 uint8 
+	S2 uint8 
+	S3 uint8 
+	S4 uint8 
+	S5 uint8 
+	Pad1 uint8 
+	Pad2 uint8 
+	Pad3 uint8 
 }
 // mofSystemConfig_V1_Power class definition
 var mofSystemConfig_V1_Power = &MofClassDef{
@@ -3544,17 +3544,17 @@ var mofSystemConfig_V1_Power = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_Video struct {
-	MemorySize uint32
-	XResolution uint32
-	YResolution uint32
-	BitsPerPixel uint32
-	VRefresh uint32
-	ChipType [256]uint16
-	DACType [256]uint16
-	AdapterString [256]uint16
-	BiosString [256]uint16
-	DeviceId [256]uint16
-	StateFlags uint32
+	MemorySize uint32 
+	XResolution uint32 
+	YResolution uint32 
+	BitsPerPixel uint32 
+	VRefresh uint32 
+	ChipType [256]uint16 // MAX(256)
+	DACType [256]uint16 // MAX(256)
+	AdapterString [256]uint16 // MAX(256)
+	BiosString [256]uint16 // MAX(256)
+	DeviceId [256]uint16 // MAX(256)
+	StateFlags uint32 // format("x")
 }
 // mofSystemConfig_V1_Video class definition
 var mofSystemConfig_V1_Video = &MofClassDef{
@@ -3587,10 +3587,10 @@ var mofSystemConfig_V1_Video = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_Services struct {
-	ServiceName [34]uint16
-	DisplayName [256]uint16
-	ProcessName [34]uint16
-	ProcessId uint32
+	ServiceName [34]uint16 // MAX(34)
+	DisplayName [256]uint16 // MAX(256)
+	ProcessName [34]uint16 // MAX(34)
+	ProcessId uint32 
 }
 // mofSystemConfig_V1_Services class definition
 var mofSystemConfig_V1_Services = &MofClassDef{
@@ -3627,12 +3627,12 @@ var mofSystemConfig_V1_Services = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_PnP struct {
-	IDLength uint32
-	DescriptionLength uint32
-	FriendlyNameLength uint32
-	DeviceID uintptr
-	DeviceDescription uintptr
-	FriendlyName uintptr
+	IDLength uint32 
+	DescriptionLength uint32 
+	FriendlyNameLength uint32 
+	DeviceID uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
+	FriendlyName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V1_PnP class definition
 var mofSystemConfig_V1_PnP = &MofClassDef{
@@ -3672,22 +3672,22 @@ var mofSystemConfig_V1_PnP = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V1_NIC struct {
-	NICName [256]uint16
-	Index uint32
-	PhysicalAddrLen uint32
-	PhysicalAddr [8]uint16
-	Size uint32
-	IpAddress int32
-	SubnetMask int32
-	DhcpServer int32
-	Gateway int32
-	PrimaryWinsServer int32
-	SecondaryWinsServer int32
-	DnsServer1 int32
-	DnsServer2 int32
-	DnsServer3 int32
-	DnsServer4 int32
-	Data uint32
+	NICName [256]uint16 // MAX(256)
+	Index uint32 
+	PhysicalAddrLen uint32 
+	PhysicalAddr [8]uint16 // MAX(8)
+	Size uint32 
+	IpAddress int32 
+	SubnetMask int32 
+	DhcpServer int32 
+	Gateway int32 
+	PrimaryWinsServer int32 
+	SecondaryWinsServer int32 
+	DnsServer1 int32 
+	DnsServer2 int32 
+	DnsServer3 int32 
+	DnsServer4 int32 
+	Data uint32 
 }
 // mofSystemConfig_V1_NIC class definition
 var mofSystemConfig_V1_NIC = &MofClassDef{
@@ -3736,9 +3736,9 @@ var mofRegistry = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_HiveDirty struct {
-	Hive uintptr
-	LinkPath uintptr
-	DirtyReason uint32
+	Hive uintptr 
+	LinkPath uintptr // StringTermination("NullTerminated"), format("w")
+	DirtyReason uint32 
 }
 // mofRegistry_HiveDirty class definition
 var mofRegistry_HiveDirty = &MofClassDef{
@@ -3759,7 +3759,7 @@ var mofRegistry_HiveDirty = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_Config struct {
-	CurrentControlSet uint32
+	CurrentControlSet uint32 
 }
 // mofRegistry_Config class definition
 var mofRegistry_Config = &MofClassDef{
@@ -3786,9 +3786,9 @@ var mofRegistry_Config = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_HiveDestroy struct {
-	Hive uintptr
-	FileName uintptr
-	Path uintptr
+	Hive uintptr 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
+	Path uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofRegistry_HiveDestroy class definition
 var mofRegistry_HiveDestroy = &MofClassDef{
@@ -3819,17 +3819,17 @@ var mofRegistry_HiveDestroy = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_Counters struct {
-	Counter1 uint64
-	Counter2 uint64
-	Counter3 uint64
-	Counter4 uint64
-	Counter5 uint64
-	Counter6 uint64
-	Counter7 uint64
-	Counter8 uint64
-	Counter9 uint64
-	Counter10 uint64
-	Counter11 uint64
+	Counter1 uint64 
+	Counter2 uint64 
+	Counter3 uint64 
+	Counter4 uint64 
+	Counter5 uint64 
+	Counter6 uint64 
+	Counter7 uint64 
+	Counter8 uint64 
+	Counter9 uint64 
+	Counter10 uint64 
+	Counter11 uint64 
 }
 // mofRegistry_Counters class definition
 var mofRegistry_Counters = &MofClassDef{
@@ -3869,11 +3869,11 @@ var mofRegistry_Counters = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_TypeGroup1 struct {
-	InitialTime int64
-	Status uint32
-	Index uint32
-	KeyHandle uintptr
-	KeyName uintptr
+	InitialTime int64 
+	Status uint32 
+	Index uint32 
+	KeyHandle uintptr 
+	KeyName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofRegistry_TypeGroup1 class definition
 var mofRegistry_TypeGroup1 = &MofClassDef{
@@ -3904,11 +3904,11 @@ var mofRegistry_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_HiveInitialize struct {
-	Hive uintptr
-	OperationType uint32
-	PoolTag uint32
-	Size uint32
-	FileName uintptr
+	Hive uintptr 
+	OperationType uint32 
+	PoolTag uint32 
+	Size uint32 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofRegistry_HiveInitialize class definition
 var mofRegistry_HiveInitialize = &MofClassDef{
@@ -3938,11 +3938,11 @@ var mofRegistry_HiveInitialize = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_TxR struct {
-	TxrGUID GUID
-	Status uint32
-	UowCount uint32
-	OperationTime uint64
-	Hive uintptr
+	TxrGUID GUID // extension("GUID")
+	Status uint32 
+	UowCount uint32 
+	OperationTime uint64 
+	Hive uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofRegistry_TxR class definition
 var mofRegistry_TxR = &MofClassDef{
@@ -3975,11 +3975,11 @@ var mofRegistry_TxR = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_HiveRundown struct {
-	Size uint64
-	Hive uintptr
-	LoadedKeyCount uint32
-	FileName uintptr
-	LinkPath uintptr
+	Size uint64 
+	Hive uintptr 
+	LoadedKeyCount uint32 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
+	LinkPath uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofRegistry_HiveRundown class definition
 var mofRegistry_HiveRundown = &MofClassDef{
@@ -4007,11 +4007,11 @@ var mofRegistry_HiveRundown = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_ChangeNotification struct {
-	Notification uintptr
-	KeyHandle uintptr
-	Type uint8
-	WatchSubtree uint8
-	Primary uint8
+	Notification uintptr 
+	KeyHandle uintptr 
+	Type uint8 
+	WatchSubtree uint8 
+	Primary uint8 
 }
 // mofRegistry_ChangeNotification class definition
 var mofRegistry_ChangeNotification = &MofClassDef{
@@ -4038,8 +4038,8 @@ var mofRegistry_ChangeNotification = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_HiveLink struct {
-	Hive uintptr
-	Path uintptr
+	Hive uintptr 
+	Path uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofRegistry_HiveLink class definition
 var mofRegistry_HiveLink = &MofClassDef{
@@ -4074,11 +4074,11 @@ var mofPageFault = &MofClassDef{
 // };
 // Go struct for event data
 type MofPageFault_HeapRangeRundown_V4 struct {
-	HeapHandle uintptr
-	HRFlags uint32
-	HRPid uint32
-	HRRangeCount uint32
-	HRHeapTag uint64
+	HeapHandle uintptr 
+	HRFlags uint32 // format("x")
+	HRPid uint32 // format("x")
+	HRRangeCount uint32 
+	HRHeapTag uint64 
 }
 // mofPageFault_HeapRangeRundown_V4 class definition
 var mofPageFault_HeapRangeRundown_V4 = &MofClassDef{
@@ -4132,14 +4132,14 @@ var mofRDComplete_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_Extension_V0_TypeGroup struct {
-	GroupMask1 uint32
-	GroupMask2 uint32
-	GroupMask3 uint32
-	GroupMask4 uint32
-	GroupMask5 uint32
-	GroupMask6 uint32
-	GroupMask7 uint32
-	GroupMask8 uint32
+	GroupMask1 uint32 // format("x")
+	GroupMask2 uint32 // format("x")
+	GroupMask3 uint32 // format("x")
+	GroupMask4 uint32 // format("x")
+	GroupMask5 uint32 // format("x")
+	GroupMask6 uint32 // format("x")
+	GroupMask7 uint32 // format("x")
+	GroupMask8 uint32 // format("x")
 }
 // mofHeader_Extension_V0_TypeGroup class definition
 var mofHeader_Extension_V0_TypeGroup = &MofClassDef{
@@ -4195,29 +4195,29 @@ var mofHeader_Extension_V0_TypeGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofEventTrace_V0_Header struct {
-	BufferSize uint32
-	Version uint32
-	ProviderVersion uint32
-	NumberOfProcessors uint32
-	EndTime uint64
-	TimerResolution uint32
-	MaxFileSize uint32
-	LogFileMode uint32
-	BuffersWritten uint32
-	StartBuffers uint32
-	PointerSize uint32
-	EventsLost uint32
-	CPUSpeed uint32
-	LoggerName uintptr
-	LogFileName uintptr
-	TimeZoneInformation [176]uint8
-	BootTime uint64
-	PerfFreq uint64
-	StartTime uint64
-	ReservedFlags uint32
-	BuffersLost uint32
-	SessionNameString uintptr
-	LogFileNameString uintptr
+	BufferSize uint32 
+	Version uint32 
+	ProviderVersion uint32 
+	NumberOfProcessors uint32 
+	EndTime uint64 
+	TimerResolution uint32 
+	MaxFileSize uint32 
+	LogFileMode uint32 // format("x")
+	BuffersWritten uint32 
+	StartBuffers uint32 
+	PointerSize uint32 
+	EventsLost uint32 
+	CPUSpeed uint32 
+	LoggerName uintptr 
+	LogFileName uintptr 
+	TimeZoneInformation [176]uint8 // extension("NoPrint"), MAX(176)
+	BootTime uint64 
+	PerfFreq uint64 
+	StartTime uint64 
+	ReservedFlags uint32 // format("x")
+	BuffersLost uint32 
+	SessionNameString uintptr // StringTermination("NullTerminated"), format("w")
+	LogFileNameString uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofEventTrace_V0_Header class definition
 var mofEventTrace_V0_Header = &MofClassDef{
@@ -4276,13 +4276,13 @@ var mofProcess_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V1_TypeGroup1 struct {
-	PageDirectoryBase uintptr
-	ProcessId uint32
-	ParentId uint32
-	SessionId uint32
-	ExitStatus int32
-	UserSID uintptr
-	ImageFileName uintptr
+	PageDirectoryBase uintptr 
+	ProcessId uint32 // format("x")
+	ParentId uint32 // format("x")
+	SessionId uint32 
+	ExitStatus int32 
+	UserSID uintptr // extension("Sid")
+	ImageFileName uintptr // StringTermination("NullTerminated")
 }
 // mofProcess_V1_TypeGroup1 class definition
 var mofProcess_V1_TypeGroup1 = &MofClassDef{
@@ -4297,7 +4297,7 @@ var mofProcess_V1_TypeGroup1 = &MofClassDef{
 		{ID: 3, Name: "ParentId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 		{ID: 4, Name: "SessionId", InType: TDH_INTYPE_UINT32},
 		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
-		{ID: 6, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 6, Name: "UserSID", InType: TDH_INTYPE_WBEMSID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
 		{ID: 7, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
@@ -4319,9 +4319,9 @@ var mofPerfInfo_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSampledProfile_V1 struct {
-	InstructionPointer uintptr
-	ThreadId uint32
-	Count uint16
+	InstructionPointer uintptr 
+	ThreadId uint32 
+	Count uint16 
 }
 // mofSampledProfile_V1 class definition
 var mofSampledProfile_V1 = &MofClassDef{
@@ -4343,8 +4343,8 @@ var mofSampledProfile_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofDPC_V1 struct {
-	InitialTime uintptr
-	Routine uintptr
+	InitialTime uint64 // extension("WmiTime")
+	Routine uintptr 
 }
 // mofDPC_V1 class definition
 var mofDPC_V1 = &MofClassDef{
@@ -4366,9 +4366,9 @@ var mofDPC_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofISR_V1 struct {
-	InitialTime uintptr
-	Routine uintptr
-	ReturnValue uint32
+	InitialTime uint64 // extension("WmiTime")
+	Routine uintptr 
+	ReturnValue uint32 
 }
 // mofISR_V1 class definition
 var mofISR_V1 = &MofClassDef{
@@ -4399,7 +4399,7 @@ var mofImage_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofKernelImageBase struct {
-	ImageBase uintptr
+	ImageBase uintptr 
 }
 // mofKernelImageBase class definition
 var mofKernelImageBase = &MofClassDef{
@@ -4440,10 +4440,10 @@ var mofLoaderBasicEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofLoaderCodedEvent struct {
-	BaseAddress uint64
-	ErrorOpcode uint8
-	Code int8
-	String uintptr
+	BaseAddress uint64 // format("x")
+	ErrorOpcode uint8 // format("x")
+	Code int8 
+	String uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofLoaderCodedEvent class definition
 var mofLoaderCodedEvent = &MofClassDef{
@@ -4466,7 +4466,7 @@ var mofLoaderCodedEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofLoaderBaseEvent struct {
-	BaseAddress uint64
+	BaseAddress uint64 // format("x")
 }
 // mofLoaderBaseEvent class definition
 var mofLoaderBaseEvent = &MofClassDef{
@@ -4500,18 +4500,18 @@ var mofLoaderBaseEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofImage_Load_V2 struct {
-	ImageBase uintptr
-	ImageSize uintptr
-	ProcessId uint32
-	ImageChecksum uint32
-	TimeDateStamp uint32
-	Reserved0 uint32
-	DefaultBase uintptr
-	Reserved1 uint32
-	Reserved2 uint32
-	Reserved3 uint32
-	Reserved4 uint32
-	FileName uintptr
+	ImageBase uintptr 
+	ImageSize uintptr 
+	ProcessId uint32 
+	ImageChecksum uint32 
+	TimeDateStamp uint32 
+	Reserved0 uint32 
+	DefaultBase uintptr 
+	Reserved1 uint32 
+	Reserved2 uint32 
+	Reserved3 uint32 
+	Reserved4 uint32 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofImage_Load_V2 class definition
 var mofImage_Load_V2 = &MofClassDef{
@@ -4541,7 +4541,7 @@ var mofImage_Load_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofHypercallPage struct {
-	HypercallPageVa uintptr
+	HypercallPageVa uintptr 
 }
 // mofHypercallPage class definition
 var mofHypercallPage = &MofClassDef{
@@ -4575,12 +4575,12 @@ var mofUdpIp_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofUdpIp_V1_TypeGroup1 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
 }
 // mofUdpIp_V1_TypeGroup1 class definition
 var mofUdpIp_V1_TypeGroup1 = &MofClassDef{
@@ -4621,10 +4621,10 @@ var mofRegistry_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_V0_TypeGroup1 struct {
-	Status uintptr
-	KeyHandle uintptr
-	ElapsedTime int64
-	KeyName uintptr
+	Status uintptr 
+	KeyHandle uintptr 
+	ElapsedTime int64 
+	KeyName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofRegistry_V0_TypeGroup1 class definition
 var mofRegistry_V0_TypeGroup1 = &MofClassDef{
@@ -4662,10 +4662,10 @@ var mofProcess_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V0_TypeGroup1 struct {
-	ProcessId uintptr
-	ParentId uintptr
-	UserSID uintptr
-	ImageFileName uintptr
+	ProcessId uintptr 
+	ParentId uintptr 
+	UserSID uintptr // extension("Sid")
+	ImageFileName uintptr // StringTermination("NullTerminated")
 }
 // mofProcess_V0_TypeGroup1 class definition
 var mofProcess_V0_TypeGroup1 = &MofClassDef{
@@ -4677,7 +4677,7 @@ var mofProcess_V0_TypeGroup1 = &MofClassDef{
 	Properties: []MofPropertyDef{
 		{ID: 1, Name: "ProcessId", InType: TDH_INTYPE_POINTER},
 		{ID: 2, Name: "ParentId", InType: TDH_INTYPE_POINTER},
-		{ID: 3, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 3, Name: "UserSID", InType: TDH_INTYPE_WBEMSID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
 		{ID: 4, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 	},
 }
@@ -4703,13 +4703,13 @@ var mofFileIo = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_ReadWrite struct {
-	Offset uint64
-	IrpPtr uintptr
-	FileObject uintptr
-	FileKey uintptr
-	TTID uint32
-	IoSize uint32
-	IoFlags uint32
+	Offset uint64 
+	IrpPtr uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
+	TTID uint32 
+	IoSize uint32 
+	IoFlags uint32 
 }
 // mofFileIo_ReadWrite class definition
 var mofFileIo_ReadWrite = &MofClassDef{
@@ -4743,13 +4743,13 @@ var mofFileIo_ReadWrite = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_Create struct {
-	IrpPtr uintptr
-	FileObject uintptr
-	TTID uint32
-	CreateOptions uint32
-	FileAttributes uint32
-	ShareAccess uint32
-	OpenPath uintptr
+	IrpPtr uintptr 
+	FileObject uintptr 
+	TTID uint32 
+	CreateOptions uint32 
+	FileAttributes uint32 
+	ShareAccess uint32 
+	OpenPath uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_Create class definition
 var mofFileIo_Create = &MofClassDef{
@@ -4779,12 +4779,12 @@ var mofFileIo_Create = &MofClassDef{
 // };
 // Go struct for event data
 type MofFltIoInit struct {
-	RoutineAddr uintptr
-	FileObject uintptr
-	FileContext uintptr
-	IrpPtr uintptr
-	CallbackDataPtr uintptr
-	MajorFunction uint32
+	RoutineAddr uintptr 
+	FileObject uintptr 
+	FileContext uintptr 
+	IrpPtr uintptr 
+	CallbackDataPtr uintptr 
+	MajorFunction uint32 
 }
 // mofFltIoInit class definition
 var mofFltIoInit = &MofClassDef{
@@ -4814,13 +4814,13 @@ var mofFltIoInit = &MofClassDef{
 // };
 // Go struct for event data
 type MofFltIoFailure struct {
-	RoutineAddr uintptr
-	FileObject uintptr
-	FileContext uintptr
-	IrpPtr uintptr
-	CallbackDataPtr uintptr
-	MajorFunction uint32
-	Status uint32
+	RoutineAddr uintptr 
+	FileObject uintptr 
+	FileContext uintptr 
+	IrpPtr uintptr 
+	CallbackDataPtr uintptr 
+	MajorFunction uint32 
+	Status uint32 // format("x")
 }
 // mofFltIoFailure class definition
 var mofFltIoFailure = &MofClassDef{
@@ -4849,8 +4849,8 @@ var mofFltIoFailure = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_Name struct {
-	FileObject uintptr
-	FileName uintptr
+	FileObject uintptr 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_Name class definition
 var mofFileIo_Name = &MofClassDef{
@@ -4875,12 +4875,12 @@ var mofFileIo_Name = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_Info struct {
-	IrpPtr uintptr
-	FileObject uintptr
-	FileKey uintptr
-	ExtraInfo uintptr
-	TTID uint32
-	InfoClass uint32
+	IrpPtr uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
+	ExtraInfo uintptr 
+	TTID uint32 
+	InfoClass uint32 
 }
 // mofFileIo_Info class definition
 var mofFileIo_Info = &MofClassDef{
@@ -4907,10 +4907,10 @@ var mofFileIo_Info = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_SimpleOp struct {
-	IrpPtr uintptr
-	FileObject uintptr
-	FileKey uintptr
-	TTID uint32
+	IrpPtr uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
+	TTID uint32 
 }
 // mofFileIo_SimpleOp class definition
 var mofFileIo_SimpleOp = &MofClassDef{
@@ -4938,13 +4938,13 @@ var mofFileIo_SimpleOp = &MofClassDef{
 // };
 // Go struct for event data
 type MofFltIoCompletion struct {
-	InitialTime uintptr
-	RoutineAddr uintptr
-	FileObject uintptr
-	FileContext uintptr
-	IrpPtr uintptr
-	CallbackDataPtr uintptr
-	MajorFunction uint32
+	InitialTime uint64 // extension("WmiTime")
+	RoutineAddr uintptr 
+	FileObject uintptr 
+	FileContext uintptr 
+	IrpPtr uintptr 
+	CallbackDataPtr uintptr 
+	MajorFunction uint32 
 }
 // mofFltIoCompletion class definition
 var mofFltIoCompletion = &MofClassDef{
@@ -4979,14 +4979,14 @@ var mofFltIoCompletion = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_DirEnum struct {
-	IrpPtr uintptr
-	FileObject uintptr
-	FileKey uintptr
-	TTID uint32
-	Length uint32
-	InfoClass uint32
-	FileIndex uint32
-	FileName uintptr
+	IrpPtr uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
+	TTID uint32 
+	Length uint32 
+	InfoClass uint32 
+	FileIndex uint32 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_DirEnum class definition
 var mofFileIo_DirEnum = &MofClassDef{
@@ -5022,13 +5022,13 @@ var mofFileIo_DirEnum = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_PathOperation struct {
-	IrpPtr uintptr
-	FileObject uintptr
-	FileKey uintptr
-	ExtraInfo uintptr
-	TTID uint32
-	InfoClass uint32
-	FileName uintptr
+	IrpPtr uintptr 
+	FileObject uintptr 
+	FileKey uintptr 
+	ExtraInfo uintptr 
+	TTID uint32 
+	InfoClass uint32 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_PathOperation class definition
 var mofFileIo_PathOperation = &MofClassDef{
@@ -5055,9 +5055,9 @@ var mofFileIo_PathOperation = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_OpEnd struct {
-	IrpPtr uintptr
-	ExtraInfo uintptr
-	NtStatus uint32
+	IrpPtr uintptr 
+	ExtraInfo uintptr 
+	NtStatus uint32 
 }
 // mofFileIo_OpEnd class definition
 var mofFileIo_OpEnd = &MofClassDef{
@@ -5091,8 +5091,8 @@ var mofSplitIo = &MofClassDef{
 // };
 // Go struct for event data
 type MofSplitIo_Info struct {
-	ParentIrp uintptr
-	ChildIrp uintptr
+	ParentIrp uintptr 
+	ChildIrp uintptr 
 }
 // mofSplitIo_Info class definition
 var mofSplitIo_Info = &MofClassDef{
@@ -5130,14 +5130,14 @@ var mofTcpIp = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_TypeGroup3 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	seqnum uint32
-	connid uintptr
+	PID uint32 
+	size uint32 
+	daddr [16]byte // use: ip := net.IP(daddr[:])
+	saddr [16]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	seqnum uint32 
+	connid uintptr // PointerType this is not a valid pointer!
 }
 // mofTcpIp_TypeGroup3 class definition
 var mofTcpIp_TypeGroup3 = &MofClassDef{
@@ -5172,16 +5172,16 @@ var mofTcpIp_TypeGroup3 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_SendIPV4 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	startime uint32
-	endtime uint32
-	seqnum uint32
-	connid uintptr
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	startime uint32 
+	endtime uint32 
+	seqnum uint32 
+	connid uintptr // PointerType this is not a valid pointer!
 }
 // mofTcpIp_SendIPV4 class definition
 var mofTcpIp_SendIPV4 = &MofClassDef{
@@ -5210,8 +5210,8 @@ var mofTcpIp_SendIPV4 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_Fail struct {
-	Proto uint16
-	FailureCode uint16
+	Proto uint16 
+	FailureCode uint16 
 }
 // mofTcpIp_Fail class definition
 var mofTcpIp_Fail = &MofClassDef{
@@ -5245,21 +5245,21 @@ var mofTcpIp_Fail = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_TypeGroup2 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	mss uint16
-	sackopt uint16
-	tsopt uint16
-	wsopt uint16
-	rcvwin uint32
-	rcvwinscale int16
-	sndwinscale int16
-	seqnum uint32
-	connid uintptr
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	mss uint16 
+	sackopt uint16 
+	tsopt uint16 
+	wsopt uint16 
+	rcvwin uint32 
+	rcvwinscale int16 
+	sndwinscale int16 
+	seqnum uint32 
+	connid uintptr // PointerType this is not a valid pointer!
 }
 // mofTcpIp_TypeGroup2 class definition
 var mofTcpIp_TypeGroup2 = &MofClassDef{
@@ -5301,16 +5301,16 @@ var mofTcpIp_TypeGroup2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_SendIPV6 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	startime uint32
-	endtime uint32
-	seqnum uint32
-	connid uintptr
+	PID uint32 
+	size uint32 
+	daddr [16]byte // use: ip := net.IP(daddr[:])
+	saddr [16]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	startime uint32 
+	endtime uint32 
+	seqnum uint32 
+	connid uintptr // PointerType this is not a valid pointer!
 }
 // mofTcpIp_SendIPV6 class definition
 var mofTcpIp_SendIPV6 = &MofClassDef{
@@ -5346,14 +5346,14 @@ var mofTcpIp_SendIPV6 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_TypeGroup1 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	seqnum uint32
-	connid uintptr
+	PID uint32 
+	size uint32 
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	seqnum uint32 
+	connid uintptr // PointerType this is not a valid pointer!
 }
 // mofTcpIp_TypeGroup1 class definition
 var mofTcpIp_TypeGroup1 = &MofClassDef{
@@ -5393,21 +5393,21 @@ var mofTcpIp_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_TypeGroup4 struct {
-	PID uint32
-	size uint32
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	mss uint16
-	sackopt uint16
-	tsopt uint16
-	wsopt uint16
-	rcvwin uint32
-	rcvwinscale int16
-	sndwinscale int16
-	seqnum uint32
-	connid uintptr
+	PID uint32 
+	size uint32 
+	daddr [16]byte // use: ip := net.IP(daddr[:])
+	saddr [16]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	mss uint16 
+	sackopt uint16 
+	tsopt uint16 
+	wsopt uint16 
+	rcvwin uint32 
+	rcvwinscale int16 
+	sndwinscale int16 
+	seqnum uint32 
+	connid uintptr // PointerType this is not a valid pointer!
 }
 // mofTcpIp_TypeGroup4 class definition
 var mofTcpIp_TypeGroup4 = &MofClassDef{
@@ -5452,8 +5452,8 @@ var mofThread_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofThread_V0_TypeGroup1 struct {
-	TThreadId uint32
-	ProcessId uint32
+	TThreadId uint32 // format("x")
+	ProcessId uint32 // format("x")
 }
 // mofThread_V0_TypeGroup1 class definition
 var mofThread_V0_TypeGroup1 = &MofClassDef{
@@ -5491,11 +5491,11 @@ var mofRegistry_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofRegistry_V1_TypeGroup1 struct {
-	Status uintptr
-	KeyHandle uintptr
-	ElapsedTime int64
-	Index uint32
-	KeyName uintptr
+	Status uintptr 
+	KeyHandle uintptr 
+	ElapsedTime int64 
+	Index uint32 
+	KeyName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofRegistry_V1_TypeGroup1 class definition
 var mofRegistry_V1_TypeGroup1 = &MofClassDef{
@@ -5534,9 +5534,9 @@ var mofImage_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofImage_V0_Load struct {
-	BaseAddress uintptr
-	ModuleSize uint32
-	ImageFileName uintptr
+	BaseAddress uintptr 
+	ModuleSize uint32 
+	ImageFileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofImage_V0_Load class definition
 var mofImage_V0_Load = &MofClassDef{
@@ -5595,13 +5595,13 @@ var mofSystemConfig_V4 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V4_MobilePlatform struct {
-	DeviceManufacturer uintptr
-	DeviceManufacturerDisplayName uintptr
-	DeviceModel uintptr
-	DeviceModelDisplayName uintptr
-	MobileOperator uintptr
-	SocVersion uintptr
-	BspVersion uintptr
+	DeviceManufacturer uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceManufacturerDisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceModel uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceModelDisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	MobileOperator uintptr // StringTermination("NullTerminated"), format("w")
+	SocVersion uintptr // StringTermination("NullTerminated"), format("w")
+	BspVersion uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V4_MobilePlatform class definition
 var mofSystemConfig_V4_MobilePlatform = &MofClassDef{
@@ -5659,16 +5659,16 @@ var mofSystemConfig_V4_MobilePlatform = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V4_PnP struct {
-	ClassGuid GUID
-	UpperFiltersCount uint32
-	LowerFiltersCount uint32
-	DeviceID uintptr
-	DeviceDescription uintptr
-	FriendlyName uintptr
-	PdoName uintptr
-	ServiceName uintptr
-	UpperFilters uintptr
-	LowerFilters uintptr
+	ClassGuid GUID // extension("GUID")
+	UpperFiltersCount uint32 
+	LowerFiltersCount uint32 
+	DeviceID uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
+	FriendlyName uintptr // StringTermination("NullTerminated"), format("w")
+	PdoName uintptr // StringTermination("NullTerminated"), format("w")
+	ServiceName uintptr // StringTermination("NullTerminated"), format("w")
+	UpperFilters uintptr // StringTermination("NullTerminated"), format("w"), WmiSizeIs("UpperFiltersCount")
+	LowerFilters uintptr // StringTermination("NullTerminated"), format("w"), WmiSizeIs("LowerFiltersCount")
 }
 // mofSystemConfig_V4_PnP class definition
 var mofSystemConfig_V4_PnP = &MofClassDef{
@@ -5712,10 +5712,10 @@ var mofImage_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofImage_V1_Load struct {
-	ImageBase uintptr
-	ImageSize uintptr
-	ProcessId uint32
-	FileName uintptr
+	ImageBase uintptr 
+	ImageSize uintptr 
+	ProcessId uint32 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofImage_V1_Load class definition
 var mofImage_V1_Load = &MofClassDef{
@@ -5761,20 +5761,20 @@ var mofThread_V3 = &MofClassDef{
 // };
 // Go struct for event data
 type MofThread_V3_TypeGroup1 struct {
-	ProcessId uint32
-	TThreadId uint32
-	StackBase uintptr
-	StackLimit uintptr
-	UserStackBase uintptr
-	UserStackLimit uintptr
-	Affinity uintptr
-	Win32StartAddr uintptr
-	TebBase uintptr
-	SubProcessTag uint32
-	BasePriority uint8
-	PagePriority uint8
-	IoPriority uint8
-	ThreadFlags uint8
+	ProcessId uint32 // format("x")
+	TThreadId uint32 // format("x")
+	StackBase uintptr 
+	StackLimit uintptr 
+	UserStackBase uintptr 
+	UserStackLimit uintptr 
+	Affinity uintptr 
+	Win32StartAddr uintptr 
+	TebBase uintptr 
+	SubProcessTag uint32 // format("x")
+	BasePriority uint8 
+	PagePriority uint8 
+	IoPriority uint8 
+	ThreadFlags uint8 
 }
 // mofThread_V3_TypeGroup1 class definition
 var mofThread_V3_TypeGroup1 = &MofClassDef{
@@ -5810,10 +5810,10 @@ var mofThread_V3_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofThreadPriority struct {
-	ThreadId uint32
-	OldPriority uint8
-	NewPriority uint8
-	Reserved uint16
+	ThreadId uint32 // format("x")
+	OldPriority uint8 
+	NewPriority uint8 
+	Reserved uint16 
 }
 // mofThreadPriority class definition
 var mofThreadPriority = &MofClassDef{
@@ -5846,18 +5846,18 @@ var mofThreadPriority = &MofClassDef{
 // };
 // Go struct for event data
 type MofCSwitch_V3 struct {
-	NewThreadId uint32
-	OldThreadId uint32
-	NewThreadPriority int8
-	OldThreadPriority int8
-	PreviousCState uint8
-	SpareByte int8
-	OldThreadWaitReason int8
-	ThreadFlags int8
-	OldThreadState int8
-	OldThreadWaitIdealProcessor int8
-	NewThreadWaitTime uint32
-	Reserved uint32
+	NewThreadId uint32 // format("x")
+	OldThreadId uint32 // format("x")
+	NewThreadPriority int8 
+	OldThreadPriority int8 
+	PreviousCState uint8 
+	SpareByte int8 
+	OldThreadWaitReason int8 
+	ThreadFlags int8 
+	OldThreadState int8 
+	OldThreadWaitIdealProcessor int8 
+	NewThreadWaitTime uint32 // format("x")
+	Reserved uint32 
 }
 // mofCSwitch_V3 class definition
 var mofCSwitch_V3 = &MofClassDef{
@@ -5945,18 +5945,18 @@ var mofSystemConfig_V3 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V3_MobilePlatform struct {
-	DeviceManufacturer uintptr
-	DeviceManufacturerDisplayName uintptr
-	DeviceModel uintptr
-	DeviceModelDisplayName uintptr
-	MobileOperator uintptr
-	MobileOperatorDisplayName uintptr
-	HardwareVersion uintptr
-	SocVersion uintptr
-	RadioHardwareVersion uintptr
-	RadioSoftwareVersion uintptr
-	BspVersion uintptr
-	OemSoftwareVersion uintptr
+	DeviceManufacturer uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceManufacturerDisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceModel uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceModelDisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	MobileOperator uintptr // StringTermination("NullTerminated"), format("w")
+	MobileOperatorDisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	HardwareVersion uintptr // StringTermination("NullTerminated"), format("w")
+	SocVersion uintptr // StringTermination("NullTerminated"), format("w")
+	RadioHardwareVersion uintptr // StringTermination("NullTerminated"), format("w")
+	RadioSoftwareVersion uintptr // StringTermination("NullTerminated"), format("w")
+	BspVersion uintptr // StringTermination("NullTerminated"), format("w")
+	OemSoftwareVersion uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V3_MobilePlatform class definition
 var mofSystemConfig_V3_MobilePlatform = &MofClassDef{
@@ -6009,14 +6009,14 @@ var mofSystemConfig_V3_MobilePlatform = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V3_Services struct {
-	ProcessId uint32
-	ServiceState uint32
-	SubProcessTag uint32
-	ServiceName uintptr
-	DisplayName uintptr
-	ProcessName uintptr
-	LoadOrderGroup uintptr
-	SvchostGroup uintptr
+	ProcessId uint32 // format("x")
+	ServiceState uint32 // format("x")
+	SubProcessTag uint32 // format("x")
+	ServiceName uintptr // StringTermination("NullTerminated"), format("w")
+	DisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	ProcessName uintptr // StringTermination("NullTerminated"), format("w")
+	LoadOrderGroup uintptr // StringTermination("NullTerminated"), format("w")
+	SvchostGroup uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V3_Services class definition
 var mofSystemConfig_V3_Services = &MofClassDef{
@@ -6051,12 +6051,12 @@ var mofSystemConfig_V3_Services = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V3_IRQ struct {
-	IRQAffinity uint64
-	IRQGroup uint16
-	Reserved uint16
-	IRQNum uint32
-	DeviceDescriptionLen uint32
-	DeviceDescription uintptr
+	IRQAffinity uint64 // format("x")
+	IRQGroup uint16 
+	Reserved uint16 
+	IRQNum uint32 
+	DeviceDescriptionLen uint32 
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V3_IRQ class definition
 var mofSystemConfig_V3_IRQ = &MofClassDef{
@@ -6095,21 +6095,21 @@ var mofSystemConfig_V3_IRQ = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V3_CPU struct {
-	MHz uint32
-	NumberOfProcessors uint32
-	MemSize uint32
-	PageSize uint32
-	AllocationGranularity uint32
-	ComputerName [256]uint16
-	DomainName [134]uint16
-	HyperThreadingFlag uintptr
-	HighestUserAddress uintptr
-	ProcessorArchitecture uint16
-	ProcessorLevel uint16
-	ProcessorRevision uint16
-	PaeEnabled uint8
-	NxEnabled uint8
-	MemorySpeed uint32
+	MHz uint32 
+	NumberOfProcessors uint32 
+	MemSize uint32 
+	PageSize uint32 
+	AllocationGranularity uint32 
+	ComputerName [256]uint16 // format("s"), MAX(256)
+	DomainName [134]uint16 // format("s"), MAX(134)
+	HyperThreadingFlag uintptr 
+	HighestUserAddress uintptr 
+	ProcessorArchitecture uint16 
+	ProcessorLevel uint16 
+	ProcessorRevision uint16 
+	PaeEnabled uint8 
+	NxEnabled uint8 
+	MemorySpeed uint32 
 }
 // mofSystemConfig_V3_CPU class definition
 var mofSystemConfig_V3_CPU = &MofClassDef{
@@ -6161,13 +6161,13 @@ var mofSystemConfig_V3_CPU = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V3_PnP struct {
-	IDLength uint32
-	DescriptionLength uint32
-	FriendlyNameLength uint32
-	DeviceID uintptr
-	DeviceDescription uintptr
-	FriendlyName uintptr
-	PdoName uintptr
+	IDLength uint32 
+	DescriptionLength uint32 
+	FriendlyNameLength uint32 
+	DeviceID uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
+	FriendlyName uintptr // StringTermination("NullTerminated"), format("w")
+	PdoName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V3_PnP class definition
 var mofSystemConfig_V3_PnP = &MofClassDef{
@@ -6206,8 +6206,8 @@ var mofFileIo_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V0_Name struct {
-	FileObject uintptr
-	FileName uintptr
+	FileObject uintptr 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_V0_Name class definition
 var mofFileIo_V0_Name = &MofClassDef{
@@ -6255,21 +6255,21 @@ var mofThread_V4 = &MofClassDef{
 // };
 // Go struct for event data
 type MofThread_TypeGroup1 struct {
-	ProcessId uint32
-	TThreadId uint32
-	StackBase uintptr
-	StackLimit uintptr
-	UserStackBase uintptr
-	UserStackLimit uintptr
-	Affinity uintptr
-	Win32StartAddr uintptr
-	TebBase uintptr
-	SubProcessTag uint32
-	BasePriority uint8
-	PagePriority uint8
-	IoPriority uint8
-	ThreadFlags uint8
-	ThreadName uintptr
+	ProcessId uint32 // format("x")
+	TThreadId uint32 // format("x")
+	StackBase uintptr 
+	StackLimit uintptr 
+	UserStackBase uintptr 
+	UserStackLimit uintptr 
+	Affinity uintptr 
+	Win32StartAddr uintptr 
+	TebBase uintptr 
+	SubProcessTag uint32 // format("x")
+	BasePriority uint8 
+	PagePriority uint8 
+	IoPriority uint8 
+	ThreadFlags uint8 
+	ThreadName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofThread_TypeGroup1 class definition
 var mofThread_TypeGroup1 = &MofClassDef{
@@ -6313,18 +6313,18 @@ var mofThread_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofCSwitch_V4 struct {
-	NewThreadId uint32
-	OldThreadId uint32
-	NewThreadPriority int8
-	OldThreadPriority int8
-	PreviousCState uint8
-	SpareByte int8
-	OldThreadWaitReason int8
-	ThreadFlags int8
-	OldThreadState int8
-	OldThreadWaitIdealProcessor int8
-	NewThreadWaitTime uint32
-	Reserved uint32
+	NewThreadId uint32 // format("x")
+	OldThreadId uint32 // format("x")
+	NewThreadPriority int8 
+	OldThreadPriority int8 
+	PreviousCState uint8 
+	SpareByte int8 
+	OldThreadWaitReason int8 
+	ThreadFlags int8 
+	OldThreadState int8 
+	OldThreadWaitIdealProcessor int8 
+	NewThreadWaitTime uint32 // format("x")
+	Reserved uint32 
 }
 // mofCSwitch_V4 class definition
 var mofCSwitch_V4 = &MofClassDef{
@@ -6369,12 +6369,12 @@ var mofDiskIo_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofDiskIo_V0_TypeGroup1 struct {
-	DiskNumber uint32
-	IrpFlags uint32
-	TransferSize uint32
-	Reserved uint32
-	ByteOffset uint64
-	FileObject uintptr
+	DiskNumber uint32 
+	IrpFlags uint32 // format("x")
+	TransferSize uint32 
+	Reserved uint32 
+	ByteOffset uint64 
+	FileObject uintptr 
 }
 // mofDiskIo_V0_TypeGroup1 class definition
 var mofDiskIo_V0_TypeGroup1 = &MofClassDef{
@@ -6442,18 +6442,18 @@ var mofSystemConfig = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_PnP struct {
-	ClassGuid GUID
-	UpperFiltersCount uint32
-	LowerFiltersCount uint32
-	DevStatus uint32
-	DevProblem uint32
-	DeviceID uintptr
-	DeviceDescription uintptr
-	FriendlyName uintptr
-	PdoName uintptr
-	ServiceName uintptr
-	UpperFilters uintptr
-	LowerFilters uintptr
+	ClassGuid GUID // extension("GUID")
+	UpperFiltersCount uint32 
+	LowerFiltersCount uint32 
+	DevStatus uint32 
+	DevProblem uint32 
+	DeviceID uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
+	FriendlyName uintptr // StringTermination("NullTerminated"), format("w")
+	PdoName uintptr // StringTermination("NullTerminated"), format("w")
+	ServiceName uintptr // StringTermination("NullTerminated"), format("w")
+	UpperFilters uintptr // StringTermination("NullTerminated"), format("w"), WmiSizeIs("UpperFiltersCount")
+	LowerFilters uintptr // StringTermination("NullTerminated"), format("w"), WmiSizeIs("LowerFiltersCount")
 }
 // mofSystemConfig_PnP class definition
 var mofSystemConfig_PnP = &MofClassDef{
@@ -6515,19 +6515,19 @@ var mofProcess = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_Defunct_TypeGroup1 struct {
-	UniqueProcessKey uintptr
-	ProcessId uint32
-	ParentId uint32
-	SessionId uint32
-	ExitStatus int32
-	DirectoryTableBase uintptr
-	Flags uint32
-	UserSID uintptr
-	ImageFileName uintptr
-	CommandLine uintptr
-	PackageFullName uintptr
-	ApplicationId uintptr
-	ExitTime uint64
+	UniqueProcessKey uintptr 
+	ProcessId uint32 // format("x")
+	ParentId uint32 // format("x")
+	SessionId uint32 
+	ExitStatus int32 
+	DirectoryTableBase uintptr 
+	Flags uint32 // format("x")
+	UserSID uintptr // extension("Sid")
+	ImageFileName uintptr // StringTermination("NullTerminated")
+	CommandLine uintptr // StringTermination("NullTerminated"), format("w")
+	PackageFullName uintptr // StringTermination("NullTerminated"), format("w")
+	ApplicationId uintptr // StringTermination("NullTerminated"), format("w")
+	ExitTime uint64 
 }
 // mofProcess_Defunct_TypeGroup1 class definition
 var mofProcess_Defunct_TypeGroup1 = &MofClassDef{
@@ -6544,7 +6544,7 @@ var mofProcess_Defunct_TypeGroup1 = &MofClassDef{
 		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
 		{ID: 6, Name: "DirectoryTableBase", InType: TDH_INTYPE_POINTER},
 		{ID: 7, Name: "Flags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 8, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 8, Name: "UserSID", InType: TDH_INTYPE_WBEMSID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
 		{ID: 9, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 		{ID: 10, Name: "CommandLine", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 		{ID: 11, Name: "PackageFullName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
@@ -6571,10 +6571,10 @@ var mofPoolTrace = &MofClassDef{
 // };
 // Go struct for event data
 type MofPoolAllocFree struct {
-	Type uint32
-	Tag uint32
-	NumberOfBytes uintptr
-	Entry uintptr
+	Type uint32 
+	Tag uint32 // format("x")
+	NumberOfBytes uintptr // extension("SizeT")
+	Entry uintptr 
 }
 // mofPoolAllocFree class definition
 var mofPoolAllocFree = &MofClassDef{
@@ -6600,11 +6600,11 @@ var mofPoolAllocFree = &MofClassDef{
 // };
 // Go struct for event data
 type MofSessionPoolAllocFree struct {
-	Type uint32
-	Tag uint32
-	NumberOfBytes uintptr
-	Entry uintptr
-	SessionId uint32
+	Type uint32 
+	Tag uint32 // format("x")
+	NumberOfBytes uintptr // extension("SizeT")
+	Entry uintptr 
+	SessionId uint32 
 }
 // mofSessionPoolAllocFree class definition
 var mofSessionPoolAllocFree = &MofClassDef{
@@ -6654,8 +6654,8 @@ var mofDiskIo = &MofClassDef{
 // };
 // Go struct for event data
 type MofDiskIo_TypeGroup2 struct {
-	Irp uintptr
-	IssuingThreadId uint32
+	Irp uintptr 
+	IssuingThreadId uint32 
 }
 // mofDiskIo_TypeGroup2 class definition
 var mofDiskIo_TypeGroup2 = &MofClassDef{
@@ -6684,15 +6684,15 @@ var mofDiskIo_TypeGroup2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofDiskIo_TypeGroup1 struct {
-	DiskNumber uint32
-	IrpFlags uint32
-	TransferSize uint32
-	Reserved uint32
-	ByteOffset uint64
-	FileObject uintptr
-	Irp uintptr
-	HighResResponseTime uint64
-	IssuingThreadId uint32
+	DiskNumber uint32 
+	IrpFlags uint32 // format("x")
+	TransferSize uint32 
+	Reserved uint32 
+	ByteOffset uint64 
+	FileObject uintptr 
+	Irp uintptr 
+	HighResResponseTime uint64 
+	IssuingThreadId uint32 
 }
 // mofDiskIo_TypeGroup1 class definition
 var mofDiskIo_TypeGroup1 = &MofClassDef{
@@ -6723,11 +6723,11 @@ var mofDiskIo_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofDiskIo_TypeGroup3 struct {
-	DiskNumber uint32
-	IrpFlags uint32
-	HighResResponseTime uint64
-	Irp uintptr
-	IssuingThreadId uint32
+	DiskNumber uint32 
+	IrpFlags uint32 // format("x")
+	HighResResponseTime uint64 
+	Irp uintptr 
+	IssuingThreadId uint32 
 }
 // mofDiskIo_TypeGroup3 class definition
 var mofDiskIo_TypeGroup3 = &MofClassDef{
@@ -6787,8 +6787,8 @@ var mofFileIo_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofFileIo_V1_Name struct {
-	FileObject uintptr
-	FileName uintptr
+	FileObject uintptr 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofFileIo_V1_Name class definition
 var mofFileIo_V1_Name = &MofClassDef{
@@ -6848,29 +6848,29 @@ var mofEventTraceEvent_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofEventTrace_V1_Header struct {
-	BufferSize uint32
-	Version uint32
-	ProviderVersion uint32
-	NumberOfProcessors uint32
-	EndTime uint64
-	TimerResolution uint32
-	MaxFileSize uint32
-	LogFileMode uint32
-	BuffersWritten uint32
-	StartBuffers uint32
-	PointerSize uint32
-	EventsLost uint32
-	CPUSpeed uint32
-	LoggerName uintptr
-	LogFileName uintptr
-	TimeZoneInformation [176]uint8
-	BootTime uint64
-	PerfFreq uint64
-	StartTime uint64
-	ReservedFlags uint32
-	BuffersLost uint32
-	SessionNameString uintptr
-	LogFileNameString uintptr
+	BufferSize uint32 
+	Version uint32 
+	ProviderVersion uint32 
+	NumberOfProcessors uint32 
+	EndTime uint64 
+	TimerResolution uint32 
+	MaxFileSize uint32 
+	LogFileMode uint32 // format("x")
+	BuffersWritten uint32 
+	StartBuffers uint32 
+	PointerSize uint32 
+	EventsLost uint32 
+	CPUSpeed uint32 
+	LoggerName uintptr 
+	LogFileName uintptr 
+	TimeZoneInformation [176]uint8 // extension("NoPrint"), MAX(176)
+	BootTime uint64 
+	PerfFreq uint64 
+	StartTime uint64 
+	ReservedFlags uint32 // format("x")
+	BuffersLost uint32 
+	SessionNameString uintptr // StringTermination("NullTerminated"), format("w")
+	LogFileNameString uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofEventTrace_V1_Header class definition
 var mofEventTrace_V1_Header = &MofClassDef{
@@ -6932,14 +6932,14 @@ var mofRDComplete_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofHeader_Extension_V1_TypeGroup struct {
-	GroupMask1 uint32
-	GroupMask2 uint32
-	GroupMask3 uint32
-	GroupMask4 uint32
-	GroupMask5 uint32
-	GroupMask6 uint32
-	GroupMask7 uint32
-	GroupMask8 uint32
+	GroupMask1 uint32 // format("x")
+	GroupMask2 uint32 // format("x")
+	GroupMask3 uint32 // format("x")
+	GroupMask4 uint32 // format("x")
+	GroupMask5 uint32 // format("x")
+	GroupMask6 uint32 // format("x")
+	GroupMask7 uint32 // format("x")
+	GroupMask8 uint32 // format("x")
 }
 // mofHeader_Extension_V1_TypeGroup class definition
 var mofHeader_Extension_V1_TypeGroup = &MofClassDef{
@@ -6977,9 +6977,9 @@ var mofDebugger = &MofClassDef{
 // };
 // Go struct for event data
 type MofDebugPrint_Event struct {
-	Component uint32
-	Level uint32
-	Message uintptr
+	Component uint32 
+	Level uint32 
+	Message uintptr // StringTermination("NullTerminated")
 }
 // mofDebugPrint_Event class definition
 var mofDebugPrint_Event = &MofClassDef{
@@ -7017,14 +7017,14 @@ var mofDiskIo_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofDiskIo_V2_TypeGroup1 struct {
-	DiskNumber uint32
-	IrpFlags uint32
-	TransferSize uint32
-	Reserved uint32
-	ByteOffset uint64
-	FileObject uintptr
-	Irp uintptr
-	HighResResponseTime uint64
+	DiskNumber uint32 
+	IrpFlags uint32 // format("x")
+	TransferSize uint32 
+	Reserved uint32 
+	ByteOffset uint64 
+	FileObject uintptr 
+	Irp uintptr 
+	HighResResponseTime uint64 
 }
 // mofDiskIo_V2_TypeGroup1 class definition
 var mofDiskIo_V2_TypeGroup1 = &MofClassDef{
@@ -7052,8 +7052,8 @@ var mofDiskIo_V2_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofDriverMajorFunctionReturn struct {
-	Irp uintptr
-	UniqMatchId uint32
+	Irp uintptr 
+	UniqMatchId uint32 
 }
 // mofDriverMajorFunctionReturn class definition
 var mofDriverMajorFunctionReturn = &MofClassDef{
@@ -7075,9 +7075,9 @@ var mofDriverMajorFunctionReturn = &MofClassDef{
 // };
 // Go struct for event data
 type MofDriverCompletionRoutine struct {
-	Routine uintptr
-	IrpPtr uintptr
-	UniqMatchId uint32
+	Routine uintptr 
+	IrpPtr uintptr 
+	UniqMatchId uint32 
 }
 // mofDriverCompletionRoutine class definition
 var mofDriverCompletionRoutine = &MofClassDef{
@@ -7103,12 +7103,12 @@ var mofDriverCompletionRoutine = &MofClassDef{
 // };
 // Go struct for event data
 type MofDriverMajorFunctionCall struct {
-	MajorFunction uint32
-	MinorFunction uint32
-	RoutineAddr uintptr
-	FileObject uintptr
-	Irp uintptr
-	UniqMatchId uint32
+	MajorFunction uint32 
+	MinorFunction uint32 
+	RoutineAddr uintptr 
+	FileObject uintptr 
+	Irp uintptr 
+	UniqMatchId uint32 
 }
 // mofDriverMajorFunctionCall class definition
 var mofDriverMajorFunctionCall = &MofClassDef{
@@ -7134,8 +7134,8 @@ var mofDriverMajorFunctionCall = &MofClassDef{
 // };
 // Go struct for event data
 type MofDriverCompleteRequestReturn struct {
-	Irp uintptr
-	UniqMatchId uint32
+	Irp uintptr 
+	UniqMatchId uint32 
 }
 // mofDriverCompleteRequestReturn class definition
 var mofDriverCompleteRequestReturn = &MofClassDef{
@@ -7158,10 +7158,10 @@ var mofDriverCompleteRequestReturn = &MofClassDef{
 // };
 // Go struct for event data
 type MofDiskIo_V2_TypeGroup3 struct {
-	DiskNumber uint32
-	IrpFlags uint32
-	HighResResponseTime uint64
-	Irp uintptr
+	DiskNumber uint32 
+	IrpFlags uint32 // format("x")
+	HighResResponseTime uint64 
+	Irp uintptr 
 }
 // mofDiskIo_V2_TypeGroup3 class definition
 var mofDiskIo_V2_TypeGroup3 = &MofClassDef{
@@ -7184,7 +7184,7 @@ var mofDiskIo_V2_TypeGroup3 = &MofClassDef{
 // };
 // Go struct for event data
 type MofDiskIo_V2_TypeGroup2 struct {
-	Irp uintptr
+	Irp uintptr 
 }
 // mofDiskIo_V2_TypeGroup2 class definition
 var mofDiskIo_V2_TypeGroup2 = &MofClassDef{
@@ -7205,9 +7205,9 @@ var mofDiskIo_V2_TypeGroup2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofDriverCompleteRequest struct {
-	RoutineAddr uintptr
-	Irp uintptr
-	UniqMatchId uint32
+	RoutineAddr uintptr 
+	Irp uintptr 
+	UniqMatchId uint32 
 }
 // mofDriverCompleteRequest class definition
 var mofDriverCompleteRequest = &MofClassDef{
@@ -7245,10 +7245,10 @@ var mofSystemConfig_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_IRQ struct {
-	IRQAffinity uint64
-	IRQNum uint32
-	DeviceDescriptionLen uint32
-	DeviceDescription uintptr
+	IRQAffinity uint64 // format("x")
+	IRQNum uint32 
+	DeviceDescriptionLen uint32 
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V0_IRQ class definition
 var mofSystemConfig_V0_IRQ = &MofClassDef{
@@ -7278,14 +7278,14 @@ var mofSystemConfig_V0_IRQ = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_CPU struct {
-	MHz uint32
-	NumberOfProcessors uint32
-	MemSize uint32
-	PageSize uint32
-	AllocationGranularity uint32
-	ComputerName [256]uint16
-	DomainName [132]uint16
-	HyperThreadingFlag uintptr
+	MHz uint32 
+	NumberOfProcessors uint32 
+	MemSize uint32 
+	PageSize uint32 
+	AllocationGranularity uint32 
+	ComputerName [256]uint16 // MAX(256)
+	DomainName [132]uint16 // MAX(132)
+	HyperThreadingFlag uintptr 
 }
 // mofSystemConfig_V0_CPU class definition
 var mofSystemConfig_V0_CPU = &MofClassDef{
@@ -7315,10 +7315,10 @@ var mofSystemConfig_V0_CPU = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_Services struct {
-	ServiceName [34]uint16
-	DisplayName [256]uint16
-	ProcessName [34]uint16
-	ProcessId uint32
+	ServiceName [34]uint16 // MAX(34)
+	DisplayName [256]uint16 // MAX(256)
+	ProcessName [34]uint16 // MAX(34)
+	ProcessId uint32 
 }
 // mofSystemConfig_V0_Services class definition
 var mofSystemConfig_V0_Services = &MofClassDef{
@@ -7355,21 +7355,21 @@ var mofSystemConfig_V0_Services = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_LogDisk struct {
-	StartOffset uint64
-	PartitionSize uint64
-	DiskNumber uint32
-	Size uint32
-	DriveType uint32
-	DriveLetterString [4]uint16
-	Pad1 uint32
-	PartitionNumber uint32
-	SectorsPerCluster uint32
-	BytesPerSector uint32
-	Pad2 uint32
-	NumberOfFreeClusters int64
-	TotalNumberOfClusters int64
-	FileSystem [16]uint16
-	VolumeExt uint32
+	StartOffset uint64 
+	PartitionSize uint64 
+	DiskNumber uint32 
+	Size uint32 
+	DriveType uint32 
+	DriveLetterString [4]uint16 // MAX(4)
+	Pad1 uint32 
+	PartitionNumber uint32 
+	SectorsPerCluster uint32 
+	BytesPerSector uint32 
+	Pad2 uint32 
+	NumberOfFreeClusters int64 
+	TotalNumberOfClusters int64 
+	FileSystem [16]uint16 // MAX(16)
+	VolumeExt uint32 
 }
 // mofSystemConfig_V0_LogDisk class definition
 var mofSystemConfig_V0_LogDisk = &MofClassDef{
@@ -7413,17 +7413,17 @@ var mofSystemConfig_V0_LogDisk = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_Video struct {
-	MemorySize uint32
-	XResolution uint32
-	YResolution uint32
-	BitsPerPixel uint32
-	VRefresh uint32
-	ChipType [256]uint16
-	DACType [256]uint16
-	AdapterString [256]uint16
-	BiosString [256]uint16
-	DeviceId [256]uint16
-	StateFlags uint32
+	MemorySize uint32 
+	XResolution uint32 
+	YResolution uint32 
+	BitsPerPixel uint32 
+	VRefresh uint32 
+	ChipType [256]uint16 // MAX(256)
+	DACType [256]uint16 // MAX(256)
+	AdapterString [256]uint16 // MAX(256)
+	BiosString [256]uint16 // MAX(256)
+	DeviceId [256]uint16 // MAX(256)
+	StateFlags uint32 // format("x")
 }
 // mofSystemConfig_V0_Video class definition
 var mofSystemConfig_V0_Video = &MofClassDef{
@@ -7467,21 +7467,21 @@ var mofSystemConfig_V0_Video = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_PhyDisk struct {
-	DiskNumber uint32
-	BytesPerSector uint32
-	SectorsPerTrack uint32
-	TracksPerCylinder uint32
-	Cylinders uint64
-	SCSIPort uint32
-	SCSIPath uint32
-	SCSITarget uint32
-	SCSILun uint32
-	Manufacturer [256]uint16
-	PartitionCount uint32
-	WriteCacheEnabled uint8
-	Pad uint8
-	BootDriveLetter [3]uint16
-	Spare [2]uint16
+	DiskNumber uint32 
+	BytesPerSector uint32 
+	SectorsPerTrack uint32 
+	TracksPerCylinder uint32 
+	Cylinders uint64 
+	SCSIPort uint32 
+	SCSIPath uint32 
+	SCSITarget uint32 
+	SCSILun uint32 
+	Manufacturer [256]uint16 // MAX(256)
+	PartitionCount uint32 
+	WriteCacheEnabled uint8 
+	Pad uint8 
+	BootDriveLetter [3]uint16 // MAX(3)
+	Spare [2]uint16 // MAX(2)
 }
 // mofSystemConfig_V0_PhyDisk class definition
 var mofSystemConfig_V0_PhyDisk = &MofClassDef{
@@ -7522,14 +7522,14 @@ var mofSystemConfig_V0_PhyDisk = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_Power struct {
-	S1 uint8
-	S2 uint8
-	S3 uint8
-	S4 uint8
-	S5 uint8
-	Pad1 uint8
-	Pad2 uint8
-	Pad3 uint8
+	S1 uint8 
+	S2 uint8 
+	S3 uint8 
+	S4 uint8 
+	S5 uint8 
+	Pad1 uint8 
+	Pad2 uint8 
+	Pad3 uint8 
 }
 // mofSystemConfig_V0_Power class definition
 var mofSystemConfig_V0_Power = &MofClassDef{
@@ -7570,12 +7570,12 @@ var mofSystemConfig_V0_Power = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_PnP struct {
-	IDLength uint32
-	DescriptionLength uint32
-	FriendlyNameLength uint32
-	DeviceID uintptr
-	DeviceDescription uintptr
-	FriendlyName uintptr
+	IDLength uint32 
+	DescriptionLength uint32 
+	FriendlyNameLength uint32 
+	DeviceID uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
+	FriendlyName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V0_PnP class definition
 var mofSystemConfig_V0_PnP = &MofClassDef{
@@ -7615,22 +7615,22 @@ var mofSystemConfig_V0_PnP = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V0_NIC struct {
-	NICName [256]uint16
-	Index uint32
-	PhysicalAddrLen uint32
-	PhysicalAddr [8]uint16
-	Size uint32
-	IpAddress int32
-	SubnetMask int32
-	DhcpServer int32
-	Gateway int32
-	PrimaryWinsServer int32
-	SecondaryWinsServer int32
-	DnsServer1 int32
-	DnsServer2 int32
-	DnsServer3 int32
-	DnsServer4 int32
-	Data uint32
+	NICName [256]uint16 // MAX(256)
+	Index uint32 
+	PhysicalAddrLen uint32 
+	PhysicalAddr [8]uint16 // MAX(8)
+	Size uint32 
+	IpAddress int32 
+	SubnetMask int32 
+	DhcpServer int32 
+	Gateway int32 
+	PrimaryWinsServer int32 
+	SecondaryWinsServer int32 
+	DnsServer1 int32 
+	DnsServer2 int32 
+	DnsServer3 int32 
+	DnsServer4 int32 
+	Data uint32 
 }
 // mofSystemConfig_V0_NIC class definition
 var mofSystemConfig_V0_NIC = &MofClassDef{
@@ -7676,8 +7676,8 @@ var mofSystemConfig_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_NumaNode struct {
-	NodeCount uint32
-	NodeMap uintptr
+	NodeCount uint32 
+	NodeMap uintptr // WmiSizeIs("NodeCount")
 }
 // mofSystemConfig_V2_NumaNode class definition
 var mofSystemConfig_V2_NumaNode = &MofClassDef{
@@ -7712,12 +7712,12 @@ var mofSystemConfig_V2_NumaNode = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_PnP struct {
-	IDLength uint32
-	DescriptionLength uint32
-	FriendlyNameLength uint32
-	DeviceID uintptr
-	DeviceDescription uintptr
-	FriendlyName uintptr
+	IDLength uint32 
+	DescriptionLength uint32 
+	FriendlyNameLength uint32 
+	DeviceID uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
+	FriendlyName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_PnP class definition
 var mofSystemConfig_V2_PnP = &MofClassDef{
@@ -7742,7 +7742,7 @@ var mofSystemConfig_V2_PnP = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_CodeIntegrity struct {
-	CodeIntegrityInfo uint32
+	CodeIntegrityInfo uint32 
 }
 // mofSystemConfig_V2_CodeIntegrity class definition
 var mofSystemConfig_V2_CodeIntegrity = &MofClassDef{
@@ -7777,22 +7777,22 @@ var mofSystemConfig_V2_CodeIntegrity = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_LogDisk struct {
-	StartOffset uint64
-	PartitionSize uint64
-	DiskNumber uint32
-	Size uint32
-	DriveType uint32
-	DriveLetterString [4]uint16
-	Pad1 uint32
-	PartitionNumber uint32
-	SectorsPerCluster uint32
-	BytesPerSector uint32
-	Pad2 uint32
-	NumberOfFreeClusters int64
-	TotalNumberOfClusters int64
-	FileSystem [16]uint16
-	VolumeExt uint32
-	Pad3 uint32
+	StartOffset uint64 
+	PartitionSize uint64 
+	DiskNumber uint32 
+	Size uint32 
+	DriveType uint32 
+	DriveLetterString [4]uint16 // format("s"), MAX(4)
+	Pad1 uint32 
+	PartitionNumber uint32 
+	SectorsPerCluster uint32 
+	BytesPerSector uint32 
+	Pad2 uint32 
+	NumberOfFreeClusters int64 
+	TotalNumberOfClusters int64 
+	FileSystem [16]uint16 // format("s"), MAX(16)
+	VolumeExt uint32 
+	Pad3 uint32 
 }
 // mofSystemConfig_V2_LogDisk class definition
 var mofSystemConfig_V2_LogDisk = &MofClassDef{
@@ -7830,10 +7830,10 @@ var mofSystemConfig_V2_LogDisk = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_Virtualization struct {
-	VbsEnabled uint8
-	HvciEnabled uint8
-	HyperVisorEnabled uint8
-	Reserved uint8
+	VbsEnabled uint8 
+	HvciEnabled uint8 
+	HyperVisorEnabled uint8 
+	Reserved uint8 
 }
 // mofSystemConfig_Virtualization class definition
 var mofSystemConfig_Virtualization = &MofClassDef{
@@ -7863,11 +7863,11 @@ var mofSystemConfig_Virtualization = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_IDEChannel struct {
-	TargetId uint32
-	DeviceType uint32
-	DeviceTimingMode uint32
-	LocationInformationLen uint32
-	LocationInformation uintptr
+	TargetId uint32 
+	DeviceType uint32 // format("x")
+	DeviceTimingMode uint32 // format("x")
+	LocationInformationLen uint32 
+	LocationInformation uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_IDEChannel class definition
 var mofSystemConfig_V2_IDEChannel = &MofClassDef{
@@ -7895,12 +7895,12 @@ var mofSystemConfig_V2_IDEChannel = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_Boot struct {
-	BootFlags uint64
-	FirmwareType uint32
-	SecureBootEnabled uint8
-	SecureBootCapable uint8
-	Reserved1 uint8
-	Reserved2 uint8
+	BootFlags uint64 
+	FirmwareType uint32 
+	SecureBootEnabled uint8 
+	SecureBootCapable uint8 
+	Reserved1 uint8 
+	Reserved2 uint8 
 }
 // mofSystemConfig_Boot class definition
 var mofSystemConfig_Boot = &MofClassDef{
@@ -7926,8 +7926,8 @@ var mofSystemConfig_Boot = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_DPI struct {
-	MachineDPI uint32
-	UserDPI uint32
+	MachineDPI uint32 
+	UserDPI uint32 
 }
 // mofSystemConfig_V2_DPI class definition
 var mofSystemConfig_V2_DPI = &MofClassDef{
@@ -7963,13 +7963,13 @@ var mofSystemConfig_V2_DPI = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_NIC struct {
-	PhysicalAddr uint64
-	PhysicalAddrLen uint32
-	Ipv4Index uint32
-	Ipv6Index uint32
-	NICDescription uintptr
-	IpAddresses uintptr
-	DnsServerAddresses uintptr
+	PhysicalAddr uint64 // format("x")
+	PhysicalAddrLen uint32 
+	Ipv4Index uint32 
+	Ipv6Index uint32 
+	NICDescription uintptr // StringTermination("NullTerminated"), format("w")
+	IpAddresses uintptr // StringTermination("NullTerminated"), format("w")
+	DnsServerAddresses uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_NIC class definition
 var mofSystemConfig_V2_NIC = &MofClassDef{
@@ -8002,14 +8002,14 @@ var mofSystemConfig_V2_NIC = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_CPU struct {
-	MHz uint32
-	NumberOfProcessors uint32
-	MemSize uint32
-	PageSize uint32
-	AllocationGranularity uint32
-	ComputerName [256]uint16
-	DomainName [134]uint16
-	HyperThreadingFlag uintptr
+	MHz uint32 
+	NumberOfProcessors uint32 
+	MemSize uint32 
+	PageSize uint32 
+	AllocationGranularity uint32 
+	ComputerName [256]uint16 // format("s"), MAX(256)
+	DomainName [134]uint16 // format("s"), MAX(134)
+	HyperThreadingFlag uintptr 
 }
 // mofSystemConfig_V2_CPU class definition
 var mofSystemConfig_V2_CPU = &MofClassDef{
@@ -8038,9 +8038,9 @@ var mofSystemConfig_V2_CPU = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_DeviceFamily struct {
-	UAPInfo uint64
-	DeviceFamily uint32
-	DeviceForm uint32
+	UAPInfo uint64 
+	DeviceFamily uint32 
+	DeviceForm uint32 
 }
 // mofSystemConfig_V2_DeviceFamily class definition
 var mofSystemConfig_V2_DeviceFamily = &MofClassDef{
@@ -8091,24 +8091,24 @@ var mofSystemConfig_V2_DeviceFamily = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_OpticalMedia struct {
-	DiskNumber uint16
-	BusType uint16
-	DeviceType uint16
-	MediaType uint16
-	StartingOffset uint64
-	Size uint64
-	NumberOfFreeBlocks uint64
-	TotalNumberOfBlocks uint64
-	NextWritableAddress uint64
-	NumberOfSessions uint32
-	NumberOfTracks uint32
-	BytesPerSector uint32
-	DiscStatus uint16
-	LastSessionStatus uint16
-	DriveLetter uintptr
-	FileSystemName uintptr
-	DeviceName uintptr
-	ManufacturerName uintptr
+	DiskNumber uint16 
+	BusType uint16 
+	DeviceType uint16 
+	MediaType uint16 
+	StartingOffset uint64 
+	Size uint64 
+	NumberOfFreeBlocks uint64 
+	TotalNumberOfBlocks uint64 
+	NextWritableAddress uint64 
+	NumberOfSessions uint32 
+	NumberOfTracks uint32 
+	BytesPerSector uint32 
+	DiscStatus uint16 
+	LastSessionStatus uint16 
+	DriveLetter uintptr // StringTermination("NullTerminated"), format("w")
+	FileSystemName uintptr // StringTermination("NullTerminated"), format("w")
+	DeviceName uintptr // StringTermination("NullTerminated"), format("a")
+	ManufacturerName uintptr // StringTermination("NullTerminated"), format("a")
 }
 // mofSystemConfig_V2_OpticalMedia class definition
 var mofSystemConfig_V2_OpticalMedia = &MofClassDef{
@@ -8147,8 +8147,8 @@ var mofSystemConfig_V2_OpticalMedia = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_ProcNumber struct {
-	ProcessorCount uint32
-	ProcessorNumber uintptr
+	ProcessorCount uint32 
+	ProcessorNumber uintptr // format("x"), WmiSizeIs("ProcessorCount")
 }
 // mofSystemConfig_V2_ProcNumber class definition
 var mofSystemConfig_V2_ProcNumber = &MofClassDef{
@@ -8179,17 +8179,17 @@ var mofSystemConfig_V2_ProcNumber = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_Video struct {
-	MemorySize uint32
-	XResolution uint32
-	YResolution uint32
-	BitsPerPixel uint32
-	VRefresh uint32
-	ChipType [256]uint16
-	DACType [256]uint16
-	AdapterString [256]uint16
-	BiosString [256]uint16
-	DeviceId [256]uint16
-	StateFlags uint32
+	MemorySize uint32 
+	XResolution uint32 
+	YResolution uint32 
+	BitsPerPixel uint32 
+	VRefresh uint32 
+	ChipType [256]uint16 // format("s"), MAX(256)
+	DACType [256]uint16 // format("s"), MAX(256)
+	AdapterString [256]uint16 // format("s"), MAX(256)
+	BiosString [256]uint16 // format("s"), MAX(256)
+	DeviceId [256]uint16 // format("s"), MAX(256)
+	StateFlags uint32 // format("x")
 }
 // mofSystemConfig_V2_Video class definition
 var mofSystemConfig_V2_Video = &MofClassDef{
@@ -8222,10 +8222,10 @@ var mofSystemConfig_V2_Video = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_Network struct {
-	TcbTablePartitions uint32
-	MaxHashTableSize uint32
-	MaxUserPort uint32
-	TcpTimedWaitDelay uint32
+	TcbTablePartitions uint32 
+	MaxHashTableSize uint32 
+	MaxUserPort uint32 
+	TcpTimedWaitDelay uint32 
 }
 // mofSystemConfig_V2_Network class definition
 var mofSystemConfig_V2_Network = &MofClassDef{
@@ -8289,45 +8289,45 @@ var mofSystemConfig_V2_Network = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_Defrag struct {
-	AlignmentClusters uint64
-	AvgFreeSpaceSize uint64
-	ClustersPerSlab uint64
-	FragmentedDirectoryExtents uint64
-	FragmentedExtents uint64
-	FreeSpaceCount uint64
-	LargestFreeSpaceSize uint64
-	LastRunActualPurgeClusters uint64
-	LastRunClustersTrimmed uint64
-	LastRunFullDefragTime uint64
-	LastRunTime uint64
-	MFTSize uint64
-	TotalClusters uint64
-	TotalUsedClusters uint64
-	AvgFragmentsPerFile uint32
-	BytesPerCluster uint32
-	DirectoryCount uint32
-	FragmentedDirectories uint32
-	FragmentedFiles uint32
-	FragmentedSpace uint32
-	HardwareIssue uint32
-	InUseMFTRecords uint32
-	InUseSlabs uint32
-	LastRunActualPurgeSlabs uint32
-	LastRunInitialBackedSlabs uint32
-	LastRunPercentFragmentation uint32
-	LastRunPinnedSlabs uint32
-	LastRunPotentialPurgeSlabs uint32
-	LastRunSpaceInefficientSlabs uint32
-	LastRunTrimmedSlabs uint32
-	LastRunUnknownEvictFailSlabs uint32
-	LastRunVolsnapPinnedSlabs uint32
-	MFTFragmentCount uint32
-	MovableFiles uint32
-	TotalMFTRecords uint32
-	TotalSlabs uint32
-	UnmovableFiles uint32
-	VolumeId GUID
-	VolumePathNames uintptr
+	AlignmentClusters uint64 
+	AvgFreeSpaceSize uint64 
+	ClustersPerSlab uint64 
+	FragmentedDirectoryExtents uint64 
+	FragmentedExtents uint64 
+	FreeSpaceCount uint64 
+	LargestFreeSpaceSize uint64 
+	LastRunActualPurgeClusters uint64 
+	LastRunClustersTrimmed uint64 
+	LastRunFullDefragTime uint64 
+	LastRunTime uint64 
+	MFTSize uint64 
+	TotalClusters uint64 
+	TotalUsedClusters uint64 
+	AvgFragmentsPerFile uint32 
+	BytesPerCluster uint32 
+	DirectoryCount uint32 
+	FragmentedDirectories uint32 
+	FragmentedFiles uint32 
+	FragmentedSpace uint32 
+	HardwareIssue uint32 
+	InUseMFTRecords uint32 
+	InUseSlabs uint32 
+	LastRunActualPurgeSlabs uint32 
+	LastRunInitialBackedSlabs uint32 
+	LastRunPercentFragmentation uint32 
+	LastRunPinnedSlabs uint32 
+	LastRunPotentialPurgeSlabs uint32 
+	LastRunSpaceInefficientSlabs uint32 
+	LastRunTrimmedSlabs uint32 
+	LastRunUnknownEvictFailSlabs uint32 
+	LastRunVolsnapPinnedSlabs uint32 
+	MFTFragmentCount uint32 
+	MovableFiles uint32 
+	TotalMFTRecords uint32 
+	TotalSlabs uint32 
+	UnmovableFiles uint32 
+	VolumeId GUID // extension("GUID")
+	VolumePathNames uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_Defrag class definition
 var mofSystemConfig_V2_Defrag = &MofClassDef{
@@ -8390,12 +8390,12 @@ var mofSystemConfig_V2_Defrag = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_Processors struct {
-	ProcessorIndex uint32
-	FeatureSet uint32
-	ProcessorSpeed uint32
-	ProcessorName [64]uint16
-	VendorIdentifier [16]uint16
-	ProcessorIdentifier [128]uint16
+	ProcessorIndex uint32 
+	FeatureSet uint32 
+	ProcessorSpeed uint32 
+	ProcessorName [64]uint16 // format("s"), MAX(64)
+	VendorIdentifier [16]uint16 // format("s"), MAX(16)
+	ProcessorIdentifier [128]uint16 // format("s"), MAX(128)
 }
 // mofSystemConfig_V2_Processors class definition
 var mofSystemConfig_V2_Processors = &MofClassDef{
@@ -8435,10 +8435,10 @@ var mofSystemConfig_V2_Processors = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_Platform struct {
-	SystemManufacturer uintptr
-	SystemProductName uintptr
-	BiosDate uintptr
-	BiosVersion uintptr
+	SystemManufacturer uintptr // StringTermination("NullTerminated"), format("w")
+	SystemProductName uintptr // StringTermination("NullTerminated"), format("w")
+	BiosDate uintptr // StringTermination("NullTerminated"), format("w")
+	BiosVersion uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_Platform class definition
 var mofSystemConfig_V2_Platform = &MofClassDef{
@@ -8463,8 +8463,8 @@ var mofSystemConfig_V2_Platform = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_ProcGroup struct {
-	GroupCount uint32
-	Affinity uintptr
+	GroupCount uint32 
+	Affinity uintptr // format("x"), WmiSizeIs("GroupCount")
 }
 // mofSystemConfig_V2_ProcGroup class definition
 var mofSystemConfig_V2_ProcGroup = &MofClassDef{
@@ -8499,12 +8499,12 @@ var mofSystemConfig_V2_ProcGroup = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_Services struct {
-	ProcessId uint32
-	ServiceState uint32
-	SubProcessTag uint32
-	ServiceName uintptr
-	DisplayName uintptr
-	ProcessName uintptr
+	ProcessId uint32 // format("x")
+	ServiceState uint32 // format("x")
+	SubProcessTag uint32 // format("x")
+	ServiceName uintptr // StringTermination("NullTerminated"), format("w")
+	DisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	ProcessName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_Services class definition
 var mofSystemConfig_V2_Services = &MofClassDef{
@@ -8543,21 +8543,21 @@ var mofSystemConfig_V2_Services = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_PhyDisk struct {
-	DiskNumber uint32
-	BytesPerSector uint32
-	SectorsPerTrack uint32
-	TracksPerCylinder uint32
-	Cylinders uint64
-	SCSIPort uint32
-	SCSIPath uint32
-	SCSITarget uint32
-	SCSILun uint32
-	Manufacturer [256]uint16
-	PartitionCount uint32
-	WriteCacheEnabled uint8
-	Pad uint8
-	BootDriveLetter [3]uint16
-	Spare [2]uint16
+	DiskNumber uint32 
+	BytesPerSector uint32 
+	SectorsPerTrack uint32 
+	TracksPerCylinder uint32 
+	Cylinders uint64 
+	SCSIPort uint32 
+	SCSIPath uint32 
+	SCSITarget uint32 
+	SCSILun uint32 
+	Manufacturer [256]uint16 // format("s"), MAX(256)
+	PartitionCount uint32 
+	WriteCacheEnabled uint8 
+	Pad uint8 
+	BootDriveLetter [3]uint16 // format("s"), MAX(3)
+	Spare [2]uint16 // MAX(2)
 }
 // mofSystemConfig_V2_PhyDisk class definition
 var mofSystemConfig_V2_PhyDisk = &MofClassDef{
@@ -8598,14 +8598,14 @@ var mofSystemConfig_V2_PhyDisk = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_Power struct {
-	S1 uint8
-	S2 uint8
-	S3 uint8
-	S4 uint8
-	S5 uint8
-	Pad1 uint8
-	Pad2 uint8
-	Pad3 uint8
+	S1 uint8 
+	S2 uint8 
+	S3 uint8 
+	S4 uint8 
+	S5 uint8 
+	Pad1 uint8 
+	Pad2 uint8 
+	Pad3 uint8 
 }
 // mofSystemConfig_V2_Power class definition
 var mofSystemConfig_V2_Power = &MofClassDef{
@@ -8639,8 +8639,8 @@ var mofSystemConfig_V2_Power = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_FlightIds struct {
-	UpdateId uintptr
-	FlightIdList uintptr
+	UpdateId uintptr // StringTermination("NullTerminated"), format("w")
+	FlightIdList uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_FlightIds class definition
 var mofSystemConfig_V2_FlightIds = &MofClassDef{
@@ -8720,21 +8720,21 @@ var mofSystemConfig_V2_FlightIds = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_MobilePlatform struct {
-	BootLoaderVersion uintptr
-	FirmwareRevision uintptr
-	FriendlyName uintptr
-	HardwareRevision uintptr
-	Manufacturer uintptr
-	ManufacturerDisplayName uintptr
-	ManufacturerModelName uintptr
-	MobileOperatorDisplayName uintptr
-	MobileOperatorName uintptr
-	ModelName uintptr
-	RadioHardwareRevision uintptr
-	RadioSoftwareRevision uintptr
-	ROMVersion uintptr
-	SOCVersion uintptr
-	HardwareVariant uintptr
+	BootLoaderVersion uintptr // StringTermination("NullTerminated"), format("w")
+	FirmwareRevision uintptr // StringTermination("NullTerminated"), format("w")
+	FriendlyName uintptr // StringTermination("NullTerminated"), format("w")
+	HardwareRevision uintptr // StringTermination("NullTerminated"), format("w")
+	Manufacturer uintptr // StringTermination("NullTerminated"), format("w")
+	ManufacturerDisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	ManufacturerModelName uintptr // StringTermination("NullTerminated"), format("w")
+	MobileOperatorDisplayName uintptr // StringTermination("NullTerminated"), format("w")
+	MobileOperatorName uintptr // StringTermination("NullTerminated"), format("w")
+	ModelName uintptr // StringTermination("NullTerminated"), format("w")
+	RadioHardwareRevision uintptr // StringTermination("NullTerminated"), format("w")
+	RadioSoftwareRevision uintptr // StringTermination("NullTerminated"), format("w")
+	ROMVersion uintptr // StringTermination("NullTerminated"), format("w")
+	SOCVersion uintptr // StringTermination("NullTerminated"), format("w")
+	HardwareVariant uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_MobilePlatform class definition
 var mofSystemConfig_V2_MobilePlatform = &MofClassDef{
@@ -8768,7 +8768,7 @@ var mofSystemConfig_V2_MobilePlatform = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_TelemetryInfo struct {
-	MachineId GUID
+	MachineId GUID // extension("GUID")
 }
 // mofSystemConfig_V2_TelemetryInfo class definition
 var mofSystemConfig_V2_TelemetryInfo = &MofClassDef{
@@ -8794,10 +8794,10 @@ var mofSystemConfig_V2_TelemetryInfo = &MofClassDef{
 // };
 // Go struct for event data
 type MofSystemConfig_V2_IRQ struct {
-	IRQAffinity uint64
-	IRQNum uint32
-	DeviceDescriptionLen uint32
-	DeviceDescription uintptr
+	IRQAffinity uint64 // format("x")
+	IRQNum uint32 
+	DeviceDescriptionLen uint32 
+	DeviceDescription uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofSystemConfig_V2_IRQ class definition
 var mofSystemConfig_V2_IRQ = &MofClassDef{
@@ -8830,8 +8830,8 @@ var mofThread_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofThread_V1_TypeGroup2 struct {
-	ProcessId uint32
-	TThreadId uint32
+	ProcessId uint32 // format("x")
+	TThreadId uint32 // format("x")
 }
 // mofThread_V1_TypeGroup2 class definition
 var mofThread_V1_TypeGroup2 = &MofClassDef{
@@ -8860,15 +8860,15 @@ var mofThread_V1_TypeGroup2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofThread_V1_TypeGroup1 struct {
-	ProcessId uint32
-	TThreadId uint32
-	StackBase uintptr
-	StackLimit uintptr
-	UserStackBase uintptr
-	UserStackLimit uintptr
-	StartAddr uintptr
-	Win32StartAddr uintptr
-	WaitMode int8
+	ProcessId uint32 // format("x")
+	TThreadId uint32 // format("x")
+	StackBase uintptr 
+	StackLimit uintptr 
+	UserStackBase uintptr 
+	UserStackLimit uintptr 
+	StartAddr uintptr 
+	Win32StartAddr uintptr 
+	WaitMode int8 
 }
 // mofThread_V1_TypeGroup1 class definition
 var mofThread_V1_TypeGroup1 = &MofClassDef{
@@ -8904,16 +8904,16 @@ var mofThread_V1_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofCSwitch_V1 struct {
-	NewThreadId uint32
-	OldThreadId uint32
-	NewThreadPriority int8
-	OldThreadPriority int8
-	NewThreadQuantum int8
-	OldThreadQuantum int8
-	OldThreadWaitReason int8
-	OldThreadWaitMode int8
-	OldThreadState int8
-	OldThreadWaitIdealProcessor int8
+	NewThreadId uint32 // format("x")
+	OldThreadId uint32 // format("x")
+	NewThreadPriority int8 
+	OldThreadPriority int8 
+	NewThreadQuantum int8 
+	OldThreadQuantum int8 
+	OldThreadWaitReason int8 
+	OldThreadWaitMode int8 
+	OldThreadState int8 
+	OldThreadWaitIdealProcessor int8 
 }
 // mofCSwitch_V1 class definition
 var mofCSwitch_V1 = &MofClassDef{
@@ -8943,9 +8943,9 @@ var mofCSwitch_V1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofWorkerThread_V1 struct {
-	TThreadId uint32
-	StartTime uint64
-	ThreadRoutine uintptr
+	TThreadId uint32 // format("x")
+	StartTime uint64 
+	ThreadRoutine uintptr 
 }
 // mofWorkerThread_V1 class definition
 var mofWorkerThread_V1 = &MofClassDef{
@@ -8982,12 +8982,12 @@ var mofTcpIp_V0 = &MofClassDef{
 // };
 // Go struct for event data
 type MofTcpIp_V0_TypeGroup1 struct {
-	daddr uintptr
-	saddr uintptr
-	dport uintptr
-	sport uintptr
-	size uint32
-	PID uint32
+	daddr [4]byte // use: ip := net.IP(daddr[:])
+	saddr [4]byte // use: ip := net.IP(saddr[:])
+	dport uint16 // big endian: port = etw.Swap16(dport)
+	sport uint16 // big endian: port = etw.Swap16(sport)
+	size uint32 
+	PID uint32 
 }
 // mofTcpIp_V0_TypeGroup1 class definition
 var mofTcpIp_V0_TypeGroup1 = &MofClassDef{
@@ -9023,7 +9023,7 @@ var mofProcess_V2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V2_TypeGroup5 struct {
-	Object uintptr
+	Object uintptr 
 }
 // mofProcess_V2_TypeGroup5 class definition
 var mofProcess_V2_TypeGroup5 = &MofClassDef{
@@ -9047,10 +9047,10 @@ var mofProcess_V2_TypeGroup5 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V2_TypeGroup4 struct {
-	Object uintptr
-	Tag uintptr
-	ProcessId uint32
-	Count uint32
+	Object uintptr 
+	Tag uintptr 
+	ProcessId uint32 // format("x")
+	Count uint32 
 }
 // mofProcess_V2_TypeGroup4 class definition
 var mofProcess_V2_TypeGroup4 = &MofClassDef{
@@ -9088,21 +9088,21 @@ var mofProcess_V2_TypeGroup4 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V2_TypeGroup2 struct {
-	ProcessId uint32
-	PageFaultCount uint32
-	HandleCount uint32
-	Reserved uint32
-	PeakVirtualSize uintptr
-	PeakWorkingSetSize uintptr
-	PeakPagefileUsage uintptr
-	QuotaPeakPagedPoolUsage uintptr
-	QuotaPeakNonPagedPoolUsage uintptr
-	VirtualSize uintptr
-	WorkingSetSize uintptr
-	PagefileUsage uintptr
-	QuotaPagedPoolUsage uintptr
-	QuotaNonPagedPoolUsage uintptr
-	PrivatePageCount uintptr
+	ProcessId uint32 // format("x")
+	PageFaultCount uint32 
+	HandleCount uint32 
+	Reserved uint32 
+	PeakVirtualSize uintptr // extension("SizeT")
+	PeakWorkingSetSize uintptr // extension("SizeT")
+	PeakPagefileUsage uintptr // extension("SizeT")
+	QuotaPeakPagedPoolUsage uintptr // extension("SizeT")
+	QuotaPeakNonPagedPoolUsage uintptr // extension("SizeT")
+	VirtualSize uintptr // extension("SizeT")
+	WorkingSetSize uintptr // extension("SizeT")
+	PagefileUsage uintptr // extension("SizeT")
+	QuotaPagedPoolUsage uintptr // extension("SizeT")
+	QuotaNonPagedPoolUsage uintptr // extension("SizeT")
+	PrivatePageCount uintptr // extension("SizeT")
 }
 // mofProcess_V2_TypeGroup2 class definition
 var mofProcess_V2_TypeGroup2 = &MofClassDef{
@@ -9147,14 +9147,14 @@ var mofProcess_V2_TypeGroup2 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V2_TypeGroup1 struct {
-	UniqueProcessKey uintptr
-	ProcessId uint32
-	ParentId uint32
-	SessionId uint32
-	ExitStatus int32
-	UserSID uintptr
-	ImageFileName uintptr
-	CommandLine uintptr
+	UniqueProcessKey uintptr 
+	ProcessId uint32 // format("x")
+	ParentId uint32 // format("x")
+	SessionId uint32 
+	ExitStatus int32 
+	UserSID uintptr // extension("Sid")
+	ImageFileName uintptr // StringTermination("NullTerminated")
+	CommandLine uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofProcess_V2_TypeGroup1 class definition
 var mofProcess_V2_TypeGroup1 = &MofClassDef{
@@ -9169,7 +9169,7 @@ var mofProcess_V2_TypeGroup1 = &MofClassDef{
 		{ID: 3, Name: "ParentId", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
 		{ID: 4, Name: "SessionId", InType: TDH_INTYPE_UINT32},
 		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
-		{ID: 6, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 6, Name: "UserSID", InType: TDH_INTYPE_WBEMSID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
 		{ID: 7, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 		{ID: 8, Name: "CommandLine", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
@@ -9181,7 +9181,7 @@ var mofProcess_V2_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_Terminate_TypeGroup1 struct {
-	ProcessId uint32
+	ProcessId uint32 // format("x")
 }
 // mofProcess_Terminate_TypeGroup1 class definition
 var mofProcess_Terminate_TypeGroup1 = &MofClassDef{
@@ -9201,8 +9201,8 @@ var mofProcess_Terminate_TypeGroup1 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V2_TypeGroup3 struct {
-	DirectoryTableBase uintptr
-	ProcessId uint32
+	DirectoryTableBase uintptr 
+	ProcessId uint32 // format("x")
 }
 // mofProcess_V2_TypeGroup3 class definition
 var mofProcess_V2_TypeGroup3 = &MofClassDef{
@@ -9254,18 +9254,18 @@ var mofProcess_V4 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V4_TypeGroup1 struct {
-	UniqueProcessKey uintptr
-	ProcessId uint32
-	ParentId uint32
-	SessionId uint32
-	ExitStatus int32
-	DirectoryTableBase uintptr
-	Flags uint32
-	UserSID uintptr
-	ImageFileName uintptr
-	CommandLine uintptr
-	PackageFullName uintptr
-	ApplicationId uintptr
+	UniqueProcessKey uintptr 
+	ProcessId uint32 // format("x")
+	ParentId uint32 // format("x")
+	SessionId uint32 
+	ExitStatus int32 
+	DirectoryTableBase uintptr 
+	Flags uint32 // format("x")
+	UserSID uintptr // extension("Sid")
+	ImageFileName uintptr // StringTermination("NullTerminated")
+	CommandLine uintptr // StringTermination("NullTerminated"), format("w")
+	PackageFullName uintptr // StringTermination("NullTerminated"), format("w")
+	ApplicationId uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofProcess_V4_TypeGroup1 class definition
 var mofProcess_V4_TypeGroup1 = &MofClassDef{
@@ -9282,7 +9282,7 @@ var mofProcess_V4_TypeGroup1 = &MofClassDef{
 		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
 		{ID: 6, Name: "DirectoryTableBase", InType: TDH_INTYPE_POINTER},
 		{ID: 7, Name: "Flags", InType: TDH_INTYPE_UINT32, OutType: TDH_OUTTYPE_HEXINT32},
-		{ID: 8, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 8, Name: "UserSID", InType: TDH_INTYPE_WBEMSID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
 		{ID: 9, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 		{ID: 10, Name: "CommandLine", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 		{ID: 11, Name: "PackageFullName", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
@@ -9308,10 +9308,10 @@ var mofPowerEvents = &MofClassDef{
 // };
 // Go struct for event data
 type MofIdleExitLatency struct {
-	PlatformState uint32
-	ProcessorState uint32
-	ReturnLatency uint32
-	TotalLatency uint32
+	PlatformState uint32 
+	ProcessorState uint32 
+	ReturnLatency uint32 
+	TotalLatency uint32 
 }
 // mofIdleExitLatency class definition
 var mofIdleExitLatency = &MofClassDef{
@@ -9356,15 +9356,15 @@ var mofProcess_V3 = &MofClassDef{
 // };
 // Go struct for event data
 type MofProcess_V3_TypeGroup1 struct {
-	UniqueProcessKey uintptr
-	ProcessId uint32
-	ParentId uint32
-	SessionId uint32
-	ExitStatus int32
-	DirectoryTableBase uintptr
-	UserSID uintptr
-	ImageFileName uintptr
-	CommandLine uintptr
+	UniqueProcessKey uintptr 
+	ProcessId uint32 // format("x")
+	ParentId uint32 // format("x")
+	SessionId uint32 
+	ExitStatus int32 
+	DirectoryTableBase uintptr 
+	UserSID uintptr // extension("Sid")
+	ImageFileName uintptr // StringTermination("NullTerminated")
+	CommandLine uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofProcess_V3_TypeGroup1 class definition
 var mofProcess_V3_TypeGroup1 = &MofClassDef{
@@ -9380,7 +9380,7 @@ var mofProcess_V3_TypeGroup1 = &MofClassDef{
 		{ID: 4, Name: "SessionId", InType: TDH_INTYPE_UINT32},
 		{ID: 5, Name: "ExitStatus", InType: TDH_INTYPE_INT32},
 		{ID: 6, Name: "DirectoryTableBase", InType: TDH_INTYPE_POINTER},
-		{ID: 7, Name: "UserSID", InType: TDH_INTYPE_SID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
+		{ID: 7, Name: "UserSID", InType: TDH_INTYPE_WBEMSID, OutType: TDH_OUTTYPE_STRING, Extension: "Sid"},
 		{ID: 8, Name: "ImageFileName", InType: TDH_INTYPE_ANSISTRING, OutType: TDH_OUTTYPE_STRING},
 		{ID: 9, Name: "CommandLine", InType: TDH_INTYPE_UNICODESTRING, OutType: TDH_OUTTYPE_STRING},
 	},
@@ -9401,7 +9401,7 @@ var mofALPC = &MofClassDef{
 // };
 // Go struct for event data
 type MofALPC_Receive_Message struct {
-	MessageID uint32
+	MessageID uint32 
 }
 // mofALPC_Receive_Message class definition
 var mofALPC_Receive_Message = &MofClassDef{
@@ -9420,7 +9420,7 @@ var mofALPC_Receive_Message = &MofClassDef{
 // };
 // Go struct for event data
 type MofALPC_Wait_For_Reply struct {
-	MessageID uint32
+	MessageID uint32 
 }
 // mofALPC_Wait_For_Reply class definition
 var mofALPC_Wait_For_Reply = &MofClassDef{
@@ -9439,7 +9439,7 @@ var mofALPC_Wait_For_Reply = &MofClassDef{
 // };
 // Go struct for event data
 type MofALPC_Send_Message struct {
-	MessageID uint32
+	MessageID uint32 
 }
 // mofALPC_Send_Message class definition
 var mofALPC_Send_Message = &MofClassDef{
@@ -9458,7 +9458,7 @@ var mofALPC_Send_Message = &MofClassDef{
 // };
 // Go struct for event data
 type MofALPC_Unwait struct {
-	Status uint32
+	Status uint32 
 }
 // mofALPC_Unwait class definition
 var mofALPC_Unwait = &MofClassDef{
@@ -9481,8 +9481,8 @@ var mofALPC_Unwait = &MofClassDef{
 // };
 // Go struct for event data
 type MofALPC_Wait_For_New_Message struct {
-	IsServerPort uint32
-	PortName uintptr
+	IsServerPort uint32 
+	PortName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofALPC_Wait_For_New_Message class definition
 var mofALPC_Wait_For_New_Message = &MofClassDef{
@@ -9528,20 +9528,20 @@ var mofImage = &MofClassDef{
 // };
 // Go struct for event data
 type MofImage_Load struct {
-	ImageBase uintptr
-	ImageSize uintptr
-	ProcessId uint32
-	ImageChecksum uint32
-	TimeDateStamp uint32
-	SignatureLevel uint8
-	SignatureType uint8
-	Reserved0 uint16
-	DefaultBase uintptr
-	Reserved1 uint32
-	Reserved2 uint32
-	Reserved3 uint32
-	Reserved4 uint32
-	FileName uintptr
+	ImageBase uintptr 
+	ImageSize uintptr 
+	ProcessId uint32 
+	ImageChecksum uint32 
+	TimeDateStamp uint32 
+	SignatureLevel uint8 
+	SignatureType uint8 
+	Reserved0 uint16 
+	DefaultBase uintptr 
+	Reserved1 uint32 
+	Reserved2 uint32 
+	Reserved3 uint32 
+	Reserved4 uint32 
+	FileName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofImage_Load class definition
 var mofImage_Load = &MofClassDef{
@@ -9580,11 +9580,11 @@ var mofImage_Load = &MofClassDef{
 // };
 // Go struct for event data
 type MofLoaderDllSearchResults struct {
-	LdrLoadFlags uint32
-	LdrSearchFlags uint32
-	SearchInfo uint32
-	LoadReason uint32
-	FullDllName uintptr
+	LdrLoadFlags uint32 // format("x")
+	LdrSearchFlags uint32 // format("x")
+	SearchInfo uint32 // format("x")
+	LoadReason uint32 // format("x")
+	FullDllName uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofLoaderDllSearchResults class definition
 var mofLoaderDllSearchResults = &MofClassDef{
@@ -9613,10 +9613,10 @@ var mofLoaderDllSearchResults = &MofClassDef{
 // };
 // Go struct for event data
 type MofLoaderNewDllEvent struct {
-	NewDllBaseAddress uintptr
-	ParentDllBaseAddress uintptr
-	LoadReason uint32
-	FilePath uintptr
+	NewDllBaseAddress uintptr // format("x")
+	ParentDllBaseAddress uintptr // format("x")
+	LoadReason uint32 // format("x")
+	FilePath uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofLoaderNewDllEvent class definition
 var mofLoaderNewDllEvent = &MofClassDef{
@@ -9648,11 +9648,11 @@ var mofLoaderNewDllEvent = &MofClassDef{
 // };
 // Go struct for event data
 type MofLoaderCodedEventPath struct {
-	BaseAddress uint64
-	ErrorOpcode uint8
-	Code int8
-	String1 uintptr
-	String2 uintptr
+	BaseAddress uint64 // format("x")
+	ErrorOpcode uint8 // format("x")
+	Code int8 
+	String1 uintptr // StringTermination("NullTerminated"), format("w")
+	String2 uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofLoaderCodedEventPath class definition
 var mofLoaderCodedEventPath = &MofClassDef{
@@ -9683,10 +9683,10 @@ var mofLoaderCodedEventPath = &MofClassDef{
 // };
 // Go struct for event data
 type MofLoaderCodedEventStatus struct {
-	BaseAddress uint64
-	ErrorOpcode uint8
-	Code int8
-	String uintptr
+	BaseAddress uint64 // format("x")
+	ErrorOpcode uint8 // format("x")
+	Code int8 
+	String uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofLoaderCodedEventStatus class definition
 var mofLoaderCodedEventStatus = &MofClassDef{
@@ -9725,11 +9725,11 @@ var mofLoaderCodedEventStatus = &MofClassDef{
 // };
 // Go struct for event data
 type MofLoaderPathSearchResults struct {
-	SearchInfo uint32
-	Cwd uintptr
-	AppDir uintptr
-	DllDir uintptr
-	DllLoadDir uintptr
+	SearchInfo uint32 // format("x")
+	Cwd uintptr // StringTermination("NullTerminated"), format("w")
+	AppDir uintptr // StringTermination("NullTerminated"), format("w")
+	DllDir uintptr // StringTermination("NullTerminated"), format("w")
+	DllLoadDir uintptr // StringTermination("NullTerminated"), format("w")
 }
 // mofLoaderPathSearchResults class definition
 var mofLoaderPathSearchResults = &MofClassDef{
