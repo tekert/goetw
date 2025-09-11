@@ -65,8 +65,10 @@ type JsonTimeZoneInfo struct {
 type JsonEventPropertyInfo struct {
 	Name                string        `json:"Name"`
 	Flags               PropertyFlags `json:"Flags"`
-	InType              TdhInType     `json:"InType,omitempty"`
-	OutType             TdhOutType    `json:"OutType,omitempty"`
+	InType              TdhInType     `json:"InType"`
+	InTypeStr           string        `json:"InTypeStr,omitempty"` // for debugging
+	OutType             TdhOutType    `json:"OutType"`
+	OutTypeStr          string        `json:"OutTypeStr,omitempty"` // for debugging
 	MapName             string        `json:"MapName,omitempty"`
 	StructStartIndex    uint16        `json:"StructStartIndex,omitempty"`
 	NumOfStructMembers  uint16        `json:"NumOfStructMembers,omitempty"`
@@ -88,7 +90,9 @@ func (epi *EventPropertyInfo) ToJSON(t *TraceEventInfo) JsonEventPropertyInfo {
 		prop.NumOfStructMembers = epi.NumOfStructMembers()
 	} else {
 		prop.InType = epi.InType()
+		prop.InTypeStr = epi.InType().String()
 		prop.OutType = epi.OutType()
+		prop.OutTypeStr = epi.OutType().String()
 		if epi.MapNameOffset() > 0 {
 			prop.MapName = t.cleanStringAt(uintptr(epi.MapNameOffset()))
 		}
