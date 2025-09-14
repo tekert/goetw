@@ -93,6 +93,7 @@ func (p *Property) Parseable() bool {
 }
 
 // GetInt returns the property value as int64.
+// Filetime intypes are returned as int64 nanoseconds.
 // Only if the data is a scalar InType
 func (p *Property) GetInt() (int64, error) {
 	v, signed, err := p.decodeScalarIntype()
@@ -109,6 +110,7 @@ func (p *Property) GetInt() (int64, error) {
 }
 
 // GetUInt returns the property value as uint64.
+// Filetime intypes are returned as uint64 nanoseconds.
 // Only if the data is a scalar InType
 func (p *Property) GetUInt() (uint64, error) {
 	v, signed, err := p.decodeScalarIntype()
