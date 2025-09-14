@@ -234,7 +234,7 @@ func NewRealTimeEventTraceProperties() *EventTraceProperties2Wrapper {
 	traceProps.LogFileNameOffset = 0
 	//* ETW event can be up to 64KB size so if the buffer size is not at least
 	// big enough to contain such an event, the event will be lost
-	// source: https://docs.microsoft.com/en-us/message-analyzer/specifying-advanced-etw-session-configuration-settings
+	// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-event_trace_properties_v2
 	traceProps.BufferSize = 64
 
 	// StartTrace will copy the string for us.
@@ -417,7 +417,11 @@ func (s *RealTimeSession) start() (err error) {
 		}
 	}
 
-	seslog.Info().Str("session", s.traceName).Uint64("Handle", uint64(s.sessionHandle)).
+	seslog.Info().Str("session", s.traceName).
+		Uint64("Handle", uint64(s.sessionHandle)).
+		Uint32("BufferSizeKB", s.traceProps.BufferSize).
+		Uint32("MinBuffers", s.traceProps.MinimumBuffers).
+		Uint32("MaxBuffers", s.traceProps.MaximumBuffers).
 		Msg("Session started")
 
 	return err
