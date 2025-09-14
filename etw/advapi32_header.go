@@ -1251,6 +1251,8 @@ func (e *EventRecord) ExtTerminalSessionID() (uint32, bool) {
 }
 
 // ExtProcessStartKey returns a unique identifier for the process that persists across boot sessions.
+// Returns zero if not present and false if not found.
+//
 // This is more reliable for correlation than a PID, which can be reused.
 // The boolean return value indicates whether the start key was present in the event's extended data.
 // Enabled by using the EVENT_ENABLE_PROPERTY_PROCESS_START_KEY flag on EnableProvider config.
