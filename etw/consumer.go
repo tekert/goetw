@@ -707,7 +707,7 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 		// We check fields that must be non-zero on any valid, running session.
 		if loggerInfo.LogfileHeader.BootTime == 0 && loggerInfo.LogfileHeader.NumberOfProcessors == 0 {
 			_ = CloseTrace(traceHandle) // Clean up the invalid handle.
-			return fmt.Errorf("trace %q opened successfully but returned an" +
+			return fmt.Errorf("trace %q opened successfully but returned an "+
 				"invalid/uninitialized header, session may not exist?", name)
 		}
 	}
@@ -1034,7 +1034,8 @@ func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
 		// (i.e., not shutting down), it means the session was likely stopped externally.
 		if !c.closed.Load() && c.ctx.Err() == nil && trace.ctx.Err() == nil && trace.realtime {
 			seslog.Warn().Str("trace", name).
-				Msg("ProcessTrace finished unexpectedly; session may have been stopped externally. Use consumer.RestartSession() to resume.")
+				Msg("ProcessTrace finished unexpectedly; session may have been stopped. " +
+					"Use consumer.RestartSession() if you want to resume.")
 		}
 	}
 	// The handle is now invalid. We close it logically to prepare for a potential restart.
