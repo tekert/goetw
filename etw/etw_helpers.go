@@ -34,8 +34,9 @@ var (
 
 // Global Memory Pools and Caches
 var (
-	// We use a global pool for EventRecordHelper to reduce allocations on the hot path.
-	helperPool = sync.Pool{New: func() any { return &EventRecordHelper{} }}
+	// // We use a global pool for EventRecordHelper to reduce allocations on the hot path.
+	// helperPool = sync.Pool{New: func() any { return &EventRecordHelper{} }}
+
 	// tdhBufferPool is used if using thd fallback for string conversion.
 	tdhBufferPool = sync.Pool{New: func() any { s := make([]uint16, 128); return &s }}
 
@@ -226,6 +227,8 @@ func (er *EventRecord) getOrSetProviderCache() (shemaCache *sync.Map) {
 // traceStorage holds all the necessary reusable memory for a single trace (goroutine).
 // This avoids using sync.Pool for thread-local data, reducing overhead.
 type traceStorage struct {
+	helper EventRecordHelper // Was in pools before, but this increased performance by ~5%
+
 	// Reusable buffers and slices. They are reset before processing each event.
 	propertiesCustom  map[string]*Property              // For user-defined simple properties
 	propertiesByIndex []*Property                       // For schema-defined simple properties
@@ -248,7 +251,7 @@ type traceStorage struct {
 
 // newTraceStorage creates a new storage area for a goroutine in ProcessTrace.
 func newTraceStorage() *traceStorage {
-	return &traceStorage{
+	ts := &traceStorage{
 		propertiesCustom:  make(map[string]*Property, 8),
 		propertiesByIndex: make([]*Property, 0, 64),
 		arrayProperties:   make(map[string]*[]*Property, 8),
@@ -266,6 +269,8 @@ func newTraceStorage() *traceStorage {
 		propertyMapPool: sync.Pool{New: func() any { return make(map[string]*Property, 8) }},
 		propSlicePool:   sync.Pool{New: func() any { s := make([]*Property, 0, 8); return &s }},
 	}
+	ts.helper.storage = ts
+	return ts
 }
 
 // reset clears the storage so it can be reused for the next event.
@@ -455,7 +460,8 @@ type EventRecordHelper struct {
 	// A reference to the thread-local storage for this trace.
 	storage *traceStorage
 
-	// FILETIME format of this event timestamp (in case raw timestamp is used)
+	// FILETIME format of this event timestamp. (In case raw timestamp is used)
+	// If raw is not set then it's just the same as EventRec.EventHeader.TimeStamp
 	timestamp int64
 }
 
@@ -483,8 +489,10 @@ func (e *EventRecordHelper) addPropError() {
 //
 // Session ClientContext: QPC, SystemTime and CPUClocks clocktypes are correctly converted to FILETIME.
 // If the raw timestamp flag is not set, it just uses the FILETIME returned by etw in time.Time format.
+//
+// To get the raw timestamp of the event use EventRecordHelper.EventRec.EventHeader.TimeStamp directly.
 func (e *EventRecordHelper) Timestamp() time.Time {
-	return FromFiletime(e.timestamp) // use cached filetime timestamp
+	return FromFiletime(e.timestamp) // use previously converted and cached filetime timestamp
 }
 
 // TimestampFromProp converts a raw timestamp value from an event property (like WmiTime)
@@ -498,15 +506,16 @@ func (e *EventRecordHelper) TimestampFromProp(propTimestamp int64) time.Time {
 // of the next event's processing.
 func (e *EventRecordHelper) release() {
 	*e = EventRecordHelper{}
-	helperPool.Put(e)
+	//helperPool.Put(e) // no using pools for now
 }
 
 // newEventRecordHelper creates a new EventRecordHelper and retrieves the TRACE_EVENT_INFO
 // for the given EventRecord. It implements a multi-level caching and fallback strategy.
 // +120% performance gain by using caching vs no caching of the TraceInfo (while caching names etc)
 func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) { // mi version
-	erh = helperPool.Get().(*EventRecordHelper)
+	//erh = helperPool.Get().(*EventRecordHelper)  // no using pools for now
 	storage := er.userContext().storage
+	erh = &storage.helper
 
 	// Reset the thread-local storage before processing a new event.
 	storage.reset()
@@ -1565,6 +1574,8 @@ func (e *EventRecordHelper) EventID() uint16 {
 	Values are cached after first access.
 */
 
+// TODO: make the names of this functions match the common types of etw properties to go, GetPropertyAsGoType
+
 // GetPropertyString returns the formatted string value of the named property.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error) {
@@ -1585,6 +1596,9 @@ func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error)
 }
 
 // GetPropertyInt returns the property value as int64.
+//
+// Filetime intypes are returned as int64 nanoseconds.
+//
 // Returns overflow error for unsigned values exceeding math.MaxInt64.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
@@ -1602,7 +1616,23 @@ func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
 	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
+// GetPropertyFileTime returns the Filetime property value as time.Time.
+//
+// Filetime intypes are returned as time.Time in UTC.
+//
+// Returns ErrUnknownProperty if the property doesn't exist.
+func (e *EventRecordHelper) GetPropertyFileTime(name string) (time.Time, error) {
+	nanoseconds, err := e.GetPropertyInt(name)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Unix(0, nanoseconds), nil
+}
+
 // GetPropertyUint returns the property value as uint64.
+//
+// Filetime intypes are returned as uint64 nanoseconds.
+//
 // Returns conversion error for negative signed values.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyUint(name string) (uint64, error) {

@@ -1716,6 +1716,31 @@ func (e *EventRecord) GetUTF16StringAt(offset uintptr, count int) (string, error
 	return FromUTF16Slice(resultSlice), nil
 }
 
+// GetFiletimeAt reads a FILETIME value from the UserData buffer at a specific byte offset.
+// It performs bounds checking to prevent memory access violations.
+// This is an unsafe, high-performance method for well-known event layouts.
+//
+// Returns filetime as in go format time.Time in UTC.
+func (e *EventRecord) GetFiletimeAsTimeAt(offset uintptr) (time.Time, error) {
+	if filetime, err := e.GetFiletimeAt(offset); err != nil {
+		return time.Time{}, err
+	} else {
+		nanoseconds := filetime.Nanoseconds()
+		return time.Unix(0, nanoseconds), nil
+	}
+}
+
+// GetFiletimeAt reads a FILETIME value from the UserData buffer at a specific byte offset.
+// It performs bounds checking to prevent memory access violations.
+// This is an unsafe, high-performance method for well-known event layouts.
+func (e *EventRecord) GetFiletimeAt(offset uintptr) (syscall.Filetime, error) {
+	if offset+8 > uintptr(e.UserDataLength) {
+		return syscall.Filetime{},
+			fmt.Errorf("offset %d is out of bounds for UserData length %d", offset+8, e.UserDataLength)
+	}
+	return *(*syscall.Filetime)(unsafe.Pointer(e.UserData + offset)), nil
+}
+
 // GetUint64At reads a uint64 value from the UserData buffer at a specific byte offset.
 // It performs bounds checking to prevent memory access violations.
 // This is an unsafe, high-performance method for well-known event layouts.
