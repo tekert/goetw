@@ -102,8 +102,8 @@ type Consumer struct {
 	// NOTE: The timestamp in
 	// EventRecord.EventHeader.TimeStamp is the raw timestamp and its in FILETIME
 	// format only if PROCESS_TRACE_MODE_RAW_TIMESTAMP is not set.
-	// if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set, use the EventRecordHelperCallback
-	// on later callbacks to access the converted timestamp via EventRecordHelper.Timestamp().
+	// if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set, use EventRecord.Timestamp() to
+	// get the correct timestamp as time.Time based on trace Clocktype used.
 	EventRecordCallback func(*EventRecord) bool
 
 	// [2] Callback which executes after TraceEventInfo is parsed.

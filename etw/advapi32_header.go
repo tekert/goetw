@@ -1716,11 +1716,33 @@ func (e *EventRecord) GetUTF16StringAt(offset uintptr, count int) (string, error
 	return FromUTF16Slice(resultSlice), nil
 }
 
+// GetWmiTime reads a WMI time value from the UserData buffer at a specific byte offset.
+// It performs bounds checking to prevent memory access violations.
+// This is an unsafe, high-performance method for well-known event layouts.
+//
+// goetw automatically converts the wmitime to the correct time format
+// using the current trace ClockType.
+//
+// MOF WmiTime qualifier:
+// if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set, WmiTime property can be in
+// QPC, CPUClock or FILETIME format (depends on Wnode.ClientContext of the session),
+// can be queried from the trace flag EventTraceLogfile.LogfileHeader.ReservedFlags (ClockType).
+// if not set, it is in FILETIME format already.
+//
+// returns the converted WmiTime to go time.Time (by default props are in Local time).
+func (e *EventRecord) GetWmiTimeAt(offset uintptr) (time.Time, error) {
+	timeRaw, err := e.GetUint64At(offset)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return e.TimestampFromProp(int64(timeRaw)), nil
+}
+
 // GetFiletimeAt reads a FILETIME value from the UserData buffer at a specific byte offset.
 // It performs bounds checking to prevent memory access violations.
 // This is an unsafe, high-performance method for well-known event layouts.
 //
-// Returns filetime as in go format time.Time in UTC.
+// Returns filetime as in go format time.Time  (by default props are in Local time).
 func (e *EventRecord) GetFiletimeAsTimeAt(offset uintptr) (time.Time, error) {
 	if filetime, err := e.GetFiletimeAt(offset); err != nil {
 		return time.Time{}, err
