@@ -16,6 +16,13 @@ import (
 //
 // Consequently, using these filters is effective for reducing the volume of data
 // in a trace, but it does not reduce the initial CPU overhead of event creation.
+//
+// Example usage:
+//	Filters: []etw.ProviderFilter{
+//		etw.NewEventIDFilter(true, 10, 11),
+//		//etw.NewPIDFilter(1234, 5678),                             // read doc about limitations
+//		//etw.NewExecutableNameFilter("svchost.exe","conhost.exe"), // read doc about limitations
+//	},
 type ProviderFilter interface {
 	// build allocates the necessary C structures and returns a descriptor.
 	build() (desc EventFilterDescriptor, keepAlive any)
