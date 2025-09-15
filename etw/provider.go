@@ -34,7 +34,7 @@ type Provider struct {
 	// The provider's unique identifier (GUID). Must be specified.
 	GUID GUID
 
-	// Friendly name of the provider. (not used for enabling, just informational)
+	// Friendly name of the provider. (not used for enabling, it's decorative)
 	Name string
 
 	// The logging level specified. The provider typically writes an event if the
@@ -102,11 +102,16 @@ type Provider struct {
 	//     already been paid. This type of filtering is effective for reducing trace
 	//     data volume but is not as effective for reducing trace CPU overhead.
 	//
+	// Example usage:
+	//
+	//  Filters: []etw.ProviderFilter{
+	//     etw.NewEventIDFilter(true, 10, 11),
+	//  },
+	//
 	// For more info read:
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/nf-evntrace-enabletraceex2#remarks
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntrace/ns-evntrace-enable_trace_parameters EnableFilterDesc
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_filter_descriptor EVENT_FILTER_TYPE_EVENT_ID
-
 	Filters []ProviderFilter
 
 	// EnableProperties specifies flags from the EVENT_ENABLE_PROPERTY_* constants.
