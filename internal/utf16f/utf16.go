@@ -24,6 +24,10 @@ const rune2Max = 1<<11 - 1
 //go:nosplit
 //go:nocheckptr
 func DecodeWtf8(src []uint16) string {
+	if len(src) == 0 {
+		return ""
+	}
+
 	// Pre-calculate max size
 	maxLen := 0
 	for i, v := range src {
@@ -47,12 +51,52 @@ func DecodeWtf8(src []uint16) string {
 		}
 	}
 
+	// Single allocation for buffer
+	buf := make([]byte, maxLen)
+	written := utf16_convert_nobounds(unsafe.SliceData(buf), unsafe.SliceData(src), len(src))
+
+	// Zero-allocation string conversion
+	return unsafe.String(unsafe.SliceData(buf), written)
+}
+
+// DecodeWtf8Buf is the same as DecodeWtf8, but allows passing a pre-allocated buffer
+// to avoid allocations.
+//
+// If the provided buffer `buf` is nil or has insufficient capacity, a new buffer
+// is allocated. The returned slice for the buffer should be used in subsequent
+// calls to amortize the allocation.
+func DecodeWtf8Buf(src []uint16, buf []byte) (string) {
 	if len(src) == 0 {
 		return ""
 	}
 
-	// Single allocation for buffer
-	buf := make([]byte, maxLen)
+	// Pre-calculate max size
+	maxLen := 0
+	for i, v := range src {
+		if v == 0 {
+			src = src[0:i]
+			break
+		}
+		switch {
+		case v <= rune1Max:
+			maxLen += 1
+		case v <= rune2Max:
+			maxLen += 2
+		default:
+			// r is a non-surrogate that decodes to 3 bytes,
+			// or is an unpaired surrogate (also 3 bytes in WTF-8),
+			// or is one half of a valid surrogate pair.
+			// If it is half of a pair, we will add 3 for the second surrogate
+			// (total of 6) and overestimate by 2 bytes for the pair,
+			// since the resulting rune only requires 4 bytes.
+			maxLen += 3
+		}
+	}
+
+    if cap(buf) < maxLen {
+        buf = make([]byte, maxLen)
+    }
+
 	written := utf16_convert_nobounds(unsafe.SliceData(buf), unsafe.SliceData(src), len(src))
 
 	// Zero-allocation string conversion
