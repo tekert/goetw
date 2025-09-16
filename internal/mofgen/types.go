@@ -77,7 +77,7 @@ var extensionMap = map[string][2]string{
 	"SizeT":    {"TDH_INTYPE_POINTER", "TDH_OUTTYPE_NULL"},   // instad of deprecated TDH_INTYPE_SIZET
 	"Sid":      {"TDH_INTYPE_WBEMSID", "TDH_OUTTYPE_STRING"}, // Sid are TDH_INTYPE_WBEMSID isntead of TDH_INTYPE_SID in MOF according to doc.
 	"GUID":     {"TDH_INTYPE_GUID", "TDH_OUTTYPE_GUID"},
-	"WmiTime":  {"TDH_INTYPE_UINT64", "TDH_OUTTYPE_DATETIME"}, // This one is the resolution of the WnodeHeader.ClientContext of the session.
+	"WmiTime":  {"TDH_INTYPE_INT64", "TDH_OUTTYPE_NULL"}, // This one is the resolution of the WnodeHeader.ClientContext of the session.
 	// Special cases, not used for kernel MOFs.
 	"NoPrint":  {"TDH_INTYPE_BINARY", "TDH_OUTTYPE_NULL"},
 	"RString":  {"TDH_INTYPE_ANSISTRING", "TDH_OUTTYPE_STRING"},

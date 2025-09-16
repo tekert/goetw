@@ -1729,7 +1729,7 @@ func (e *EventRecord) GetUTF16StringAt(offset uintptr, count int) (string, error
 // can be queried from the trace flag EventTraceLogfile.LogfileHeader.ReservedFlags (ClockType).
 // if not set, it is in FILETIME format already.
 //
-// returns the converted WmiTime to go time.Time (by default props are in Local time).
+// returns the converted WmiTime to go time.Time (is usually but not always UTC).
 func (e *EventRecord) GetWmiTimeAt(offset uintptr) (time.Time, error) {
 	timeRaw, err := e.GetUint64At(offset)
 	if err != nil {
@@ -1742,7 +1742,7 @@ func (e *EventRecord) GetWmiTimeAt(offset uintptr) (time.Time, error) {
 // It performs bounds checking to prevent memory access violations.
 // This is an unsafe, high-performance method for well-known event layouts.
 //
-// Returns filetime as in go format time.Time  (by default props are in Local time).
+// Returns filetime as in go format time.Time (is usually but not always UTC).
 func (e *EventRecord) GetFiletimeAsTimeAt(offset uintptr) (time.Time, error) {
 	if filetime, err := e.GetFiletimeAt(offset); err != nil {
 		return time.Time{}, err
@@ -1754,7 +1754,7 @@ func (e *EventRecord) GetFiletimeAsTimeAt(offset uintptr) (time.Time, error) {
 
 // GetFiletimeAt reads a FILETIME value from the UserData buffer at a specific byte offset.
 // It performs bounds checking to prevent memory access violations.
-// This is an unsafe, high-performance method for well-known event layouts.
+// This is an unsafe, high-performance method for well-known event layouts. (is usually but not always UTC)
 func (e *EventRecord) GetFiletimeAt(offset uintptr) (syscall.Filetime, error) {
 	if offset+8 > uintptr(e.UserDataLength) {
 		return syscall.Filetime{},

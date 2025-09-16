@@ -1616,9 +1616,33 @@ func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
 	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
+// GetPropertyWmiTime retrieves a timestamp property from the event record
+// specified by the given property name. The property is expected to be in
+// WMI time format, which is an integer value representing the time based
+// on the trace ClockType.
+//
+// The ClockType determines the format of the timestamp:
+// if session Wnode.ClientContext is set to PROCESS_TRACE_MODE_RAW_TIMESTAMP
+// the wmitime property is in raw format, else filetime.
+//  - If CLockType is 1, the property will be in QPC (Query Performance Counter) format.
+//  - If CLockType is 2, the property will be in SystemTime format.
+//  - If CLockType is 3, the property will be in CPUTick format.
+//
+// The method uses the dedicated TimestampFromProp function to calculate the
+// absolute time based on the trace ClockType.
+//
+// Returns the timestamp as a time.Time (usually but not always in UTC).
+func (e *EventRecordHelper) GetPropertyWmiTime(name string) (time time.Time, err error) {
+	wmiTime, err := e.GetPropertyInt(name)
+	if err != nil {
+		return time, err
+	}
+	return e.EventRec.TimestampFromProp(int64(wmiTime)), nil
+}
+
 // GetPropertyFileTime returns the Filetime property value as time.Time.
 //
-// Filetime intypes are returned as time.Time in UTC.
+// Filetime intypes are returned as time.Time (usually but not always UTC).
 //
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyFileTime(name string) (time.Time, error) {
