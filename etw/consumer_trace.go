@@ -73,6 +73,9 @@ type ConsumerTrace struct {
 	processTraceMode uint32
 	bootTime         int64 // Cached boot time from LogfileHeader for timestamp calculations
 
+	// user-defined setting for raw timestamp processing.
+	rawTimestampProcessing uint32
+
 	// traceProps holds EVENT_TRACE_PROPERTIES_V2 structure for querying session statistics.
 	// This is only available for real-time sessions and is nil for ETL file traces.
 	traceProps *EventTraceProperties2Wrapper
@@ -361,6 +364,9 @@ func newConsumerTrace(tname string) *ConsumerTrace {
 
 	t.TraceName = tname
 	t.TraceNameW, _ = syscall.UTF16PtrFromString(tname)
+
+	// Default raw timestamp processing to enabled.
+	t.rawTimestampProcessing = PROCESS_TRACE_MODE_RAW_TIMESTAMP
 
 	if !isETLFile(tname) {
 		t.traceProps = NewQueryTraceProperties(tname)

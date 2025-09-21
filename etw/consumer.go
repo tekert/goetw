@@ -647,7 +647,36 @@ func (c *Consumer) closeConsumer(wait bool) (lastErr error) {
 	return
 }
 
-// TODO(tekert): implement function to set ProcessTraceMode flags before consumer is started.
+// SetRawTimestampProcessing configures whether the consumer requests raw,
+// high-resolution timestamps from ETW. This must be called before Start().
+//
+// When enabled (the default), timestamps are delivered in their original format
+// (e.g. if QPC, CpuCycle, SystemTime is set in Session Wnode.ClientContext)
+// and converted to time.Time by this library.
+//
+// When disabled, ETW converts timestamps to standard system time Filetime (100ns intervals
+// since 1601-01-01) before delivery.
+func (c *Consumer) SetRawTimestampProcessing(traceName string, enabled bool) error {
+	if c.started.Load() {
+		return errors.New("cannot change timestamp processing mode after consumer has started")
+	}
+	v, ok := c.traces.Load(traceName)
+	if !ok {
+		return fmt.Errorf("trace %q not found, add it with FromTraceNames or FromSessions first", traceName)
+	}
+
+	trace := v.(*ConsumerTrace)
+	if trace.open {
+		return fmt.Errorf("cannot change timestamp processing mode for trace %q after it has been opened", traceName)
+	}
+
+	if enabled {
+		trace.rawTimestampProcessing = PROCESS_TRACE_MODE_RAW_TIMESTAMP
+	} else {
+		trace.rawTimestampProcessing = 0
+	}
+	return nil
+}
 
 // OpenTrace opens a Trace for consumption.
 // All traces are opened with the new PROCESS_TRACE_MODE_EVENT_RECORD flag
@@ -677,7 +706,8 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	// PROCESS_TRACE_MODE_EVENT_RECORD to receive EventRecords (new format)
 	// PROCESS_TRACE_MODE_RAW_TIMESTAMP don't convert TimeStamp member of EVENT_HEADER and EVENT_TRACE_HEADER to system time
 	// PROCESS_TRACE_MODE_REAL_TIME to receive events in real time
-	var tracemode uint32 = PROCESS_TRACE_MODE_EVENT_RECORD | PROCESS_TRACE_MODE_RAW_TIMESTAMP
+	//var tracemode uint32 = PROCESS_TRACE_MODE_EVENT_RECORD | PROCESS_TRACE_MODE_RAW_TIMESTAMP
+	var tracemode uint32 = PROCESS_TRACE_MODE_EVENT_RECORD | ti.rawTimestampProcessing
 	if ti.realtime {
 		tracemode = tracemode | PROCESS_TRACE_MODE_REAL_TIME
 	}
