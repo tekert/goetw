@@ -93,6 +93,6 @@ var goExtensionTypeMap = map[string]string{
 	"IPAddr":   "[4]byte",   // IPAddr is a uint32
 	"SizeT":    "uintptr",
 	"Sid":      "uintptr", // SIDs are variable length with USER_TOKEN and are represented as an offset.
-	"GUID":     "GUID",    // Assumes etw.GUID is available in the generated code's package
+	"GUID":     "etw.GUID",    // Assumes etw.GUID is available in the generated code's package
 	"WmiTime":  "uint64",  // FILETIME or session Wnode.ClientContext resolution if raw timestamps
 }

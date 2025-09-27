@@ -80,11 +80,21 @@ var (
 	forceMofTemplateRegeneration = false
 )
 
-// EnableMofTemplateRegeneration allows bypassing the sync.Once cache for MOF templates.
+// IsMofKernelClassLoaded returns true if the kernel MOF classes have been loaded.
+func IsMofKernelClassLoaded() bool {
+	return mofKernelClassLoaded
+}
+
+// SetMofKernelClassLoaded sets the flag indicating whether the kernel MOF classes have been loaded.
+func SetMofKernelClassLoaded(loaded bool) {
+	mofKernelClassLoaded = loaded
+}
+
+// DebugEnableMofTemplateRegeneration allows bypassing the sync.Once cache for MOF templates.
 // This is primarily a debugging tool to test changes to the template generation logic
 // without restarting the application. It is not thread-safe and should be set before
 // starting any trace sessions.
-func EnableMofTemplateRegeneration(enable bool) {
+func DebugEnableMofTemplateRegeneration(enable bool) {
 	forceMofTemplateRegeneration = enable
 }
 
