@@ -34,10 +34,12 @@ type RealTimeSession struct {
 	enabledProviders map[GUID]Provider // Providers active on a running session
 }
 
+// IsNtKernelSession returns true if the session is the special "NT Kernel Logger" session.
 func (p *RealTimeSession) IsNtKernelSession() bool {
 	return p.traceName == NtKernelLogger || (p.configProps.Wnode.Guid == *SystemTraceControlGuid)
 }
 
+// IsSystemSession returns true if the session is a win11+ system logger.
 func (p *RealTimeSession) IsSystemSession() bool {
 	return (p.configProps.LogFileMode & EVENT_TRACE_SYSTEM_LOGGER_MODE) != 0
 }
@@ -676,6 +678,23 @@ func (s *RealTimeSession) GetTracePropertyCopy() *EventTraceProperties2Wrapper {
 	return s.traceProps.Clone()
 }
 
+// IsSessionUp checks if the session is currently active in the system.
+// This is useful to detect if a session is still running, for example
+// if it was stopped externally.
+//
+// NOTE: This does not check if the session is started by this process,
+// but rather if the session name exists in the system.
+// For shared sessions like the "NT Kernel Logger", this will return true
+// if any process is using it.
+func (s *RealTimeSession) IsSessionActive() bool {
+	_, err := s.QueryTrace()
+	if err == nil {
+		return true // for shared nt kernel logger this mean it's used by another process.
+	} else {
+		return false
+	}
+}
+
 // Queries the current trace session to get updated trace properties and stats.
 // This is the "controller's view" of the session, using the session handle
 // obtained when Start() was called. It is the most direct way to query a session
@@ -705,6 +724,110 @@ func (s *RealTimeSession) Flush() error {
 
 	return ControlTrace(s.sessionHandle, nil, &s.traceProps.EventTraceProperties2,
 		EVENT_TRACE_CONTROL_FLUSH)
+}
+
+// RestartKernelProvider triggers a rundown for specific kernel event groups by
+// rapidly disabling and re-enabling their corresponding flags on a running
+// "NT Kernel Logger" session. This is the standard method to request that the
+// kernel provider re-emit its current state information (e.g., a list of all
+// running processes when using the PROCESS flag).
+//
+// This operation can only be performed on an active session and will return an
+// error if the session has not been started or is not an NT Kernel Logger session.
+//
+// The flags parameter should be a bitmask of the kernel flags (e.g.,
+// etw.EVENT_TRACE_FLAG_PROCESS) for which to trigger a rundown.
+func (s *RealTimeSession) RestartNtKernelProvider(flags uint32) error {
+	if !s.IsNtKernelSession() {
+		return fmt.Errorf("not a kernel session")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.IsStarted() {
+		return fmt.Errorf("session not started, cannot restart kernel provider")
+	}
+
+	// To trigger a rundown, we update the session to disable the flags,
+	// and then immediately update it again to re-enable them.
+	s.traceProps.EnableFlags &^= flags
+	//s.traceProps.EnableFlags |= EVENT_TRACE_FLAG_NO_SYSCONFIG // ! TESTING
+	if err := ControlTrace(s.sessionHandle, nil, &s.traceProps.EventTraceProperties2,
+		EVENT_TRACE_CONTROL_UPDATE); err != nil {
+		// Attempt to restore flags on failure.
+		s.traceProps.EnableFlags |= flags
+		return fmt.Errorf("failed to disable kernel flags for rundown: %w", err)
+	}
+
+	s.traceProps.EnableFlags |= flags
+	//s.traceProps.EnableFlags &^= EVENT_TRACE_FLAG_NO_SYSCONFIG // ! TESTING
+	return ControlTrace(s.sessionHandle, nil, &s.traceProps.EventTraceProperties2,
+		EVENT_TRACE_CONTROL_UPDATE)
+}
+
+// EnableKernelProvider enables additional kernel event groups for an "NT Kernel
+// Logger" session by adding the specified flags to the session's `EnableFlags`.
+//
+// If the session has not been started, this method updates the session's
+// configuration, and the flags will be applied when `Start()` is called.
+//
+// If the session is already running, this method updates the live session
+// immediately via a call to the `ControlTrace` API. The configuration is also
+// updated, so the change will persist if the session is later restarted via `Restart()`.
+//
+// The flags parameter should be a bitmask of the kernel flags to enable (e.g.,
+// etw.EVENT_TRACE_FLAG_DISK_IO | etw.EVENT_TRACE_FLAG_NETWORK_TCPIP).
+func (s *RealTimeSession) EnableNtKernelProvider(flags uint32) error {
+	if !s.IsNtKernelSession() {
+		return fmt.Errorf("not a kernel session")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Update the configuration so the change persists across restarts.
+	s.configProps.EnableFlags |= flags
+
+	if !s.IsStarted() {
+		// Not started yet, nothing more to do. The flags will be used at Start().
+		return nil
+	}
+
+	// If already started, update the running session.
+	s.traceProps.EnableFlags |= flags
+	return ControlTrace(s.sessionHandle, nil, &s.traceProps.EventTraceProperties2,
+		EVENT_TRACE_CONTROL_UPDATE)
+}
+
+// DisableKernelProvider disables specific kernel event groups for an "NT Kernel
+// Logger" session by removing the specified flags from the session's `EnableFlags`.
+//
+// If the session has not been started, this method updates the session's
+// configuration. The flags will be disabled when `Start()` is eventually called.
+//
+// If the session is already running, this method updates the live session
+// immediately. The configuration is also updated to ensure the change persists
+// if the session is later restarted.
+//
+// The flags parameter should be a bitmask of the kernel flags to disable.
+func (s *RealTimeSession) DisableKernelProvider(flags uint32) error {
+	if !s.IsNtKernelSession() {
+		return fmt.Errorf("not a kernel session")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Update the configuration so the change persists across restarts.
+	s.configProps.EnableFlags &^= flags
+
+	if !s.IsStarted() {
+		// Not started yet, nothing more to do.
+		return nil
+	}
+
+	// If already started, update the running session.
+	s.traceProps.EnableFlags &^= flags
+	return ControlTrace(s.sessionHandle, nil, &s.traceProps.EventTraceProperties2,
+		EVENT_TRACE_CONTROL_UPDATE)
 }
 
 // NewQueryTraceProperties creates a properties structure used to query an existing
