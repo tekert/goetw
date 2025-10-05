@@ -70,7 +70,7 @@ func main() {
 	}
 	mofPath := filepath.Join(projectRoot, "internal", "mofgen", "cmd", "WindowsKernelTrace.mof")
 	//mofPath := filepath.Join(projectRoot, "internal", "mofgen", "cmd", "GeneratedWindowsKernelTrace.mof")
-	outPath := filepath.Join(projectRoot, "etw", "mofevents", "gen_mof_kerneldef.go")
+	outPath := filepath.Join(projectRoot, "etw", "gen_mof_kerneldef.go")
 
 	// // Get directory containing main.go
 	// projectRoot, err := os.Getwd()

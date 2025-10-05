@@ -94,8 +94,8 @@ function Get-MofRepresentationRaw {
     return $outputLines -join "`n"
 }
 
-# Stage 2: Formats a raw MOF string with wrapping and indentation rules. ( AI CODE don't look, just works)
-# This is a complete rewrite to provide a simpler, more robust formatting algorithm.
+# Stage 2: Formats a raw MOF string with wrapping and indentation rules.
+# ( AI CODE don't look, just works)
 function Format-MofContent {
     param([string]$MofContent)
 
