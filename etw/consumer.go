@@ -524,7 +524,7 @@ func (c *Consumer) stopTrace(name string, timeout time.Duration) error {
 	// This guarantees that an idle ProcessTrace call will unblock.
 	c.closeTrace(trace)
 
-	// 3: Wait for the supervisor goroutine to finish. This will block
+	// 3: Wait for the ProcessTrace goroutine to finish. This will block
 	// until the trace has finished gracefully, timed out, or been aborted.
 	<-trace.done
 
@@ -798,30 +798,6 @@ func (c *Consumer) FromTraceNames(names ...string) *Consumer {
 	return c
 }
 
-// inneficient. (i almost rewrote every single function in this fork...)
-// DefaultEventCallback is the default [Consumer.EventCallback] method applied
-// to Consumer created with NewConsumer
-// Receives parsed events and sends them to the Consumer.Events channel.
-//
-// func (c *Consumer) DefaultEventCallback_old(event *Event) (err error) {
-// 	// we have to check again here as the lock introduced delay
-// 	if c.ctx.Err() == nil {
-// 		// if the event can be skipped we send it in a non-blocking way
-// 		if event.Flags.Skippable {
-// 			select {
-// 			case c.Events <- event:
-// 			default:
-// 				c.Skipped.Add(1)
-// 				event.Release()
-// 			}
-// 			return
-// 		}
-// 		// if we cannot skip event we send it in a blocking way
-// 		c.Events <- event
-// 	}
-// 	return
-// }
-
 // Will only work while using the [DefaultEventCallback] method.
 // This is an example of how to read events with channels, 6% overhead
 // vs reading events from custom EventCallback function
@@ -888,22 +864,46 @@ func (c *Consumer) DefaultEventCallback(event *Event) error {
 }
 
 // RestartTrace attempts to restart a consumer's connection to a single trace by name.
-// This function is designed for scenarios where the underlying ETW session is known
-// to be running, but the consumer's connection was lost (e.g., the session was
-// briefly stopped and started by an external process).
 //
-// This function does NOT restart the underlying ETW session itself. For owned
-// sessions, use RestartSessions to manage both the session and the consumer.
+// It assumes the underlying ETW session is still running. If the session does not
+// exist, the attempt to re-open the trace will fail. (Use Consumer.RestartSessions instead).
 //
 // It re-opens the trace for consumption and starts a new processing goroutine,
 // preserving the trace's existing statistics.
+//
+// The function will block until the original trace processing has gracefully stopped
+// before attempting to restart it.
 func (c *Consumer) RestartTrace(name string) error {
+	v, ok := c.traces.Load(name)
+	if !ok {
+		return fmt.Errorf("trace %q not found in consumer", name)
+	}
+	trace := v.(*ConsumerTrace)
+
+	// If the trace is currently running, signal it to stop. We don't wait here;
+	// reconnectTrace will handle waiting for the goroutine to exit.
+	if trace.open && trace.processing.Load() {
+		trace.cancel()
+		c.closeTrace(trace)
+	}
+
+	// reconnectTrace will wait for the old goroutine to finish, then
+	// re-open the trace and start a new processing goroutine.
+	return c.reconnectTrace(name)
+}
+
+// reconnectTrace attempts to reconnect a consumer to a trace after its processing
+// goroutine has stopped (or was never started). This is an internal helper.
+// It waits for any existing processing to finish, then re-opens the trace and
+// starts a new processing goroutine.
+func (c *Consumer) reconnectTrace(name string) error {
 	trace, ok := c.GetTrace(name)
 	if !ok {
 		return fmt.Errorf("trace %q not found in consumer", name)
 	}
 
-	// CRITICAL: Wait for the previous goroutine to fully exit.
+	// CRITICAL: Wait for the previous goroutine to fully exit. This works
+	// even if the trace was never started, as `done` is initialized closed.
 	select {
 	case <-trace.Done():
 		// Previous goroutine has finished. It's safe to proceed.
@@ -912,7 +912,7 @@ func (c *Consumer) RestartTrace(name string) error {
 	}
 
 	if trace.processing.Load() {
-		return fmt.Errorf("trace %q is still processing, cannot restart", name)
+		return fmt.Errorf("trace %q is still processing, cannot reconnect", name)
 	}
 
 	// Re-open the consumer's trace handle to the session.
@@ -932,34 +932,35 @@ func (c *Consumer) RestartTrace(name string) error {
 // This is useful for scenarios where a real-time session is stopped by an
 // external process.
 //
-// If the consumer is consuming events in real time,
-//
-//	the ProcessTrace function returns () [<-trace.Done()] after the controller stops
-//	the trace session. (Note that there may be a delay of several
-//	seconds before the function returns.
-//
-// For each provided session, its `Restart()` method is called first to ensure
-// the underlying ETW session is running before the consumer tries to reconnect.
-//
-// This function re-opens the trace for consumption and starts a new processing
-// goroutine, preserving the trace's existing statistics.
-//
 // It returns an error if a trace is already processing, not found in the consumer,
 // or fails to restart.
 func (c *Consumer) RestartSessions(sessions ...Session) error {
+	// NOTE: If the consumer is consuming events in real time,
+	// the ProcessTrace function returns () [<-trace.Done()] after the controller stops
+	// the trace session. (Note that there may be a delay of several
+	// seconds before the function returns.
+	//
+	// For each provided session, its `Restart()` method is called first to ensure
+	// the underlying ETW session is running before the consumer tries to reconnect.
+	//
+	// This function re-opens the trace for consumption and starts a new processing
+	// goroutine, preserving the trace's existing statistics.
+
 	for _, s := range sessions {
 		name := s.TraceName()
 
 		// TODO: check if session was not already manually restarted.
 
-		// First, ensure the underlying ETW session is running.
+		// First, ensure the underlying ETW session is running. This stops and
+		// starts the session, which causes the consumer's goroutine to exit.
 		if err := s.Restart(); err != nil {
 			return fmt.Errorf("failed to restart underlying session for trace %q: %w", name, err)
 		}
 
-		// Now, restart the consumer's connection to the newly started session.
-		if err := c.RestartTrace(name); err != nil {
-			return fmt.Errorf("failed to restart consumer trace for session %q: %w", name, err)
+		// Now, reconnect the consumer to the newly started session.
+		// reconnectTrace will wait for the old goroutine to exit before starting a new one.
+		if err := c.reconnectTrace(name); err != nil {
+			return fmt.Errorf("failed to reconnect consumer for session %q: %w", name, err)
 		}
 	}
 	return nil
@@ -1035,8 +1036,21 @@ func (c *Consumer) processTrace(name string, trace *ConsumerTrace) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	// Increase the priority of this thread to ensure timely event processing.
+	if err := SetThreadPriority(syscall.Handle(CurrentThread()), THREAD_PRIORITY_ABOVE_NORMAL); err != nil {
+		seslog.Warn().Str("trace", name).Err(err).Msg("Failed to set thread priority")
+	} else {
+		seslog.Debug().Str("trace", name).Msg("Thread priority increased")
+	}
+
 	goroutineID := getGoroutineID()
-	seslog.Info().Str("trace", name).Int64("goroutineID", goroutineID).Msg("Starting processing trace")
+	threadPriority, _ := GetThreadPriority(syscall.Handle(CurrentThread()))
+	seslog.Info().
+		Str("trace", name).
+		Int("threadPriority", threadPriority).
+		Int64("goroutineID", goroutineID).
+		Str("LockOSThread", "true").
+		Msg("Starting trace callback thread")
 
 	trace.processing.Store(true)
 	trace.StartTime = time.Now()
