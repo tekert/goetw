@@ -381,10 +381,6 @@ func (s *RealTimeSession) start() (err error) {
 		s.configProps.LogFileMode &= ^uint32(EVENT_TRACE_USE_PAGED_MEMORY)
 	}
 
-	if s.IsNtKernelSession() && s.configProps.EnableFlags == 0 {
-		return fmt.Errorf("cannot start kernel session without any kernel flags enabled")
-	}
-
 	// StartTrace
 	propsForAPI := s.configProps.Clone()
 	traceProps := &propsForAPI.EventTraceProperties2
