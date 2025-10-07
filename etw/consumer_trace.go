@@ -71,10 +71,18 @@ type ConsumerTrace struct {
 	// the trace is opened and is immutable for the lifetime of the session.
 	// It is used in the hot path for timestamp conversion to avoid locking.
 	processTraceMode uint32
-	bootTime         int64 // Cached boot time from LogfileHeader for timestamp calculations
 
 	// user-defined setting for raw timestamp processing.
 	rawTimestampProcessing uint32
+
+	// Cached values from the LogfileHeader for timestamp conversions.
+	// These are set when the trace is opened and are immutable for the lifetime
+	// of the session. They are used in the hot path for timestamp conversion
+	// to avoid locking.
+	timeMultiplierNanos int64 // Multiplier for raw timestamp to nanoseconds conversion.
+	timeDivisorNanos    int64 // Divisor for raw timestamp to nanoseconds conversion.
+	bootTimeNanos       int64 // Cached boot time in nanoseconds for direct nanos conversions.
+	bootTime            int64 // Cached boot time from LogfileHeader for timestamp calculations
 
 	// traceProps holds EVENT_TRACE_PROPERTIES_V2 structure for querying session statistics.
 	// This is only available for real-time sessions and is nil for ETL file traces.
@@ -171,6 +179,79 @@ func (ct ClockType) String() string {
 	}
 }
 
+func (t *ConsumerTrace) initTimestamp() {
+	// This function is called once when a trace is opened. It pre-calculates
+	// all necessary values for high-performance timestamp conversions.
+
+	// Prevent re-initialization.
+	if t.timeStampBaseInit {
+		return
+	}
+
+	t.logfileMu.RLock()
+	defer t.logfileMu.RUnlock()
+
+	// Cache base values directly from the log file header.
+	logheader := &t.traceLogfile.LogfileHeader
+	t.bootTime = logheader.BootTime
+
+	// Determine and store the clock type from the log file header.
+	// The ReservedFlags field indicates the clock resolution used by the session.
+	t.ClockType = ClockType(logheader.ReservedFlags)
+
+	// Pre-calculate boot time in nanoseconds for the direct nanos conversion path.
+	t.bootTimeNanos = FromFiletimeNanos(t.bootTime)
+
+	// Calculate conversion factors based on the session's clock type.
+	switch t.ClockType {
+	case ClockTypeQueryPerformanceCounter:
+		qpcFrequency := logheader.PerfFreq
+		if qpcFrequency > 0 {
+			// For fromRawTimestamp (float-based, legacy) // Scale factor = (100ns intervals per second) / (QPC ticks per second)
+			t.timeStampScale = 10000000.0 / float64(qpcFrequency)
+			// For fromRawTimestampNanos (integer-based, preferred)
+			t.timeMultiplierNanos = 1e9
+			t.timeDivisorNanos = qpcFrequency
+		}
+	case ClockTypeSystemTime:
+		// SystemTime is already in 100ns FILETIME intervals relative to boot.
+		t.timeStampScale = 1.0
+		t.timeMultiplierNanos = 100
+		t.timeDivisorNanos = 1
+	case ClockTypeCpuCycleCounter:
+		cpuSpeed := logheader.GetCpuSpeedInMHz()
+		if cpuSpeed != 0 {
+			// Scale factor = (100ns intervals per second) / (CPU ticks per second)
+			// (10,000,000 / (cpuSpeed * 1,000,000)) = 10.0 / cpuSpeed
+			t.timeStampScale = 10.0 / float64(cpuSpeed)
+			// (ticks * 1e9) / (cpuSpeed * 1e6) = (ticks * 1000) / cpuSpeed
+			t.timeMultiplierNanos = 1000
+			t.timeDivisorNanos = int64(cpuSpeed)
+		}
+	}
+
+	// 4. Set safe defaults to prevent division by zero if initialization failed.
+	if t.timeStampScale == 0 {
+		t.timeStampScale = 1.0
+	}
+	if t.timeDivisorNanos == 0 {
+		t.timeMultiplierNanos = 1
+		t.timeDivisorNanos = 1
+	}
+
+	// 5. Mark as initialized.
+	t.timeStampBaseInit = true
+
+	conlog.Debug().Str("trace", t.TraceName).
+		Str("clockType", t.ClockType.String()).
+		Int64("BootTime", t.bootTime).
+		Uint32("ProcessTraceMode", t.processTraceMode).
+		Float64("timeStampScale", t.timeStampScale).
+		Int64("nanosMultiplier", t.timeMultiplierNanos).
+		Int64("nanosDivisor", t.timeDivisorNanos).
+		Msg("Initialized raw timestamp conversion parameters")
+}
+
 // fromRawTimestamp converts a raw timestamp to an absolute FILETIME.
 // It uses the session's clock type to apply the correct scaling factor to the raw
 // tick value and calculates the final FILETIME relative to the system's boot time.
@@ -179,46 +260,11 @@ func (ct ClockType) String() string {
 // (like PerfInfo provider) even if raw timestamp is not active, we use this so
 // that users can get the correct timestamp based on that property->event->session.
 func (t *ConsumerTrace) fromRawTimestamp(timestamp int64) (filetime int64) {
-	// Initialize the scaling factor on the first call. This is a one-time setup
-	// per trace session and is safe for concurrent use as it's idempotent.
-	if !t.timeStampBaseInit {
-		t.logfileMu.RLock()
-		logheader := &t.traceLogfile.LogfileHeader
-
-		// Calculate the scale factor to convert raw ticks into 100-nanosecond intervals.
-		switch ClockType(logheader.ReservedFlags) {
-		case ClockTypeQueryPerformanceCounter:
-			if logheader.PerfFreq != 0 {
-				// Scale factor = (100ns intervals per second) / (QPC ticks per second)
-				t.timeStampScale = 10000000.0 / float64(logheader.PerfFreq)
-			} else {
-				t.timeStampScale = 1.0 // Fallback to avoid division by zero.
-			}
-		case ClockTypeSystemTime:
-			// SystemTime is already in 100ns FILETIME intervals, but relative to boot.
-			t.timeStampScale = 1.0
-		case ClockTypeCpuCycleCounter:
-			cpuSpeed := logheader.GetCpuSpeedInMHz()
-			if cpuSpeed != 0 {
-				// Scale factor = (100ns intervals per second) / (CPU ticks per second)
-				// (10,000,000 / (cpuSpeed * 1,000,000)) = 10.0 / cpuSpeed
-				t.timeStampScale = 10.0 / float64(cpuSpeed)
-			} else {
-				t.timeStampScale = 1.0 // Fallback.
-			}
-		default:
-			t.timeStampScale = 1.0 // Unknown clock type, assume no scaling.
-		}
-		t.logfileMu.RUnlock()
-		t.timeStampBaseInit = true // Mark as initialized.
-
-		conlog.Debug().Str("trace", t.TraceName).
-			Str("clockType", t.ClockType.String()).
-			Int64("BootTime", t.bootTime).
-			Uint32("ProcessTraceMode", t.processTraceMode).
-			Float64("timeStampScale", t.timeStampScale).
-			Msg("Initialized raw timestamp conversion parameters")
-	}
+	// The initialization has to be done after OpenTrace, but it initialized before the first event arrives.
+	// so this is mostly safe in my testing.
+	// if !t.timeStampBaseInit {
+	// 	t.initTimestamp()
+	// }
 
 	// Calculate the number of 100ns intervals represented by the raw timestamp.
 	scaledTicks := int64(t.timeStampScale * float64(timestamp))
@@ -226,6 +272,21 @@ func (t *ConsumerTrace) fromRawTimestamp(timestamp int64) (filetime int64) {
 	// For real-time sessions and file traces with raw timestamps, the final
 	// FILETIME is the boot time plus the scaled ticks since boot.
 	return t.bootTime + scaledTicks
+}
+
+// fromRawTimestampNanos converts a raw timestamp directly to a Unix nanosecond epoch value.
+func (t *ConsumerTrace) fromRawTimestampNanos(timestamp int64) (nanos int64) {
+	// Think this is not needed, test.
+	// if !t.timeStampBaseInit {
+	// 	t.initTimestamp()
+	// }
+
+	// This is now a single, branchless calculation. The multiplier and divisor
+	// are determined once when the trace is opened.
+	nanosSinceBoot := (timestamp * t.timeMultiplierNanos) / t.timeDivisorNanos
+
+	// The boot time is in 100ns intervals (FILETIME), so convert to nanos and adjust for epoch.
+	return t.bootTimeNanos + nanosSinceBoot
 }
 
 // IsTraceOpen returns true if the trace is currently open and ready for processing.

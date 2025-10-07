@@ -759,12 +759,9 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	ti.processTraceMode = tracemode
 	//ti.processTraceMode = loggerInfo.GetProcessTraceMode() // this works fine for real time traces but not for ETL files.
 
-	// Cache the bootime for lock-free access in the event callback.
-	ti.bootTime = loggerInfo.LogfileHeader.BootTime
+    // Initialize all timestamp conversion parameters based on the trace header.
+    ti.initTimestamp()
 
-	// Determine and store the clock type from the log file header.
-	// The ReservedFlags field indicates the clock resolution used by the session.
-	ti.ClockType = ClockType(ti.traceLogfile.LogfileHeader.ReservedFlags)
 	seslog.Trace().Str("trace", name).Interface("Returned-EventTraceLogFile", loggerInfo).Msg("OpenTrace API call returned")
 	seslog.Info().Str("trace", name).Str("ClockType", ti.ClockType.String()).Msg("Consumer opened trace successfully")
 

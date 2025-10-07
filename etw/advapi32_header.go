@@ -1384,6 +1384,14 @@ func (e *EventRecord) Timestamp() time.Time {
 	return e.TimestampFromProp(e.EventHeader.TimeStamp)
 }
 
+func (e *EventRecord) TimestampDebugTest() time.Time { // TODO: test performance
+	usrCtx := e.userContext()
+	if usrCtx.trace.processTraceMode&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
+		return e.TimestampFromProp(e.EventHeader.TimeStamp)
+	}
+	return FromFiletime(e.EventHeader.TimeStamp)
+}
+
 // TimestampFromProp converts a raw timestamp value from an event property (like WmiTime)
 // into an absolute time.Time, using the session's clock type and conversion settings.
 // This requieres the trace session to be running.
@@ -1391,6 +1399,28 @@ func (e *EventRecord) TimestampFromProp(propTimestamp int64) time.Time {
 	// userContext() will not be nil if The Consumer is running and processing events.
 	filetime := e.userContext().trace.fromRawTimestamp(propTimestamp)
 	return FromFiletime(filetime)
+}
+
+// TimestampNanos converts the event's raw timestamp directly to a nanosecond epoch value.
+// This is a high-performance alternative to `Timestamp().UnixNano()` that avoids creating
+// a `time.Time` object and using floating-point math. It is ideal for calculating
+// durations on the hot path.
+//
+// The conversion uses integer arithmetic.
+func (e *EventRecord) TimestampNanos() (int64) {
+	// userContext() will not be nil if The Consumer is running and processing events.
+	trace := e.userContext().trace
+
+	// For raw timestamps, we must convert from the session's clock type.
+	if trace.processTraceMode&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
+		return trace.fromRawTimestampNanos(e.EventHeader.TimeStamp)
+	} else {
+		// If raw timestamps are not enabled, ETW provides FILETIME directly.
+
+		// FILETIME is 100-nanosecond intervals since 1601.
+		// Convert to nanoseconds and adjust for Unix epoch.
+		return FromFiletimeNanos(e.EventHeader.TimeStamp)
+	}
 }
 
 // TimestampRaw returns the raw timestamp of the event as an int64.
@@ -1640,82 +1670,82 @@ func (e *EventRecord) GetSIDAt(offset uintptr, hasTokenUser bool) (*SID, error) 
 // byte offset. If count is -1, the string is assumed to be null-terminated.
 // Otherwise, it reads exactly 'count' bytes.
 func (e *EventRecord) GetAnsiStringAt(offset uintptr, count int) (string, error) {
-    if offset > uintptr(e.UserDataLength) {
-        return "", fmt.Errorf("offset %d is out of bounds for UserData length %d",
-            offset, e.UserDataLength)
-    }
-    if offset == uintptr(e.UserDataLength) {
-        return "", nil
-    }
+	if offset > uintptr(e.UserDataLength) {
+		return "", fmt.Errorf("offset %d is out of bounds for UserData length %d",
+			offset, e.UserDataLength)
+	}
+	if offset == uintptr(e.UserDataLength) {
+		return "", nil
+	}
 
-    ptr := e.UserData + offset
-    remainingBytes := (e.UserData + uintptr(e.UserDataLength)) - ptr
-    var bytes []byte
+	ptr := e.UserData + offset
+	remainingBytes := (e.UserData + uintptr(e.UserDataLength)) - ptr
+	var bytes []byte
 
-    if count < 0 { // Null-terminated
-        allBytes := unsafe.Slice((*byte)(unsafe.Pointer(ptr)), remainingBytes)
-        end := -1
-        for i, b := range allBytes {
-            if b == 0 {
-                end = i
-                break
-            }
-        }
-        if end != -1 {
-            bytes = allBytes[:end]
-        } else {
-            bytes = allBytes
-        }
-    } else { // Counted
-        if uintptr(count) > remainingBytes {
-            return "", fmt.Errorf("requested ansi string length %d at offset %d exceeds remaining UserData length %d", count, offset, remainingBytes)
-        }
-        bytes = unsafe.Slice((*byte)(unsafe.Pointer(ptr)), count)
-    }
-    return string(bytes), nil
+	if count < 0 { // Null-terminated
+		allBytes := unsafe.Slice((*byte)(unsafe.Pointer(ptr)), remainingBytes)
+		end := -1
+		for i, b := range allBytes {
+			if b == 0 {
+				end = i
+				break
+			}
+		}
+		if end != -1 {
+			bytes = allBytes[:end]
+		} else {
+			bytes = allBytes
+		}
+	} else { // Counted
+		if uintptr(count) > remainingBytes {
+			return "", fmt.Errorf("requested ansi string length %d at offset %d exceeds remaining UserData length %d", count, offset, remainingBytes)
+		}
+		bytes = unsafe.Slice((*byte)(unsafe.Pointer(ptr)), count)
+	}
+	return string(bytes), nil
 }
 
 // GetUTF16StringAt reads a UTF-16 string from the UserData buffer at a specific
 // byte offset. If count is -1, the string is assumed to be null-terminated.
 // Otherwise, it reads exactly 'count' characters (uint16 values).
 func (e *EventRecord) GetUTF16StringAt(offset uintptr, count int) (string, error) {
-    if offset > uintptr(e.UserDataLength) {
-        return "", fmt.Errorf("offset %d is out of bounds for UserData length %d",
-            offset, e.UserDataLength)
-    }
-    if offset == uintptr(e.UserDataLength) {
-        return "", nil
-    }
+	if offset > uintptr(e.UserDataLength) {
+		return "", fmt.Errorf("offset %d is out of bounds for UserData length %d",
+			offset, e.UserDataLength)
+	}
+	if offset == uintptr(e.UserDataLength) {
+		return "", nil
+	}
 
-    ptr := e.UserData + offset
-    remainingBytes := (e.UserData + uintptr(e.UserDataLength)) - ptr
-    maxChars := remainingBytes / 2
-    if maxChars == 0 {
-        return "", nil
-    }
+	ptr := e.UserData + offset
+	remainingBytes := (e.UserData + uintptr(e.UserDataLength)) - ptr
+	maxChars := remainingBytes / 2
+	if maxChars == 0 {
+		return "", nil
+	}
 
-    var resultSlice []uint16
-    if count < 0 { // Null-terminated
-        allWchars := unsafe.Slice((*uint16)(unsafe.Pointer(ptr)), maxChars)
-        end := -1
-        for i, w := range allWchars {
-            if w == 0 {
-                end = i
-                break
-            }
-        }
-        if end != -1 {
-            resultSlice = allWchars[:end]
-        } else {
-            resultSlice = allWchars
-        }
-    } else { // Counted
-        if uintptr(count) > maxChars {
-            return "", fmt.Errorf("requested utf16 string length %d chars at offset %d exceeds remaining UserData capacity for %d chars", count, offset, maxChars)
-        }
-        resultSlice = unsafe.Slice((*uint16)(unsafe.Pointer(ptr)), count)
-    }
-    return FromUTF16Slice(resultSlice), nil
+	var resultSlice []uint16
+	if count < 0 { // Null-terminated
+		allWchars := unsafe.Slice((*uint16)(unsafe.Pointer(ptr)), maxChars)
+		end := -1
+		for i, w := range allWchars {
+			if w == 0 {
+				end = i
+				break
+			}
+		}
+		if end != -1 {
+			resultSlice = allWchars[:end]
+		} else {
+			resultSlice = allWchars
+		}
+	} else { // Counted
+		if uintptr(count) > maxChars {
+			return "", fmt.Errorf("requested utf16 string length %d chars at offset %d exceeds remaining UserData capacity for %d chars", count, offset, maxChars)
+		}
+		resultSlice = unsafe.Slice((*uint16)(unsafe.Pointer(ptr)), count)
+	}
+	return FromUTF16Slice(resultSlice), nil
 }
 
 // GetWmiTime reads a WMI time value from the UserData buffer at a specific byte offset.
