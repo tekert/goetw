@@ -11,7 +11,6 @@ func hasFlag(flags, flag KernelNtFlag) bool {
 func TestKernelProviders(t *testing.T) {
 	t.Run("IndividualProviders", func(t *testing.T) {
 		for _, p := range KernelProviders {
-			p := p // capture range variable
 			t.Run(p.Name, func(t *testing.T) {
 				// Test IsKernelProvider with name
 				if !IsKernelProvider(p.Name) {

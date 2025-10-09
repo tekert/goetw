@@ -151,7 +151,7 @@ if err := c.Start(); err != nil {
 `c.Start` opens the trace sessions that were registered (in this case, only "TestingGoEtw") and starts processing them in a new goroutine.
 
 NOTE: If, for example, "TestingGoEtw" already existed and was not closed, it means you only need to consume from it; no need to create another Session.
-`c.FromTraceNames` can do that.
+`c.FromTraces` can do that.
 
 
 The context here is just a means to sync the goroutines on exit.  

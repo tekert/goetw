@@ -197,28 +197,28 @@ func BenchmarkGUIDEquals(b *testing.B) {
 
 	b.Run("ManualCompare_Equal", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = equalsManual(guid1, guid2)
 		}
 	})
 
 	b.Run("DirectCompare_Equal", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = guid1.Equals(guid2)
 		}
 	})
 
 	b.Run("ManualCompare_NotEqual", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = equalsManual(guid1, guid3)
 		}
 	})
 
 	b.Run("DirectCompare_NotEqual", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = guid1.Equals(guid3)
 		}
 	})
@@ -239,14 +239,14 @@ func BenchmarkGUIDString(b *testing.B) {
 
 	b.Run("Optimized", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = guid.String()
 		}
 	})
 
 	b.Run("Sprintf", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = stringSprintf(guid)
 		}
 	})
@@ -259,14 +259,14 @@ func BenchmarkParseGUID(b *testing.B) {
 
 	b.Run("Optimized", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, _ = ParseGUID(guidStr)
 		}
 	})
 
 	b.Run("RegexpAndSplit", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, _ = parseGUID_old(guidStr)
 		}
 	})

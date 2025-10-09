@@ -42,28 +42,6 @@ var (
 // 3. [Consumer BufferCallback] From the LogfileInfo.LogfileHeader.EventsLost (only for ETL files).
 // 4. [Session side] From the QueryTrace() call, which returns the total number of lost events
 
-// SessionSlice converts a slice of structures implementing Session
-// to a slice of Session.
-func SessionSlice(i any) (out []Session) {
-	v := reflect.ValueOf(i)
-
-	switch v.Kind() {
-	case reflect.Slice:
-		out = make([]Session, 0, v.Len())
-		for i := 0; i < v.Len(); i++ {
-			if s, ok := v.Index(i).Interface().(Session); ok {
-				out = append(out, s)
-				continue
-			}
-			panic("slice item must implement Session interface")
-		}
-	default:
-		panic("interface parameter must be []Session")
-	}
-
-	return
-}
-
 // Once Consumer is closed discard it and create a new one.
 //
 // Performance Note on "Consumer-Side" Filtering:
@@ -183,6 +161,28 @@ func NewConsumer(ctx context.Context) (c *Consumer) {
 	c.EventCallback = c.DefaultEventCallback
 
 	return c
+}
+
+// SessionSlice converts a slice of structures implementing Session
+// to a slice of Session.
+func SessionSlice(i any) (out []Session) {
+	v := reflect.ValueOf(i)
+
+	switch v.Kind() {
+	case reflect.Slice:
+		out = make([]Session, 0, v.Len())
+		for i := 0; i < v.Len(); i++ {
+			if s, ok := v.Index(i).Interface().(Session); ok {
+				out = append(out, s)
+				continue
+			}
+			panic("slice item must implement Session interface")
+		}
+	default:
+		panic("interface parameter must be []Session")
+	}
+
+	return
 }
 
 // SetTraceInfoCache enables or disables the caching of the TRACE_EVENT_INFO schema buffer.
@@ -603,6 +603,7 @@ func (c *Consumer) closeConsumer(wait bool) (lastErr error) {
 		seslog.Debug().Msg("Consumer already closed.")
 		return
 	}
+	c.closed.Store(true)
 	seslog.Debug().Msg("Closing Consmer...")
 
 	// 1: Signal the global context for all callbacks.
@@ -641,9 +642,7 @@ func (c *Consumer) closeConsumer(wait bool) (lastErr error) {
 	// a summary of suppressed logs that occurred during the consumer's lifetime.
 	GetLogManager().GetSampler().Flush()
 
-	c.closed.Store(true)
 	seslog.Debug().Msg("Consumer closed.")
-
 	return
 }
 
@@ -662,7 +661,7 @@ func (c *Consumer) SetRawTimestampProcessing(traceName string, enabled bool) err
 	}
 	v, ok := c.traces.Load(traceName)
 	if !ok {
-		return fmt.Errorf("trace %q not found, add it with FromTraceNames or FromSessions first", traceName)
+		return fmt.Errorf("trace %q not found, add it with FromTraces or FromSessions first", traceName)
 	}
 
 	trace := v.(*ConsumerTrace)
@@ -759,8 +758,8 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	ti.processTraceMode = tracemode
 	//ti.processTraceMode = loggerInfo.GetProcessTraceMode() // this works fine for real time traces but not for ETL files.
 
-    // Initialize all timestamp conversion parameters based on the trace header.
-    ti.initTimestamp()
+	// Initialize all timestamp conversion parameters based on the trace header.
+	ti.initTimestamp()
 
 	seslog.Trace().Str("trace", name).Interface("Returned-EventTraceLogFile", loggerInfo).Msg("OpenTrace API call returned")
 	seslog.Info().Str("trace", name).Str("ClockType", ti.ClockType.String()).Msg("Consumer opened trace successfully")
@@ -778,7 +777,10 @@ func (c *Consumer) QueryTrace(traceName string) (prop *EventTraceProperties2Wrap
 	return t.QueryTrace()
 }
 
-// FromSessions initializes the consumer from sessions
+// FromSessions initializes the consumer from sessions.
+// Equivalent to
+//
+//	FromTrace(session.TraceName())
 func (c *Consumer) FromSessions(sessions ...Session) *Consumer {
 	for _, s := range sessions {
 		c.getOrAddTrace(s.TraceName())
@@ -787,8 +789,11 @@ func (c *Consumer) FromSessions(sessions ...Session) *Consumer {
 	return c
 }
 
-// FromTraceNames initializes consumer from existing traces
-func (c *Consumer) FromTraceNames(names ...string) *Consumer {
+// FromTraces initializes consumer from existing sessions or ETL files by their names.
+// For real-time sessions use the session name.
+// For ETL files use the full path to the file.
+// If a trace with the same name already exists it is reused.
+func (c *Consumer) FromTraces(names ...string) *Consumer {
 	for _, n := range names {
 		c.getOrAddTrace(n)
 	}

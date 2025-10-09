@@ -280,7 +280,7 @@ defer consumer.Stop()
 // Configure session sources
 consumer.FromSessions(session) // From active sessions
 // or
-consumer.FromTraceNames("MyTrace") // From session names
+consumer.FromTraces("MyTrace") // From session names
 
 // Set up event processing
 go func() {
@@ -669,7 +669,7 @@ func main() {
 
     fmt.Println("AutoLogger configured successfully")
     fmt.Println("Reboot to activate, then consume with:")
-    fmt.Println(`  consumer.FromTraceNames("BootTrace")`)
+    fmt.Println(`  consumer.FromTraces("BootTrace")`)
 }
 ```
 

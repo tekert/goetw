@@ -174,7 +174,7 @@ func run() error {
 	switch {
 	case etlFile != "":
 		fmt.Printf("Reading from ETL file: %s\n", etlFile)
-		c = etw.NewConsumer(ctx).FromTraceNames(etlFile)
+		c = etw.NewConsumer(ctx).FromTraces(etlFile)
 
 	case kernelProviders != "":
 		fmt.Printf("Starting NT Kernel Logger session with providers: %s\n", kernelProviders)

@@ -1624,9 +1624,9 @@ func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
 // The ClockType determines the format of the timestamp:
 // if session Wnode.ClientContext is set to PROCESS_TRACE_MODE_RAW_TIMESTAMP
 // the wmitime property is in raw format, else filetime.
-//  - If CLockType is 1, the property will be in QPC (Query Performance Counter) format.
-//  - If CLockType is 2, the property will be in SystemTime format.
-//  - If CLockType is 3, the property will be in CPUTick format.
+//   - If CLockType is 1, the property will be in QPC (Query Performance Counter) format.
+//   - If CLockType is 2, the property will be in SystemTime format.
+//   - If CLockType is 3, the property will be in CPUTick format.
 //
 // The method uses the dedicated TimestampFromProp function to calculate the
 // absolute time based on the trace ClockType.

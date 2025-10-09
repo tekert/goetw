@@ -270,7 +270,7 @@ func TestEventDrivenSampler(t *testing.T) {
 		s.ShouldLog(firstKey, nil) // First log - always passes
 
 		// Log several times to trigger exponential backoff and build up suppressed count
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			clock.Advance(1 * time.Millisecond)
 			s.ShouldLog(firstKey, nil) // These will be suppressed
 		}

@@ -326,7 +326,7 @@ func BenchmarkMarshalKeywords(b *testing.B) {
 	}
 
 	b.Run("hexf_NUm64p_Alloc", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			maskString := NUm64p(k.Mask, false)
 			size := 26 + len(maskString) + 20 // Rough size
 			buf := make([]byte, 0, size)
@@ -337,7 +337,7 @@ func BenchmarkMarshalKeywords(b *testing.B) {
 	})
 
 	b.Run("strconv_AppendUint_NoPad", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			size := 26 + 18 + 20 // Rough size
 			buf := make([]byte, 0, size)
 			buf = append(buf, `{"Mask":"0x`...)
@@ -347,7 +347,7 @@ func BenchmarkMarshalKeywords(b *testing.B) {
 	})
 
 	b.Run("hexf_AppendUint64_Padded", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			size := 26 + 18 + 20 // Rough size
 			buf := make([]byte, 0, size)
 			buf = append(buf, `{"Mask":"0x`...)

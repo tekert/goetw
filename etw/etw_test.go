@@ -76,7 +76,7 @@ func TestProducerConsumer(t *testing.T) {
 	// Consumer part
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	c := NewConsumer(ctx).FromSessions(ses) //.FromTraceNames(EventlogSecurity)
+	c := NewConsumer(ctx).FromSessions(ses) //.FromTraces(EventlogSecurity)
 
 	// we have to declare a func otherwise c.Stop seems to be called
 	defer func() { tt.CheckErr(c.Stop()) }()
@@ -334,7 +334,7 @@ func TestLostEvents(t *testing.T) {
 
 	// Consumer part
 	ctx := t.Context()
-	c := NewConsumer(ctx).FromSessions(ses) //.FromTraceNames(EventlogSecurity)
+	c := NewConsumer(ctx).FromSessions(ses) //.FromTraces(EventlogSecurity)
 	// we have to declare a func otherwise c.Stop does not seem to be called
 	defer func() { tt.CheckErr(c.Stop()) }()
 
@@ -444,7 +444,7 @@ func TestConsumerCallbacks(t *testing.T) {
 
 	// Consumer part
 	ctx := t.Context()
-	c := NewConsumer(ctx).FromSessions(ses) //.FromTraceNames(EventlogSecurity)
+	c := NewConsumer(ctx).FromSessions(ses) //.FromTraces(EventlogSecurity)
 
 	c.EventRecordHelperCallback = func(erh *EventRecordHelper) (err error) {
 
@@ -804,9 +804,9 @@ func TestCallbackConcurrency(t *testing.T) {
 
 	// Open multiple traces to force potential concurrent execution
 	c.FromSessions(s).
-		FromTraceNames("EventLog-System").
-		FromTraceNames("EventLog-Application").
-		FromTraceNames("Steam Event Tracing")
+		FromTraces("EventLog-System").
+		FromTraces("EventLog-Application").
+		FromTraces("Steam Event Tracing")
 
 	tt.CheckErr(c.Start())
 
@@ -1265,7 +1265,7 @@ func compareTraceInfo(generated, original *TraceEventInfo, t *testing.T, isMof b
 	eventName := fmt.Sprintf("Event '%s' (Provider: %s, Opcode: %d)", original.TaskName(), original.ProviderName(), original.EventDescriptor.Opcode)
 
 	// Helper for logging mismatches.
-	logMismatch := func(field string, gen, org interface{}) {
+	logMismatch := func(field string, gen, org any) {
 		mismatchMask |= MismatchOther
 		t.Logf("CRITICAL MISMATCH: %s for %s\n  - Have: %v\n  - Want: %v", field, eventName, gen, org)
 	}
@@ -1348,7 +1348,7 @@ func compareTraceInfo(generated, original *TraceEventInfo, t *testing.T, isMof b
 		propName := original.stringAt(uintptr(orgEpi.NameOffset))
 		propContext := fmt.Sprintf("Prop[%d:%s] in %s", i, propName, eventName)
 
-		logPropMismatch := func(field string, gen, org interface{}) {
+		logPropMismatch := func(field string, gen, org any) {
 			mismatchMask |= MismatchOther
 			t.Logf("CRITICAL MISMATCH: %s for %s\n  - Have: %v\n  - Want: %v", field, propContext, gen, org)
 		}

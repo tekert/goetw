@@ -195,8 +195,8 @@ func main() {
     c := etw.NewConsumer(context.Background())
     defer c.Stop()
 
-    // Instead of FromSessions, use FromTraceNames with the file path.
-    c.FromTraceNames(etlFile)
+    // Instead of FromSessions, use FromTraces with the file path.
+    c.FromTraces(etlFile)
 
     // When processing a file, Start() blocks until all events are read,
     // so we don't need to run it in a goroutine or sleep.

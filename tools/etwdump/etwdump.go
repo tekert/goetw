@@ -371,7 +371,7 @@ func main() {
 
 	c := etw.NewConsumer(context.Background()).
 		FromSessions(etw.SessionSlice(producers)...).
-		FromTraceNames(sessions...)
+		FromTraces(sessions...)
 
 	if filemon {
 		c.EventRecordCallback = filemonEventRecordCB
