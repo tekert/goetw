@@ -29,21 +29,32 @@ type noCopy struct{}
 func (*noCopy) Lock()   {}
 func (*noCopy) Unlock() {}
 
+const FiletimeEpoch = 116444736000000000
+
 // Faster than syscall.Filetime.Nanoseconds() on edge cases.
 // UTCTimeStamp converts a Windows FILETIME (100-nanosecond intervals since 1601)
 // to a Unixtime.Time
 //
 //go:inline
 func FromFiletime(fileTime int64) time.Time {
-	return time.Unix(0, (fileTime-116444736000000000)*100)
+	return time.Unix(0, (fileTime-FiletimeEpoch)*100)
 }
+
+// FromFiletimeNanos converts a Windows FILETIME (100-nanosecond intervals since 1601)
+// to a Unix time in nanoseconds since epoch
+//
+//go:inline
+func FromFiletimeNanos(fileTime int64) int64 {
+	return (fileTime-FiletimeEpoch)*100
+}
+
 
 // FromFiletimeUTC converts a Windows FILETIME (100-nanosecond intervals since 1601)
 // to a Unix UTC time.Time
 //
 //go:inline
 func FromFiletimeUTC(fileTime int64) time.Time {
-	return time.Unix(0, (fileTime-116444736000000000)*100).UTC()
+	return time.Unix(0, (fileTime-FiletimeEpoch)*100).UTC()
 }
 
 // FromSyscallFiletime converts a Windows FILETIME (100-nanosecond intervals since 1601)
