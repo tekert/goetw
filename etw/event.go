@@ -17,20 +17,47 @@ var (
 	eventPool = sync.Pool{
 		New: func() any {
 			return &Event{
-				EventData:    make([]EventProperty, 0, 32), // Pre-allocate capacity
-				UserData:     make([]EventProperty, 0, 8),  // Pre-allocate capacity
+				EventData:    make([]EventProperty, 0, 32),
+				UserData:     make([]EventProperty, 0, 8),
 				ExtendedData: make([]string, 0, 4),
+				// Add a 0.5KB arena for string data per event.
+				dataBuffer: make([]byte, 0, 512),
 			}
 		},
 	}
 )
 
+// TODO: maybe just make eventrecordhelper marsheable, similar to Event.
+// and delete this Event..
+// make EventRecordHelper 
+
 type EventID uint16
 
+// ValueType indicates the type of data held by an EventProperty.
+type ValueType uint8
+
+const (
+	OutTypeNull ValueType = iota
+	OutTypeString
+	OutTypeInt
+	OutTypeUint
+	OutTypeFloat
+	OutTypeBool
+	OutTypeHex64
+	OutTypeOther // For arrays, structs, etc.
+)
+
 // EventProperty holds a single key-value pair from an ETW event's data.
+// It uses typed fields to avoid heap allocations from interface boxing.
 type EventProperty struct {
-	Name  string
-	Value any
+	Name        string
+	Type        ValueType
+	StringValue string
+	IntValue    int64
+	UintValue   uint64
+	FloatValue  float64
+	BoolValue   bool
+	OtherValue  any // Fallback for complex types like arrays/structs
 }
 
 // Properties is a slice of EventProperty that marshals to a JSON object (map).
@@ -43,56 +70,47 @@ func (p Properties) MarshalJSON() ([]byte, error) {
 		return []byte("null"), nil
 	}
 
-	// Using a pre-allocated byte buffer is more efficient than strings.Builder.
-	// We estimate a starting size to reduce re-allocations.
-	// Average property: "name": "value", -> ~15 chars + name len + value len
-	estimatedSize := 2 + len(p)*15
-	for _, prop := range p {
-		estimatedSize += len(prop.Name)
-		if s, ok := prop.Value.(string); ok {
-			estimatedSize += len(s) + 2 // +2 for quotes
-		} else {
-			estimatedSize += 64 // A rough guess for other types like arrays
-		}
-	}
-	if estimatedSize < 512 {
-		estimatedSize = 512
-	}
+	buf := make([]byte, 0, 512) // Start with a reasonable buffer
 
-	buf := make([]byte, 0, estimatedSize)
 	buf = append(buf, '{')
 
 	for i, prop := range p {
 		if i > 0 {
 			buf = append(buf, ',')
 		}
+
 		// Marshal property name
 		buf = append(buf, '"')
 		buf = append(buf, prop.Name...)
 		buf = append(buf, `":`...)
 
-		// Marshal property value.
-		switch v := prop.Value.(type) {
-		case string:
-			// strconv.AppendQuote is significantly faster than json.Marshal for strings
-			// as it avoids reflection.
-			buf = strconv.AppendQuote(buf, v)
-		case int64:
-			buf = strconv.AppendInt(buf, v, 10)
-		case uint64:
-			buf = strconv.AppendUint(buf, v, 10)
-		case float64:
-			buf = strconv.AppendFloat(buf, v, 'g', -1, 64)
-		case bool:
-			buf = strconv.AppendBool(buf, v)
-		default:
+		// Marshal property value based on its type.
+		switch prop.Type {
+		case OutTypeString:
+			buf = strconv.AppendQuote(buf, prop.StringValue)
+		case OutTypeInt:
+			buf = strconv.AppendInt(buf, prop.IntValue, 10)
+		case OutTypeUint:
+			buf = strconv.AppendUint(buf, prop.UintValue, 10)
+		case OutTypeHex64:
+			// For pointers and other hex values, format as a quoted hex string.
+			buf = append(buf, '"')
+			buf = hexf.AppendNUm64p(buf, prop.UintValue, true)
+			buf = append(buf, '"')
+		case OutTypeFloat:
+			buf = strconv.AppendFloat(buf, prop.FloatValue, 'g', -1, 64)
+		case OutTypeBool:
+			buf = strconv.AppendBool(buf, prop.BoolValue)
+		case OutTypeOther:
 			// For all other types (arrays, structs), we fall back to the standard
 			// marshaler. This is less frequent and acceptable.
-			valBytes, err := json.Marshal(v)
+			valBytes, err := json.Marshal(prop.OtherValue)
 			if err != nil {
 				return nil, err
 			}
 			buf = append(buf, valBytes...)
+		case OutTypeNull:
+			buf = append(buf, "null"...)
 		}
 	}
 
@@ -153,6 +171,9 @@ type Event struct {
 		}
 	}
 	ExtendedData []string `json:",omitempty"`
+
+	// dataBuffer is a per-event arena for allocating all property strings.
+	dataBuffer []byte
 }
 
 // So to print the mask in hex mode.
@@ -178,7 +199,7 @@ func (k MarshalKeywords) MarshalJSON() ([]byte, error) {
 
 	// Write JSON structure, appending the zero-padded hex mask directly to the buffer.
 	buf = append(buf, `{"Mask":"0x`...)
-	buf = hexf.AppendUint64(buf, k.Mask) // Use our new library function.
+	buf = hexf.AppendUint64PaddedU(buf, k.Mask) // Use our new library function.
 	buf = append(buf, `","Name":[`...)
 
 	// Write names array
@@ -199,39 +220,59 @@ func (k MarshalKeywords) MarshalJSON() ([]byte, error) {
 func NewEvent() *Event {
 	e := eventPool.Get().(*Event)
 	// Ensure slices have 0 length but retain capacity.
-	e.EventData = e.EventData[:0]
-	e.UserData = e.UserData[:0]
-	e.ExtendedData = e.ExtendedData[:0]
+	e.reset()
 	return e
 }
 
 func (e *Event) reset() {
-	// Slices are reset to zero length in NewEvent, which is called before reuse.
-	// We only need to zero the other fields.
-	*e = Event{
-		EventData:    e.EventData,
-		UserData:     e.UserData,
-		ExtendedData: e.ExtendedData,
-	}
+	// Ensure slices have 0 length but retain capacity.
+	e.EventData = e.EventData[:0]
+	e.UserData = e.UserData[:0]
+	e.ExtendedData = e.ExtendedData[:0]
+	e.dataBuffer = e.dataBuffer[:0] // Reset the arena buffer
+	//e.System is overwritten on each event, no need to reset.
+	e.Flags.Skippable = false
 }
 
 func (e *Event) Release() {
-	e.reset()
 	eventPool.Put(e)
 }
 
-func (e *Event) GetProperty(name string) (i any, ok bool) {
+// getValue reconstructs the 'any' value from the typed fields for generic access.
+func (ep *EventProperty) getValue() any {
+	switch ep.Type {
+	case OutTypeString:
+		return ep.StringValue
+	case OutTypeInt:
+		return ep.IntValue
+	case OutTypeUint:
+		return ep.UintValue
+	case OutTypeHex64:
+		// For generic access, format it to the expected string representation.
+		return hexf.NUm64p(ep.UintValue, true)
+	case OutTypeFloat:
+		return ep.FloatValue
+	case OutTypeBool:
+		return ep.BoolValue
+	case OutTypeOther:
+		return ep.OtherValue
+	default: // TypeNil
+		return nil
+	}
+}
+
+func (e *Event) GetProperty(name string) (any, bool) {
 	// Linear scan is fast enough for the small number of properties
 	// typical in an ETW event.
 	for i := range e.EventData {
 		if e.EventData[i].Name == name {
-			return e.EventData[i].Value, true
+			return e.EventData[i].getValue(), true
 		}
 	}
 
 	for i := range e.UserData {
 		if e.UserData[i].Name == name {
-			return e.UserData[i].Value, true
+			return e.UserData[i].getValue(), true
 		}
 	}
 
@@ -239,60 +280,113 @@ func (e *Event) GetProperty(name string) (i any, ok bool) {
 }
 
 func (e *Event) GetPropertyString(name string) (string, bool) {
-	if i, ok := e.GetProperty(name); ok {
-		// Handle both eager-parsed strings and lazily-parsed properties.
-		switch v := i.(type) {
-		case string:
-			return v, true
-		default:
+	for i := range e.EventData {
+		if e.EventData[i].Name == name {
+			prop := &e.EventData[i]
+			if prop.Type == OutTypeString {
+				return prop.StringValue, true
+			}
 			// For any other type, format it to a string.
-			return fmt.Sprint(v), true
+			return fmt.Sprint(prop.getValue()), true
+		}
+	}
+	for i := range e.UserData {
+		if e.UserData[i].Name == name {
+			prop := &e.UserData[i]
+			if prop.Type == OutTypeString {
+				return prop.StringValue, true
+			}
+			return fmt.Sprint(prop.getValue()), true
 		}
 	}
 	return "", false
 }
 
 // GetPropertyInt retrieves a property value directly as an int64, if possible.
-// It provides fast, direct conversion from binary for scalar properties that were
-// lazily parsed. Returns false if the property does not exist or is not a number.
+// Returns false if the property does not exist, is not a number, or overflows.
 func (e *Event) GetPropertyInt(name string) (int64, bool) {
-	if val, ok := e.GetProperty(name); ok {
-		switch v := val.(type) {
-		case int64:
-			return v, true
-		case uint64:
-			if v <= math.MaxInt64 {
-				return int64(v), true
+	for i := range e.EventData {
+		if e.EventData[i].Name == name {
+			prop := &e.EventData[i]
+			switch prop.Type {
+			case OutTypeInt:
+				return prop.IntValue, true
+			case OutTypeUint:
+				if prop.UintValue <= math.MaxInt64 {
+					return int64(prop.UintValue), true
+				}
 			}
+			return 0, false
+		}
+	}
+	for i := range e.UserData {
+		if e.UserData[i].Name == name {
+			prop := &e.UserData[i]
+			switch prop.Type {
+			case OutTypeInt:
+				return prop.IntValue, true
+			case OutTypeUint:
+				if prop.UintValue <= math.MaxInt64 {
+					return int64(prop.UintValue), true
+				}
+			}
+			return 0, false
 		}
 	}
 	return 0, false
 }
 
 // GetPropertyUInt retrieves a property value directly as a uint64, if possible.
-// It provides fast, direct conversion from binary for scalar properties that were
-// lazily parsed. Returns false if the property does not exist or is not a number.
+// Returns false if the property does not exist, is not a number, or would be negative.
 func (e *Event) GetPropertyUInt(name string) (uint64, bool) {
-	if val, ok := e.GetProperty(name); ok {
-		switch v := val.(type) {
-		case uint64:
-			return v, true
-		case int64:
-			if v >= 0 {
-				return uint64(v), true
+	for i := range e.EventData {
+		if e.EventData[i].Name == name {
+			prop := &e.EventData[i]
+			switch prop.Type {
+			case OutTypeUint:
+				return prop.UintValue, true
+			case OutTypeInt:
+				if prop.IntValue >= 0 {
+					return uint64(prop.IntValue), true
+				}
 			}
+			return 0, false
+		}
+	}
+	for i := range e.UserData {
+		if e.UserData[i].Name == name {
+			prop := &e.UserData[i]
+			switch prop.Type {
+			case OutTypeUint:
+				return prop.UintValue, true
+			case OutTypeInt:
+				if prop.IntValue >= 0 {
+					return uint64(prop.IntValue), true
+				}
+			}
+			return 0, false
 		}
 	}
 	return 0, false
 }
 
 // GetPropertyFloat retrieves a property value directly as a float64, if possible.
-// It provides fast, direct conversion from binary for scalar properties that were
-// lazily parsed. Returns false if the property does not exist or is not a number.
+// Returns false if the property does not exist or is not a float.
 func (e *Event) GetPropertyFloat(name string) (float64, bool) {
-	if val, ok := e.GetProperty(name); ok {
-		if f, ok := val.(float64); ok {
-			return f, true
+	for i := range e.EventData {
+		if e.EventData[i].Name == name {
+			if e.EventData[i].Type == OutTypeFloat {
+				return e.EventData[i].FloatValue, true
+			}
+			return 0, false
+		}
+	}
+	for i := range e.UserData {
+		if e.UserData[i].Name == name {
+			if e.UserData[i].Type == OutTypeFloat {
+				return e.UserData[i].FloatValue, true
+			}
+			return 0, false
 		}
 	}
 	return 0, false

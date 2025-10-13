@@ -42,17 +42,29 @@ var (
 
 	// globalSchemaCache stores all schema-related information for an event.
 	// It's a two-level map for performance:
-	// Level 1: Provider GUID -> Level 2: *sync.Map
+	// Level 1: Provider GUID -> *providerCache
 	// Level 2: Schema Key (uint64) -> *schemaCacheEntry
 	globalSchemaCache sync.Map
 
-	// globalTraceEventInfoCacheEnabled controls whether the schema cache is used.
-	// Disabling it forces a call to TdhGetEventInformation for every event, which is
-	// useful for debugging but has a significant performance impact.
-	globalTraceEventInfoCacheEnabled = true
-
 	// cache for metadata on fully parsed events
 	hostname, _ = os.Hostname()
+)
+
+// --- Schema Key Configuration ---
+// preferredSchemaKey controls the keying method used for the global schema cache.
+// Change this value to switch between strategies.
+// 64: Uses a 64-bit key. Faster, but requires copying the schema buffer on a cache hit.
+// 128: Uses a 128-bit key. Slower key generation, but allows for zero-copy cache hits.
+type preferredSchemaKey = schemaKeyType128
+
+const (
+	// The following boolean constant is derived from preferredSchemaKey at compile time
+	// by comparing the size of the aliased type. This allows the compiler to perform
+	// dead code elimination, providing conditional compilation from a single type alias change.
+	//
+	// The nil pointer dereference is never executed; it only provides a typed
+	// expression for the compiler to evaluate the size of.
+	use64bitKey = unsafe.Sizeof(*(*preferredSchemaKey)(nil)) == unsafe.Sizeof(schemaKeyType64(0))
 )
 
 // schemaCacheEntry holds all the cached information for a unique event schema.
@@ -81,6 +93,15 @@ type schemaCacheEntry struct {
 	relatedActivityID string
 	mofEventTypeName  string
 	metadataOnce      sync.Once
+}
+
+// globalSchemaCacheKey combines the Provider GUID and the event-specific schema key
+// to create a single, globally unique key for an event schema. This allows for
+// a flattened, single-level global cache.
+type globalSchemaCacheKey struct {
+	providerGUIDHigh uint64
+	providerGUIDLow  uint64
+	schemaKey        preferredSchemaKey
 }
 
 // GetPropertyNames parses and caches the property names from the TRACE_EVENT_INFO buffer.
@@ -137,8 +158,11 @@ func (sce *schemaCacheEntry) cacheMetadata(er *EventRecord, traceInfo *TraceEven
 
 // These EventRecord methods are defined here because they are only needed in etw_helpers.go
 
-//lint:ignore U1000 option for different keying strategies
-type schemaKeyType32 uint32
+// SchemaKey is a constraint that permits any of our defined schema key types.
+// This is used by the generic getSchemaKey function.
+type SchemaKey interface {
+	schemaKeyType64 | schemaKeyType128
+}
 
 //lint:ignore U1000 option for different keying strategies
 type schemaKeyType64 uint64
@@ -149,96 +173,96 @@ type schemaKeyType128 struct {
 	low  uint64
 }
 
-// schemaCacheKey32 generates a unique uint32 key for a given event schema within a provider.
-// This has the same effect as the schemaCacheKey64 but same performance and doesn't requiere a isMof call.
-func (er *EventRecord) schemaCacheKey32() schemaKeyType32 {
+// getSchemaKey is a generic function that generates a unique key for an event's schema.
+// The keying strategy is controlled at compile-time via the `preferredSchemaKey` type alias,
+// which determines the specific key type (`schemaKeyType64` or `schemaKeyType128`) to generate.
+//
+//   - `schemaKeyType64`: A fast 64-bit key identifying the event's property layout.
+//     Because it excludes the `Keyword`, it is not fully unique. This requires the cached
+//     schema EventDescriptor to be copied and patched on a cache hit, trading zero-copy for faster key generation.
+//
+//   - `schemaKeyType128`: A robust 128-bit key that includes the `Keyword`, guaranteeing
+//     uniqueness. This enables a zero-copy optimization on cache hits, as the program can
+//     point directly to the immutable cached schema buffer, but uses more memory.
+//
+// It's 40ns for 128bit key vs 20ns for 64/32bit key but 128bit saves copying the cached schema
+// to patch the EventDescriptor on cache hits. The copy is about 60-70ns.
+// 128bit key is overall 10% faster in practice because it avoids the copy on cache hits,
+// but uses more memory. The choice depends on the expected memory and performance needs.
+func getSchemaKey[K SchemaKey](er *EventRecord) K {
+	var key K
 	desc := &er.EventHeader.EventDescriptor
-	if er.IsMof() {
-		// For MOF, Opcode (8 bits) + Version (8 bits) is the unique schema ID.
-		return schemaKeyType32(uint32(desc.Opcode)<<8 | uint32(desc.Version))
+
+	switch any(key).(type) {
+	case schemaKeyType64:
+		// Pack most descriptor fields into a single uint64.
+		// This is enough to uniquely identify the schema for both Manifest and MOF events.
+		// Pack fields into a uint64:
+		// | 16 bits | 8 bits | 8 bits | 8 bits | 8 bits  | 16 bits |
+		// | Task    | Opcode | Level  | Channel| Version | ID      |
+		key := uint64(desc.Id)            // needed for manifest
+		key |= uint64(desc.Version) << 16 // neded for manifest
+		key |= uint64(desc.Channel) << 24
+		key |= uint64(desc.Level) << 32
+		key |= uint64(desc.Opcode) << 40 // needed for mof
+		key |= uint64(desc.Task) << 48
+		val := schemaKeyType64(key)
+		return any(val).(K)
+
+	case schemaKeyType128:
+		// For Manifest and MOF, the entire descriptor defines the unique schema.
+		// This single, robust key works for both types.
+		// Pack fields into a uint64:
+		// | 16 bits | 8 bits | 8 bits | 8 bits | 8 bits  | 16 bits |
+		// | Task    | Opcode | Level  | Channel| Version | ID      |
+		low := uint64(desc.Id)            // needed for manifest
+		low |= uint64(desc.Version) << 16 // neded for manifest
+		low |= uint64(desc.Channel) << 24
+		low |= uint64(desc.Level) << 32
+		low |= uint64(desc.Opcode) << 40 // needed for mof
+		low |= uint64(desc.Task) << 48
+		high := desc.Keyword
+		val := schemaKeyType128{high: high, low: low}
+		return any(val).(K)
 	}
-	// For Manifest, ID (16 bits) + Version (8 bits) is the unique schema ID.
-	return schemaKeyType32(uint32(desc.Id)<<8 | uint32(desc.Version))
+
+	// This part of the code is unreachable because the type K is constrained
+	// by the SchemaKey interface, but the compiler requires a return statement.
+	panic("unsupported key type")
 }
 
-// schemaCacheKey128 packs the entire EventDescriptor into a 128-bit key.
-// This is the most robust key, as it guarantees uniqueness across all event types
-// by including the Keyword. Using this key allows for a performance optimization where
-// the cached TRACE_EVENT_INFO buffer can be used directly without copying, as the
-// EventDescriptor within it will be a perfect match.
-// It's 40ns for 128bit key vs 20ns for 64/32bit key but this saves copying the cached schema to patch the EventDescriptor.
-func (er *EventRecord) schemaCacheKey128() schemaKeyType128 {
-	desc := &er.EventHeader.EventDescriptor
-	// For Manifest and MOF, the entire descriptor defines the unique schema.
-	// This single, robust key works for both types.
-	// Pack fields into a uint64:
-	// | 16 bits | 8 bits | 8 bits | 8 bits | 8 bits  | 16 bits |
-	// | Task    | Opcode | Level  | Channel| Version | ID      |
-	low := uint64(desc.Id)            // needed for manifest
-	low |= uint64(desc.Version) << 16 // neded for manifest
-	low |= uint64(desc.Channel) << 24
-	low |= uint64(desc.Level) << 32
-	low |= uint64(desc.Opcode) << 40 // needed for mof
-	low |= uint64(desc.Task) << 48
-	high := desc.Keyword
-
-	return schemaKeyType128{high: high, low: low}
-}
-
-// schemaCacheKey64 generates a unique uint64 key for a given event schema.
-// This key is sufficient to uniquely identify the *layout* of an event's properties
-// for both manifest-based and classic MOF events. It excludes the Keyword field, which
-// is used for event filtering rather than defining the schema structure.
-// Because this key is not fully unique, the cached TRACE_EVENT_INFO is a template
-// that must be copied to thread-local storage and have its EventDescriptor patched
-// with the one from the live event.
-// This is as fast as the 32-bit key that requires an if check.
-func (er *EventRecord) schemaCacheKey64() schemaKeyType64 {
-	desc := &er.EventHeader.EventDescriptor
-	// Pack most descriptor fields into a single uint64.
-	// This is enough to uniquely identify the schema for both Manifest and MOF events.
-	// Pack fields into a uint64:
-	// | 16 bits | 8 bits | 8 bits | 8 bits | 8 bits  | 16 bits |
-	// | Task    | Opcode | Level  | Channel| Version | ID      |
-	key := uint64(desc.Id)            // needed for manifest
-	key |= uint64(desc.Version) << 16 // neded for manifest
-	key |= uint64(desc.Channel) << 24
-	key |= uint64(desc.Level) << 32
-	key |= uint64(desc.Opcode) << 40 // needed for mof
-	key |= uint64(desc.Task) << 48
-	return schemaKeyType64(key)
-}
-
-// getOrSetProviderCache retrieves or creates the provider-specific cache (the second level of the two-level map).
-// This is a thread-safe way to ensure the nested map is initialized only once per provider.
-func (er *EventRecord) getOrSetProviderCache() (shemaCache *sync.Map) {
-	if val, ok := globalSchemaCache.Load(er.EventHeader.ProviderId); ok {
-		shemaCache = val.(*sync.Map)
-	} else {
-		// This provider has not been seen before. Create its cache.
-		// Use LoadOrStore to handle the race condition of two goroutines seeing it for the first time.
-		newCache := &sync.Map{}
-		actual, _ := globalSchemaCache.LoadOrStore(er.EventHeader.ProviderId, newCache)
-		shemaCache = actual.(*sync.Map)
+// schemaCacheKey generates a memory friedly composite key for the global schema cache.
+// It combines the provider GUID and the schema key into a struct of scalar types,
+// which helps prevent stack memory writes during map lookups and instead use registers.
+func (er *EventRecord) schemaCacheKey() globalSchemaCacheKey {
+	// Directly access the GUID bytes and interpret them as two uint64s.
+	// This is much faster using GUID struct directly.
+	guidPtr := (*[2]uint64)(unsafe.Pointer(&er.EventHeader.ProviderId))
+	return globalSchemaCacheKey{
+		providerGUIDHigh: guidPtr[0],
+		providerGUIDLow:  guidPtr[1],
+		schemaKey:        getSchemaKey[preferredSchemaKey](er),
 	}
-	return
 }
 
 // traceStorage holds all the necessary reusable memory for a single trace (goroutine).
 // This avoids using sync.Pool for thread-local data, reducing overhead.
 type traceStorage struct {
-	helper EventRecordHelper // Was in pools before, but this increased performance by ~5%
+	helper      EventRecordHelper // Was in pools before, but this increased performance by ~5%
+	parsedEvent *Event            // Caches the fully parsed event.
 
 	// Reusable buffers and slices. They are reset before processing each event.
-	propertiesCustom  map[string]*Property              // For user-defined simple properties
-	propertiesByIndex []*Property                       // For schema-defined simple properties
-	arrayProperties   map[string]*[]*Property           // For arrays of properties
-	structArrays      map[string][]map[string]*Property // For arrays of structs
-	structSingle      []map[string]*Property            // For non-array structs
-	selectedProps     map[string]bool                   // Properties selected by the user for parsing
-	propertyOffsets   []uintptr                         // Caches property offsets for on-demand integer parsing.
-	epiArray          []*EventPropertyInfo              // Caches pointers to EventPropertyInfo's.
-	teiBuffer         []byte                            // Buffer for TdhGetEventInformation()
+	propertiesCustom     map[string]*Property     // For user-defined simple properties
+	propertiesByIndex    []*Property              // For schema-defined simple properties
+	arrayProperties      []*[]*Property           // For arrays of properties, indexed by property schema index
+	usedArrayIndices     []int                    // Tracks populated indices in arrayProperties for fast reset.
+	structArrays         [][]map[string]*Property // For arrays of structs, indexed by property schema index
+	usedStructArrIndices []int                    // Tracks populated indices in structArrays for fast reset.
+	structSingle         []map[string]*Property   // For non-array structs
+	selectedProps        map[string]bool          // Properties selected by the user for parsing
+	propertyOffsets      []uintptr                // Caches property offsets for on-demand integer parsing.
+	//epiArray          []*EventPropertyInfo              // Caches pointers to EventPropertyInfo's.
+	teiBuffer []byte // Buffer for TdhGetEventInformation()
 
 	// Freelist cache for Property structs.
 	propCache []Property
@@ -250,17 +274,22 @@ type traceStorage struct {
 }
 
 // newTraceStorage creates a new storage area for a goroutine in ProcessTrace.
+// TODO: Explore a mechanism to periodically shrink the capacity of slices in traceStorage
+// (e.g., propCache, propertiesByIndex) if they grow excessively due to a single large event.
+// This would manage the "high-water mark" memory issue, trading a small performance cost
+// for better long-term memory usage in scenarios with highly variable event sizes.
 func newTraceStorage() *traceStorage {
 	ts := &traceStorage{
-		propertiesCustom:  make(map[string]*Property, 8),
-		propertiesByIndex: make([]*Property, 0, 64),
-		arrayProperties:   make(map[string]*[]*Property, 8),
-		structArrays:      make(map[string][]map[string]*Property, 4),
-		structSingle:      make([]map[string]*Property, 0, 4),
-		selectedProps:     make(map[string]bool, 16),
-		propertyOffsets:   make([]uintptr, 0, 64),
-		epiArray:          make([]*EventPropertyInfo, 0, 64),
-		teiBuffer:         make([]byte, 8192), // Initial size for GetEventInformation()
+		propertiesCustom:     make(map[string]*Property, 8),
+		propertiesByIndex:    make([]*Property, 0, 64),
+		arrayProperties:      make([]*[]*Property, 0, 16),
+		usedArrayIndices:     make([]int, 0, 16),
+		structArrays:         make([][]map[string]*Property, 0, 8),
+		usedStructArrIndices: make([]int, 0, 8),
+		structSingle:         make([]map[string]*Property, 0, 4),
+		selectedProps:        make(map[string]bool, 16),
+		propertyOffsets:      make([]uintptr, 0, 64),
+		teiBuffer:            make([]byte, 8192), // Initial size for GetEventInformation()
 
 		// Initialize the property cache with a reasonable capacity to avoid frequent reallocations.
 		propCache: make([]Property, 0, 256),
@@ -273,108 +302,57 @@ func newTraceStorage() *traceStorage {
 	return ts
 }
 
-// reset clears the storage so it can be reused for the next event.
-// It resets slice lengths to 0 (preserving capacity) and clears maps.
-func (ts *traceStorage) reset() {
-	// 1. Reset property freelist index. The underlying slice memory is reused.
-	ts.propIdx = 0
-
-	// 2. Clear properties slice and map.
-	clear(ts.propertiesCustom)
-	clear(ts.propertiesByIndex)
-	ts.propertiesByIndex = ts.propertiesByIndex[:0]
-
-	// 3. Clear array properties map, returning inner slices to their pool.
-	for _, propSlicePtr := range ts.arrayProperties {
-		clear(*propSlicePtr)
-		*propSlicePtr = (*propSlicePtr)[:0]
-		ts.propSlicePool.Put(propSlicePtr)
-	}
-	clear(ts.arrayProperties)
-
-	// 4. Clear struct arrays map, returning inner maps to their pool.
-	for _, structs := range ts.structArrays {
-		for _, propStruct := range structs {
-			clear(propStruct)
-			ts.propertyMapPool.Put(propStruct)
-		}
-	}
-	clear(ts.structArrays)
-
-	// 5. Clear single struct slice, returning inner maps to their pool.
-	for _, propStruct := range ts.structSingle {
-		clear(propStruct)
-		ts.propertyMapPool.Put(propStruct)
-	}
-	ts.structSingle = ts.structSingle[:0]
-
-	// 6. Clear selected properties map.
-	clear(ts.selectedProps)
-
-	// 7. The propertyOffsets slice does not need to be reset. It is re-sliced to the
-	// correct size in initialize() and its contents are overwritten for each event,
-	// making a reset here redundant.
-	//ts.propertyOffsets = ts.propertyOffsets[:0]
-
-	// 8. Reset epi array slice, clearing pointers to prevent stale data.
-	clear(ts.epiArray)
-	ts.epiArray = ts.epiArray[:0]
-
-	// teiBuffer does not need to be reset, it gets overwritten.
-}
-
 /*
-	PERFORMANCE NOTE: Pointer vs. Direct Slice Access in `EventRecordHelper`
+   PERFORMANCE NOTE: Pointer vs. Direct Slice Access in `EventRecordHelper`
 
-	A key performance optimization in this package involves how slices from the thread-local
-	`traceStorage` (like `epiArray` and `propertyOffsets`) are accessed by the temporary
-	`EventRecordHelper`.
+   A key performance optimization in this package involves how slices from the thread-local
+   `traceStorage` are accessed by the temporary `EventRecordHelper`. Benchmarks and assembly
+   analysis have shown that using pointers to slices on the helper struct (the current
+   implementation) is consistently **~5% faster** than using direct slice values, even when
+   compiling with bounds checks disabled.
 
-	It may seem simpler to access these slices directly, e.g., `e.storage.epiArray[i]`.
-	However, benchmarks and assembly analysis have shown that this is consistently ~3% slower
-	than the current implementation, which uses pointers on the helper struct:
-	e.g., `e.epiArray *[]*EventPropertyInfo` and `(*e.epiArray)[i]`.
+   This performance difference is due to two main factors: **Function Call Overhead (Stack Spilling)**
+   and **Bounds Check Elimination (BCE)**.
 
-	The reason for this performance difference lies in the Go compiler's ability to perform
-	**Bounds Check Elimination (BCE)**.
+   ---
 
-	---
+   ### 1. Function Call Overhead (The Primary Reason)
 
-	### The Fast Version (Current Implementation with Pointers)
+   The `EventRecordHelper` struct is a method receiver on the hottest paths of event
+   processing (e.g., `prepareProperty`). The Go compiler tries to pass method receivers
+   and arguments in fast CPU registers. However, there is a limited budget for this.
 
-	1.  **How it works:** In `initialize()`, we assign a pointer to the storage slice to the
-		helper: `e.epiArray = &storage.epiArray`. We then re-slice it to a fixed, known
-		length: `*e.epiArray = (*e.epiArray)[:maxPropCount]`. Accesses in hot loops
-		are then done via `(*e.epiArray)[i]`.
+   -   **Pointer Version (Fast):** The helper struct contains only pointers (8 bytes each).
+       This keeps the total size of the struct small and "lightweight." The compiler can
+       easily pass the entire helper in registers when calling its methods.
 
-	2.  **Why it's fast:** The compiler has a direct, local pointer (`e.epiArray`) to the
-		slice header. It can more easily prove that the slice's length (`maxPropCount`)
-		is constant throughout the helper's lifecycle. This proof allows the optimizer to
-		**eliminate the bounds check** (the implicit `if i >= len(...)`) on every single
-		access within the hot loops of `prepareProperties`. Removing this repeated check
-		in code that runs millions of times per second results in a measurable performance gain.
+   -   **Slice Version (Slow):** A slice header is 24 bytes (pointer, len, cap). Using
+       direct slice fields makes the `EventRecordHelper` struct much larger ("fatter").
+       It exceeds the register budget, forcing the compiler to perform **stack spilling**—
+       writing the struct's contents to main memory (the stack) for every method call.
 
-	---
+   Profiling confirms this: the cumulative time of the `CALL e.prepareProperty` instruction
+   is significantly higher in the slice version due to the overhead of these memory
+   operations on every single call. This is the dominant reason for the performance gap.
 
-	### The Slower Version (Direct Access, Avoided)
+   ---
 
-	1.  **How it would work:** The helper would access the slice directly through its storage
-		field: `e.storage.epiArray[i]`.
+   ### 2. Bounds Check Elimination (BCE)
 
-	2.  **Why it's slow:** The access path involves multiple pointer dereferences (`e -> storage -> epiArray`).
-		Due to **pointer aliasing**, the compiler becomes more conservative. It cannot easily
-		prove that some other part of the code with access to `e.storage` has not modified
-		the `epiArray` slice header (e.g., by re-slicing it) between the `initialize()` call
-		and the access in the hot loop. This uncertainty forces the compiler to keep the
-		safety bounds check on every access. The cumulative cost of these millions of extra
-		checks results in the ~3% performance degradation.
+   When compiling with default settings, the pointer-based approach also helps the Go
+   optimizer eliminate bounds checks (`if i >= len(...)`) in hot loops.
 
-	---
+   By assigning a pointer and re-slicing it to a known length in `initialize()`, the
+   compiler can more easily prove that the slice's length is constant throughout the
+   helper's lifecycle. This certainty allows it to remove the redundant safety checks
+   inside loops, further improving performance.
 
-	**Conclusion:** The use of pointers to slices on `EventRecordHelper` is a deliberate and
-	critical micro-optimization. It provides the compiler with the necessary information to
-	generate more efficient machine code by eliminating redundant safety checks on the hot path
-	of event processing. It also prevents race conditions when using pools (explained below).
+   ---
+
+   **Conclusion:** The use of pointers to slices on `EventRecordHelper` is a deliberate and
+   critical optimization. It ensures the helper struct remains lightweight, avoiding expensive
+   stack spills during function calls, while also providing the compiler with the necessary
+   information to perform bounds check elimination.
 */
 
 // EventRecordHelper provides methods to parse and access properties of an ETW event.
@@ -413,14 +391,14 @@ type EventRecordHelper struct {
 	//   the value is a pointer to a slice of `*Property` objects, each
 	//   representing an element in the array.
 	// - Final JSON Example: "SIDs": ["S-1-5-18", "S-1-5-19"]
-	ArrayProperties map[string]*[]*Property
+	ArrayProperties *[]*[]*Property
 	// StructArrays stores arrays of complex structures.
 	// - Structure: A map where the key is the array's name (e.g., "Adapters").
 	//   The value is a slice of maps. Each map in the slice represents one
 	//   struct instance, with its keys being the struct's field names
 	//   (e.g., "IPAddress") and values being the corresponding `*Property` objects.
 	// - Final JSON Example: "Adapters": [{"IPAddress": "1.2.3.4"}, {"IPAddress": "5.6.7.8"}]
-	StructArrays map[string][]map[string]*Property
+	StructArrays *[][]map[string]*Property
 	// StructSingle stores top-level properties that are structs but are NOT arrays.
 	// Since these structs don't have a single collective name, they are grouped
 	// into a slice(array) and published under a special key in the final event.
@@ -432,8 +410,7 @@ type EventRecordHelper struct {
 
 	// Flags control event processing behavior, e.g., skipping or dropping events.
 	Flags struct {
-		Skip      bool
-		Skippable bool // TODO: does this work?
+		Skip bool
 	}
 
 	// Cached provider schema information to avoid repeated lookups.
@@ -442,7 +419,7 @@ type EventRecordHelper struct {
 	// Stored property values for resolving array lengths
 	// both are filled when a prop is about to be prepared.
 	propertyOffsets *[]uintptr
-	epiArray        *[]*EventPropertyInfo
+	//epiArray        *[]*EventPropertyInfo
 
 	// Buffer that contains the memory for TraceEventInfo.
 	// used internally to reuse the memory allocation.
@@ -459,6 +436,10 @@ type EventRecordHelper struct {
 
 	// A reference to the thread-local storage for this trace.
 	storage *traceStorage
+
+	// currentPrepCount tracks the number of (sequantial) properties that have been prepared so far.
+	// This enables lazy, on-demand property preparation.
+	currentPrepCount uint32
 
 	// FILETIME format of this event timestamp. (In case raw timestamp is used)
 	// If raw is not set then it's just the same as EventRec.EventHeader.TimeStamp
@@ -501,70 +482,65 @@ func (e *EventRecordHelper) TimestampFromProp(propTimestamp int64) time.Time {
 	return e.EventRec.TimestampFromProp(propTimestamp)
 }
 
-// release returns the EventRecordHelper to the global pool.
+// reset returns the EventRecordHelper to the global pool.
 // The associated traceStorage is NOT reset here; it's reset at the beginning
 // of the next event's processing.
-func (e *EventRecordHelper) release() {
-	*e = EventRecordHelper{}
+func (e *EventRecordHelper) reset() {
+	//*e = EventRecordHelper{} // 2% performance drop
+	e.TraceInfo = nil
 	//helperPool.Put(e) // no using pools for now
 }
 
 // newEventRecordHelper creates a new EventRecordHelper and retrieves the TRACE_EVENT_INFO
 // for the given EventRecord. It implements a multi-level caching and fallback strategy.
-// +120% performance gain by using caching vs no caching of the TraceInfo (while caching names etc)
-func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) { // mi version
+// +120% performance gain by using caching vs no caching of the TraceInfo (also caching names etc)
+func newEventRecordHelper(er *EventRecord, storage *traceStorage) (erh *EventRecordHelper, err error) {
 	//erh = helperPool.Get().(*EventRecordHelper)  // no using pools for now
-	storage := er.userContext().storage
 	erh = &storage.helper
 
 	// Reset the thread-local storage before processing a new event.
-	storage.reset()
+	//storage.reset()
 
 	erh.storage = storage
 	erh.EventRec = er
 	erh.teiBuffer = &storage.teiBuffer // Keep a reference before calling internal funcs
 
-	providerCache := er.getOrSetProviderCache()
-	schemaKey := er.schemaCacheKey64()
+	key := er.schemaCacheKey()
 
-	// TODO: erase the  globalTraceEventInfoCacheEnabled when tested enough
-
-	// --- Stage 1: Check Cache ---
-	if globalTraceEventInfoCacheEnabled {
-		if cachedEntry, found := providerCache.Load(schemaKey); found {
-			entry := cachedEntry.(*schemaCacheEntry)
-			// A valid cache hit requires a non-nil buffer. A nil buffer means it's a
-			// "shell" entry created when caching was previously disabled.
-			if entry.teiBuffer != nil {
-				// --- Cache Hit: Populate helper from cache ---
-				template := entry.teiBuffer
-				// This commented block of code is if we need to copy the buffer to a local one. (2,1% performance hit)
-				// NOTE: use er.schemaCacheKey32() or er.schemaCacheKey64() if using this block
-				if true {
-					// Ensure the thread-local buffer is large enough.
-					if cap(storage.teiBuffer) < len(template) {
-						storage.teiBuffer = make([]byte, len(template))
-					}
-					storage.teiBuffer = storage.teiBuffer[:len(template)]
-					// Copy the cached template into the thread-local buffer.
-					copy(storage.teiBuffer, template)
-					erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
-					erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // Important: patch EventDescriptor
-				} else {
-					// NOTE: use er.schemaCacheKey128() if using this block
-					// The template is immutable. Point directly to it. No copy needed.
-					erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&template[0]))
-					// The buffer is the globally cached one, not the thread-local one.
-					// Setting this to nil indicates it's not locally owned.
-					erh.teiBuffer = nil
-				}
-
-				return erh, nil // Cache hit, we are done.
+	// --- Stage 1: Check Global Cache (Single, direct lookup) ---
+	if val, found := globalSchemaCache.Load(key); found {
+		cachedEntry := val.(*schemaCacheEntry)
+		// Since caching is always enabled, a found entry is guaranteed to be valid and have a non-nil teiBuffer
+		erh.schemaCache = cachedEntry // Cache the entry on the helper for later use.
+		// --- Cache Hit: Populate helper from cache ---
+		schema := cachedEntry.teiBuffer
+		// This commented block of code is if we need to copy the buffer to a local one. (2,1% performance hit)
+		// NOTE: use er.schemaCacheKey32() or er.schemaCacheKey64() if using this block
+		if use64bitKey {
+			// Ensure the thread-local buffer is large enough.
+			if cap(storage.teiBuffer) < len(schema) {
+				storage.teiBuffer = make([]byte, len(schema))
 			}
+			storage.teiBuffer = storage.teiBuffer[:len(schema)]
+			// Copy the cached template into the thread-local buffer.
+			copy(storage.teiBuffer, schema) // 2.1% performance hit
+			erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&storage.teiBuffer[0]))
+			erh.TraceInfo.EventDescriptor = er.EventHeader.EventDescriptor // Important: patch EventDescriptor
+		} else {
+			// NOTE: use er.schemaCacheKey128() if using this block
+			// The template is immutable. Point directly to it. No copy needed.
+			erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&schema[0]))
+			// The buffer is the globally cached one, not the thread-local one.
+			// Setting this to nil indicates it's not locally owned.
+			erh.teiBuffer = nil
 		}
+
+		// Perform smart cleanup now that we know the schema
+		erh.resetStorageFor(erh.TraceInfo)
+		return erh, nil // Cache hit, we are done.
 	}
 
-	// --- Stage 2: Call TdhGetEventInformation (Cache Miss or Cache Disabled) ---
+	// --- Stage 2: Call TdhGetEventInformation (Cache Miss) ---
 	erh.TraceInfo, err = er.GetEventInformation(erh.teiBuffer)
 	if err != nil {
 		apiErr := fmt.Errorf("%w: %v", ErrGetEventInformation, err)
@@ -585,19 +561,19 @@ func newEventRecordHelper(er *EventRecord) (erh *EventRecordHelper, err error) {
 		return erh, err
 	}
 
-	// --- Stage 3: Update Cache ---
-	//  We always create an entry to support property name caching.
-	// It will be a "shell" (with a nil teiBuffer) if TEI caching is disabled.
+	// --- Stage 3: Update Cache (Single, direct store) ---
+	// Create a new cache entry with a copy of the TEI buffer.
 	newEntry := &schemaCacheEntry{}
-	if globalTraceEventInfoCacheEnabled {
-		// If caching is enabled, make a copy of the buffer to store.
-		newEntry.teiBuffer = make([]byte, len(*erh.teiBuffer))
-		copy(newEntry.teiBuffer, *erh.teiBuffer)
-	}
-	// Store the new entry, overwriting any previous (e.g., shell) entry.
-	// The small race of overwriting is acceptable for the performance gain.
-	providerCache.Store(schemaKey, newEntry)
+	newEntry.teiBuffer = make([]byte, len(*erh.teiBuffer))
+	copy(newEntry.teiBuffer, *erh.teiBuffer)
 
+	// Use LoadOrStore to handle the race where two threads miss the cache for the same schema simultaneously.
+	// The first one to call Store wins, and the second one will get the already-stored value, preventing duplicates.
+	actual, _ := globalSchemaCache.LoadOrStore(key, newEntry)
+	erh.schemaCache = actual.(*schemaCacheEntry) // Always use the value that's in the map.
+
+	// Perform smart cleanup now that we know the schema
+	erh.resetStorageFor(erh.TraceInfo)
 	return erh, err
 }
 
@@ -611,17 +587,12 @@ func (e *EventRecordHelper) getCachedSchemaEntry() *schemaCacheEntry {
 
 	// The schema MUST be in the cache at this point.
 	// newEventRecordHelper ensures it's populated on both cache hits and misses.
-
-	// 1. First-level lookup. Already exists.
-	providerCache, _ := globalSchemaCache.Load(e.EventRec.EventHeader.ProviderId)
-
-	// 2. Second-level lookup. Already exists.
-	// We use the same 64-bit key that was used to cache the TRACE_EVENT_INFO.
-	schemaKey := e.EventRec.schemaCacheKey64()
-	cachedEntry, _ := providerCache.(*sync.Map).Load(schemaKey)
+	key := e.EventRec.schemaCacheKey()
+	val, _ := globalSchemaCache.Load(key)
+	cachedEntry := val.(*schemaCacheEntry)
 
 	// Cache the result on the helper for subsequent calls within the same event's lifecycle.
-	e.schemaCache = cachedEntry.(*schemaCacheEntry)
+	e.schemaCache = cachedEntry
 	return e.schemaCache
 }
 
@@ -639,52 +610,125 @@ func (e *EventRecordHelper) getCachedNameToIndexMap() map[string]int {
 	return entry.GetNameToIndexMap(e.TraceInfo) // will lazily parse the map on first call
 }
 
-// This memory was already reseted when it was released.
+// initialize sets up the helper pointers and state for the current event.
+// This is called after resetForEvent and assumes the storage has been properly cleaned.
+// This function does NOT perform any cleanup; it only assigns values.
 func (e *EventRecordHelper) initialize() {
 	storage := e.storage
-	e.PropertiesCustom = storage.propertiesCustom // custom properties.
-	e.ArrayProperties = storage.arrayProperties
 
-	// Structure handling
-	e.StructArrays = storage.structArrays
-	e.StructSingle = &storage.structSingle
-
+	// Assign map pointers
+	e.PropertiesCustom = storage.propertiesCustom
 	e.selectedProperties = storage.selectedProps
 
-	// userDataIt iterator will be incremented for each queried property by prop size
+	// Assign struct pointer
+	e.StructSingle = &storage.structSingle
+
+	// Set up user data iteration pointers
 	e.userDataIt = e.EventRec.UserData
 	e.userDataEnd = e.EventRec.UserData + uintptr(e.EventRec.UserDataLength)
 
+	// Reset preparation counter for the new event
+	e.currentPrepCount = 0
+
 	if e.TraceInfo == nil {
-		// Nothing more to initialize if we have no schema.
+		// No schema available, nothing more to set up
 		return
 	}
 
-	maxPropCount := int(e.TraceInfo.PropertyCount)
-	// Get and resize properties slice for fast indexed access.
-	if cap(storage.propertiesByIndex) < maxPropCount {
-		storage.propertiesByIndex = make([]*Property, maxPropCount)
-	} else {
-		storage.propertiesByIndex = storage.propertiesByIndex[:maxPropCount]
-	}
+	// Assign slice pointers (slices were already sized in resetForEvent)
 	e.PropertiesByIndex = &storage.propertiesByIndex
-
-	// Get and resize property offsets
-	if cap(storage.propertyOffsets) < maxPropCount {
-		storage.propertyOffsets = make([]uintptr, maxPropCount)
-	}
+	e.ArrayProperties = &storage.arrayProperties
+	e.StructArrays = &storage.structArrays
 	e.propertyOffsets = &storage.propertyOffsets
-	*e.propertyOffsets = (*e.propertyOffsets)[:maxPropCount]
+}
 
-	// Get and resize epi array
-	if cap(storage.epiArray) < maxPropCount {
-		storage.epiArray = make([]*EventPropertyInfo, maxPropCount)
+// TODO: clear some mem allocated is some event caused peak alloc?
+// resetStorageFor performs selective cleanup of the previous event's state based on
+// what the current event will actually use. This is called after the schema is known
+// but before property preparation begins.
+//
+// It only clears what will be overwritten or reused, avoiding unnecessary work.
+func (e *EventRecordHelper) resetStorageFor(traceInfo *TraceEventInfo) {
+	storage := e.storage
+	//traceInfo := e.TraceInfo
+
+	// --- Part 1: Clean up complex pooled structures from PREVIOUS event ---
+	// These MUST be cleaned because they hold pooled resources that need to be returned.
+
+	// Return array property slices to pool
+	for _, i := range storage.usedArrayIndices {
+		propSlicePtr := storage.arrayProperties[i]
+		clear(*propSlicePtr)
+		*propSlicePtr = (*propSlicePtr)[:0]
+		storage.propSlicePool.Put(propSlicePtr)
+		storage.arrayProperties[i] = nil
 	}
-	e.epiArray = &storage.epiArray
-	*e.epiArray = (*e.epiArray)[:maxPropCount]
-	// Pre-populate the entire epiArray to make getEpiAt branchless (faster).
-	for i := range maxPropCount {
-		(*e.epiArray)[i] = e.TraceInfo.GetEventPropertyInfoAt(uint32(i))
+	storage.usedArrayIndices = storage.usedArrayIndices[:0]
+
+	// Return struct array maps to pool
+	for _, i := range storage.usedStructArrIndices {
+		structs := storage.structArrays[i]
+		for _, propStruct := range structs {
+			clear(propStruct)
+			storage.propertyMapPool.Put(propStruct)
+		}
+		storage.structArrays[i] = nil
+	}
+	storage.usedStructArrIndices = storage.usedStructArrIndices[:0]
+
+	// Return single struct maps to pool
+	for _, propStruct := range storage.structSingle {
+		clear(propStruct)
+		storage.propertyMapPool.Put(propStruct)
+	}
+	storage.structSingle = storage.structSingle[:0]
+
+	// --- Part 2: Reset simple state for CURRENT event ---
+	// Reset the property freelist index. The underlying slice memory is reused.
+	storage.propIdx = 0
+
+	// Clear the cached optional parsed event.
+	storage.parsedEvent = nil
+
+	// Clear maps that will be repopulated
+	clear(storage.propertiesCustom)
+	clear(storage.selectedProps)
+
+	// --- Part 3: Selective slice cleanup based on current event's schema ---
+	if traceInfo != nil {
+		maxPropCount := int(traceInfo.PropertyCount)
+
+		// propertiesByIndex: will be fully repopulated, so clear only what we'll use
+		if cap(storage.propertiesByIndex) >= maxPropCount {
+			// We have enough capacity. Clear only the range we'll use.
+			storage.propertiesByIndex = storage.propertiesByIndex[:maxPropCount]
+			clear(storage.propertiesByIndex)
+		} else {
+			storage.propertiesByIndex = make([]*Property, maxPropCount)
+		}
+
+		// arrayProperties: entries are nil by default and set on-demand, so just resize
+		if cap(storage.arrayProperties) >= maxPropCount {
+			storage.arrayProperties = storage.arrayProperties[:maxPropCount]
+			// NO CLEAR - entries are nil and will be checked before use
+		} else {
+			storage.arrayProperties = make([]*[]*Property, maxPropCount)
+		}
+
+		// structArrays: entries are nil by default and set on-demand, so just resize
+		if cap(storage.structArrays) >= maxPropCount {
+			storage.structArrays = storage.structArrays[:maxPropCount]
+			// NO CLEAR - entries are nil and will be checked before use
+		} else {
+			storage.structArrays = make([][]map[string]*Property, maxPropCount)
+		}
+
+		// propertyOffsets: will be overwritten during prepareProperty, so just resize
+		if cap(storage.propertyOffsets) < maxPropCount {
+			storage.propertyOffsets = make([]uintptr, maxPropCount)
+		}
+		storage.propertyOffsets = storage.propertyOffsets[:maxPropCount]
+		// NO CLEAR - values are overwritten during prepareProperty
 	}
 }
 
@@ -750,15 +794,25 @@ func (e *EventRecordHelper) setEventMetadata(event *Event) {
 	event.System.Opcode.Value = e.TraceInfo.EventDescriptor.Opcode
 	event.System.Opcode.Name = sce.opcodeName
 
-	// These are not hashed when using 64bit key, so we must get the current values.
-	// TODO: cache these using a 128bit key exept channelName
-	event.System.Channel = e.TraceInfo.ChannelName() // sce.channelName
+	// When using the 128-bit key, the cached schema is a perfect match, and we can
+	// use the pre-cached metadata strings for better performance. With the 64-bit key,
+	// we must retrieve the live metadata from the current event's TraceInfo.
+	// This 'if' is resolved at compile time.
+	if use64bitKey {
+		event.System.Channel = e.TraceInfo.ChannelName()
+		event.System.Level.Name = e.TraceInfo.LevelName()
+		event.System.Keywords.Name = e.TraceInfo.KeywordsName()
+		event.System.Task.Name = e.TraceInfo.TaskName()
+	} else {
+		event.System.Channel = sce.channelName
+		event.System.Level.Name = sce.levelName
+		event.System.Keywords.Name = sce.keywordsNames
+		event.System.Task.Name = sce.taskName
+	}
+
 	event.System.Level.Value = e.TraceInfo.EventDescriptor.Level
-	event.System.Level.Name = e.TraceInfo.LevelName() //sce.levelName
 	event.System.Keywords.Mask = e.TraceInfo.EventDescriptor.Keyword
-	event.System.Keywords.Name = e.TraceInfo.KeywordsName() //sce.traceInfo.keywordsName
 	event.System.Task.Value = uint8(e.TraceInfo.EventDescriptor.Task)
-	event.System.Task.Name = e.TraceInfo.TaskName() //sce.taskName
 
 	// Use the converted timestamp if available, otherwise fall back to raw timestamp
 	event.System.TimeCreated.SystemTime = e.Timestamp()
@@ -779,6 +833,8 @@ func (e *EventRecordHelper) setEventMetadata(event *Event) {
 }
 
 // Returns the size of the property at index i at index i, using TdhGetPropertySize.
+//
+// NOTE: This is very slow, so only use it when absolutely necessary (e.g. for very complex types).
 func (e *EventRecordHelper) getPropertySize(i uint32) (size uint32, err error) {
 	dataDesc := PropertyDataDescriptor{}
 	dataDesc.PropertyName = uint64(e.TraceInfo.PropertyNamePointer(i))
@@ -793,8 +849,12 @@ func (e *EventRecordHelper) getPropertySize(i uint32) (size uint32, err error) {
 func (e *EventRecordHelper) getIntegerValueAt(i uint32) (uint16, error) {
 	// Get the data pointer from our offset cache. This is an absolute pointer.
 	dataPtr := (*e.propertyOffsets)[i]
-	// Fetch the schema for the property at the target index 'i'.
-	epi := e.getEpiAt(i)
+	// // Fetch the schema for the property at the target index 'i'.
+	//epi2 := e.getEpiAt(i) // <- equivalent but ~0.5% slower
+	// The property at `i` has already been prepared, so its info is cached.
+	propAtIndex := (*e.PropertiesByIndex)[i]
+	assert(propAtIndex != nil, "property at index %d not yet prepared", i)
+	epi := propAtIndex.evtPropInfo
 
 	// The property must be a scalar integer to be used for length/count.
 	if (epi.Flags&(PropertyStruct|PropertyParamCount)) != 0 || epi.Count() != 1 {
@@ -829,11 +889,9 @@ func (e *EventRecordHelper) getIntegerValueAt(i uint32) (uint16, error) {
 	return 0, ErrGetIntegerNoData
 }
 
-// Gets the EventPropertyInfo at index i, (already cached in initialize()).
-// big performance vs caching on the fly.
+// Gets the EventPropertyInfo at index i.
 func (e *EventRecordHelper) getEpiAt(i uint32) *EventPropertyInfo {
-	// (epiArray mem is reused, make sure the elements are set to nil before use)
-	return (*e.epiArray)[i]
+	return e.TraceInfo.GetEventPropertyInfoAt(i) // it's cached by the cpu most of the time.
 }
 
 // Returns the length of the property (can be 0) at index i and the actual size in bytes.
@@ -918,14 +976,12 @@ func (e *EventRecordHelper) getPropertyLength(i uint32, epi *EventPropertyInfo) 
 			// Scan until null or end
 			chars := unsafe.Slice((*byte)(unsafe.Pointer(e.userDataIt)),
 				e.remainingUserDataLength())
-			sizeBytes = 0
-			for _, c := range chars {
-				sizeBytes++ // include null terminator
-				if c == 0 {
-					break
-				}
+			if nullPos := bytes.IndexByte(chars, 0); nullPos != -1 {
+				sizeBytes = uint32(nullPos + 1) // Found null, size includes terminator.
+			} else {
+				sizeBytes = uint32(len(chars)) // No null, consume all remaining data.
 			}
-			// size may be null included even if not null terminated, doesnt matter.
+			// size may be null included even if not null terminated, doesn't matter.
 			// this is the last prop, the iterator will be at the end of the data.
 			return 0, sizeBytes, nil
 
@@ -1033,14 +1089,14 @@ func (e *EventRecordHelper) getPropertyLength(i uint32, epi *EventPropertyInfo) 
 }
 
 // Setups a property for parsing, will be parsed later (or not)
-func (e *EventRecordHelper) prepareProperty(i uint32, name string) (p *Property, err error) {
+func (e *EventRecordHelper) prepareProperty(i uint32, name string, epi *EventPropertyInfo) (p *Property, err error) {
 	p = e.newProperty()
 
 	// Store the offset of this property so we can parse it later if needed.
 	// We store the absolute pointer, which is safe within the callback context.
 	(*e.propertyOffsets)[i] = e.userDataIt
 
-	epi := e.getEpiAt(i)
+	//epi := e.getEpiAt(i) // slow.
 	p.evtPropInfo = epi
 	p.name = name
 	p.pValue = e.userDataIt
@@ -1091,7 +1147,6 @@ func (e *EventRecordHelper) prepareStruct(i uint32, epi *EventPropertyInfo, arra
 	var p *Property
 	var err error
 	names := e.getCachedPropNames()
-	arrayName := names[i]
 
 	// Treat non-array properties as arrays with one element.
 	for range arrayCount {
@@ -1101,7 +1156,8 @@ func (e *EventRecordHelper) prepareStruct(i uint32, epi *EventPropertyInfo, arra
 		lastMember := startIndex + epi.NumOfStructMembers()
 
 		for j := startIndex; j < lastMember; j++ {
-			if p, err = e.prepareProperty(uint32(j), names[j]); err != nil {
+			epiprop := e.getEpiAt(uint32(j))
+			if p, err = e.prepareProperty(uint32(j), names[j], epiprop); err != nil {
 				// On error, return the map to the pool.
 				// No need to release individual properties due to block pooling.
 				clear(propStruct)
@@ -1114,7 +1170,11 @@ func (e *EventRecordHelper) prepareStruct(i uint32, epi *EventPropertyInfo, arra
 		// Add to appropriate collection
 		if isArray {
 			// Part of an array - add to StructArrays
-			e.StructArrays[arrayName] = append(e.StructArrays[arrayName], propStruct)
+			// Track the index if this is the first struct for this property.
+			if (*e.StructArrays)[i] == nil {
+				e.storage.usedStructArrIndices = append(e.storage.usedStructArrIndices, int(i))
+			}
+			(*e.StructArrays)[i] = append((*e.StructArrays)[i], propStruct)
 		} else {
 			// Single struct - add to SingleStructs
 			*e.StructSingle = append(*e.StructSingle, propStruct)
@@ -1152,7 +1212,7 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	var p *Property
 	var err error
 	for range arrayCount {
-		if p, err = e.prepareProperty(i, names[i]); err != nil {
+		if p, err = e.prepareProperty(i, names[i], epi); err != nil {
 			// On error, return the slice to the pool.
 			// No need to release individual properties due to block pooling.
 			clear(*array)
@@ -1164,7 +1224,9 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	}
 
 	if len(*array) > 0 {
-		e.ArrayProperties[arrayName] = array
+		(*e.ArrayProperties)[i] = array
+		// Track that this index is now populated.
+		e.storage.usedArrayIndices = append(e.storage.usedArrayIndices, int(i))
 	} else {
 		// Return the unused slice to the pool if the array ended up empty.
 		e.storage.propSlicePool.Put(array)
@@ -1173,35 +1235,46 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	return nil
 }
 
-// Prepare will partially decode the event, extracting event info for later
-//
-// There is a lot of information available in the event even without decoding,
-// including timestamp, PID, TID, provider ID, activity ID, and the raw data.
-func (e *EventRecordHelper) prepareProperties() (err error) {
+// preparePropertiesUpTo will partially decode the event, property offsets, sizes, indexes, etc.
+// Prepares up to target ID inclusive, these are the properties IDx in the event schema
+// and they start from 1.
+func (e *EventRecordHelper) preparePropertiesUpTo(targetID uint32) (err error) {
+	// Clamp the targetIndex to a valid maximum to prevent out-of-bounds access.
+	if targetID > e.TraceInfo.TopLevelPropertyCount {
+		targetID = e.TraceInfo.TopLevelPropertyCount
+	}
+	if e.currentPrepCount >= targetID {
+		return nil // Already prepared all properties.
+	}
 
-	// TODO: move this to a separate function before TraceInfo is used/created or not
+	// TODO: move this to a separate function before TraceInfo(schema) is used/created or not
 	// Handle special case for MOF events that are just a single string.
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntcons/ns-evntcons-event_header
-	if e.EventRec.IsMof() {
-		// If there aren't any event property info structs, use the UserData directly.
-		if (e.EventRec.EventHeader.Flags & EVENT_HEADER_FLAG_STRING_ONLY) != 0 {
+	if e.EventRec.IsMof() && (e.EventRec.EventHeader.Flags&EVENT_HEADER_FLAG_STRING_ONLY) != 0 {
+		if e.currentPrepCount == 0 {
+			// If there aren't any event property info structs, use the UserData directly.
 			str := (*uint16)(unsafe.Pointer(e.EventRec.UserData))
-			value := FromUTF16Slice(
-				unsafe.Slice(str, e.EventRec.UserDataLength/2))
+			value := FromUTF16Slice(unsafe.Slice(str, e.EventRec.UserDataLength/2))
 			if e.EventRec.UserDataLength != 0 {
 				e.SetCustomProperty("String", value)
 			}
-			return
+			e.currentPrepCount = e.TraceInfo.TopLevelPropertyCount // Mark all as "done".
 		}
+		return nil
 	}
 
 	// Get or generate property names for this event schema.
 	// This is a performance optimization to avoid repeated UTF-16 to string conversions.
 	names := e.getCachedPropNames()
 
-	// Process all top-level properties defined in the event schema.
-	for i := uint32(0); i < e.TraceInfo.TopLevelPropertyCount; i++ {
-		epi := e.getEpiAt(i)
+	// Get the pointer to the first EventPropertyInfo struct once before the loop.
+	epiPtr := uintptr(unsafe.Pointer(&e.TraceInfo.EventPropertyInfoArray[0]))
+
+	//propsByIndexSlice := *e.PropertiesByIndex
+
+	// Process all top-level properties defined in the event schema up to targetIndex.
+	for i := e.currentPrepCount; i < targetID; i++ {
+		epi := (*EventPropertyInfo)(unsafe.Pointer(epiPtr))
 		if epi == nil {
 			e.addPropError()
 			conlog.SampledError("epi-null").
@@ -1231,35 +1304,39 @@ func (e *EventRecordHelper) prepareProperties() (err error) {
 		} else {
 			// Property is a single, non-array, non-struct value.
 			var p *Property
-			if p, err = e.prepareProperty(i, names[i]); err != nil {
+			if p, err = e.prepareProperty(i, names[i], epi); err != nil {
 				return err
 			}
-			(*e.PropertiesByIndex)[i] = p
+			(*e.PropertiesByIndex)[i] = p // PERF-NOTE: Heavy write barrier here, go sheningans, but unavoidable.
 		}
+
+		epiPtr += gEpiSize // Move to the next EventPropertyInfo struct.
 	}
+	e.currentPrepCount = max(targetID, e.currentPrepCount)
 
 	// After parsing all defined properties, check if there's any data left.
-	// This can happen if the event schema is an older version.
-	if e.userDataIt < e.userDataEnd {
-		remainingBytes := uint32(e.userDataEnd - e.userDataIt)
-		remainingData := unsafe.Slice((*byte)(unsafe.Pointer(e.userDataIt)), remainingBytes)
+	if e.currentPrepCount == (e.TraceInfo.TopLevelPropertyCount) {
+		// This can happen if the event schema is an older version.
+		if e.userDataIt < e.userDataEnd {
+			remainingBytes := uint32(e.userDataEnd - e.userDataIt)
+			remainingData := unsafe.Slice((*byte)(unsafe.Pointer(e.userDataIt)), remainingBytes)
 
-		// Probably this is because TraceEventInfo used an older Thread_V2_TypeGroup1
-		// instead of a Thread_V3_TypeGroup1 MOF class to decode it.
-		// Try to parse the remaining data as a MOF property.
-		// TODO: remove this?
-		if e.TraceInfo.IsMof() {
-			if err2 := e.prepareMofPropertyFix(remainingData, remainingBytes); err2 == nil {
-				return nil // Data was successfully parsed, return.
+			// Probably this is because TraceEventInfo used an older Thread_V2_TypeGroup1
+			// instead of a Thread_V3_TypeGroup1 MOF class to decode it.
+			// Try to parse the remaining data as a MOF property.
+			if e.TraceInfo.IsMof() {
+				if err2 := e.prepareMofPropertyFix(remainingData, remainingBytes); err2 == nil {
+					return nil // Data was successfully parsed, return.
+				}
 			}
-		}
 
-		e.addPropError()
-		conlog.Warn().Interface("eventRecord", e.EventRec).
-			Interface("traceInfo", e.TraceInfo).Uint32("remaining", remainingBytes).
-			Int("total", int(e.EventRec.UserDataLength)).
-			//Str("remainingHex", hex.EncodeToString(remainingData)). // Interface mashal already does this
-			Msg("UserData not fully parsed")
+			e.addPropError()
+			conlog.Warn().Interface("eventRecord", e.EventRec).
+				Interface("traceInfo", e.TraceInfo).Uint32("remaining", remainingBytes).
+				Int("total", int(e.EventRec.UserDataLength)).
+				//Str("remainingHex", hex.EncodeToString(remainingData)). // Interface mashal already does this
+				Msg("UserData not fully parsed")
+		}
 	}
 
 	return nil
@@ -1305,81 +1382,12 @@ func (e *EventRecordHelper) prepareMofPropertyFix(remainingData []byte, remainin
 // buildEvent creates the final Event object, populates its properties and metadata.
 func (e *EventRecordHelper) buildEvent() (event *Event, err error) {
 	event = NewEvent()
-	event.Flags.Skippable = e.Flags.Skippable
 	if err = e.parseAndSetAllProperties(event); err != nil {
 		return
 	}
 	e.setEventMetadata(event)
 
 	return event, err
-}
-
-// parseAndSetProperty parses a single named property and sets its value in the output Event.
-func (e *EventRecordHelper) parseAndSetProperty(name string, out *Event) (err error) {
-	var eventData *Properties
-	if (e.TraceInfo.Flags & TEMPLATE_USER_DATA) == TEMPLATE_USER_DATA {
-		eventData = &out.UserData
-	} else {
-		eventData = &out.EventData
-	}
-
-	// Check simple properties from schema first using the index map for a fast lookup.
-	nameToIndex := e.getCachedNameToIndexMap()
-	if index, ok := nameToIndex[name]; ok {
-		if index < len(*e.PropertiesByIndex) {
-			if p := (*e.PropertiesByIndex)[index]; p != nil {
-				var val string
-				if val, err = p.FormatToString(); err != nil {
-					return fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, p.name, err)
-				}
-				*eventData = append(*eventData, EventProperty{Name: p.name, Value: val})
-				return nil // Property found and parsed.
-			}
-		}
-	}
-
-	// Check for custom properties in the map.
-	if p, ok := e.PropertiesCustom[name]; ok {
-		// Custom properties have their value pre-formatted as a string.
-		*eventData = append(*eventData, EventProperty{Name: p.name, Value: p.value})
-		return nil
-	}
-
-	// simple arrays.
-	if propsSlicePtr, ok := e.ArrayProperties[name]; ok {
-		values := make([]string, len(*propsSlicePtr))
-
-		// iterate over the properties
-		for i, p := range *propsSlicePtr {
-			if values[i], err = p.FormatToString(); err != nil {
-				return fmt.Errorf("%w array %s[%d]: %s", ErrPropertyParsingTdh, name, i, err)
-			}
-		}
-		*eventData = append(*eventData, EventProperty{Name: name, Value: values})
-		return nil
-	}
-
-	// Structure arrays
-	if structs, ok := e.StructArrays[name]; ok {
-		if structArray, err := e.formatStructs(structs, name); err != nil {
-			return err
-		} else {
-			*eventData = append(*eventData, EventProperty{Name: name, Value: structArray})
-		}
-		return nil
-	}
-
-	// Single structs - only check if requesting StructurePropertyName
-	if name == StructurePropertyName && len(*e.StructSingle) > 0 {
-		if singleStructs, err := e.formatStructs(*e.StructSingle, name); err != nil {
-			return err
-		} else {
-			*eventData = append(*eventData, EventProperty{Name: name, Value: singleStructs})
-		}
-		return nil
-	}
-
-	return fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
 // shouldParse determines if a property should be parsed based on user selection.
@@ -1405,7 +1413,6 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 	}
 
 	// Get or generate property names for this event schema.
-	// This is a performance optimization to avoid repeated UTF-16 to string conversions.
 	names := e.getCachedPropNames()
 
 	// Properties
@@ -1421,78 +1428,118 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 		// If it's a simple scalar with no value map, parse it to its native Go type.
 		// Otherwise, format it to a string.
 		if p.isScalarInType() && p.evtPropInfo.MapNameOffset() == 0 {
-			var val any
 			inType := p.evtPropInfo.InType()
 
+			switch inType {
 			// Use the existing decoders to get native types.
-			if inType == TDH_INTYPE_FLOAT || inType == TDH_INTYPE_DOUBLE {
-				val, err = p.decodeFloatIntype()
-			} else {
-				uval, signed, err_ := p.decodeScalarIntype()
-				err = err_
-				if err == nil {
+			case TDH_INTYPE_FLOAT, TDH_INTYPE_DOUBLE:
+				fval, err := p.decodeFloatIntype()
+				if err != nil {
+					last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+				} else {
+					*eventData = append(*eventData,
+						EventProperty{Name: name, Type: TypeFloat64, FloatValue: fval})
+				}
+
+			case TDH_INTYPE_BOOLEAN:
+				// Boolean is 4 bytes in ETW. True if non-zero.
+				uval, _, err := p.decodeScalarIntype()
+				if err != nil {
+					last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+				} else {
+					*eventData = append(*eventData,
+						EventProperty{Name: name, Type: TypeBool, BoolValue: uval != 0})
+				}
+
+			case TDH_INTYPE_POINTER:
+				// Handle pointers specially: parse as uint64 but tag for hex formatting.
+				uval, _, err := p.decodeScalarIntype()
+				if err != nil {
+					last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+				} else {
+					*eventData = append(*eventData,
+						EventProperty{Name: name, Type: TypeHexUint64, UintValue: uval})
+				}
+
+			default: // All other integer types
+				uval, signed, err := p.decodeScalarIntype()
+				if err != nil {
+					last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+				} else {
 					if signed {
-						val = int64(uval)
+						*eventData = append(*eventData,
+							EventProperty{Name: name, Type: TypeInt64, IntValue: int64(uval)})
 					} else {
-						val = uval
+						*eventData = append(*eventData,
+							EventProperty{Name: name, Type: TypeUint64, UintValue: uval})
 					}
 				}
 			}
-
+		} else {
+			// (COMPLEX TYPES or MAPPED SCALARS): Format to a string using the arena.
+			startOffset := len(out.dataBuffer)
+			var err error
+			out.dataBuffer, err = p.decodeToString(p.evtPropInfo.OutType(), out.dataBuffer)
 			if err != nil {
+				out.dataBuffer = out.dataBuffer[:startOffset] // Rewind on error
 				last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
 			} else {
-				*eventData = append(*eventData, EventProperty{Name: name, Value: val})
+				// Create a string header pointing to the new data in our buffer.
+				stringPtr := unsafe.SliceData(out.dataBuffer[startOffset:])
+				val := unsafe.String(stringPtr, len(out.dataBuffer)-startOffset)
+				*eventData = append(*eventData,
+					EventProperty{Name: name, Type: TypeString, StringValue: val})
 			}
+		}
+	}
 
-		} else {
-			// (COMPLEX TYPES): Format to a string immediately.
-			var val string
-			if val, err = p.FormatToString(); err != nil {
-				last = fmt.Errorf("%w %s: %s", ErrPropertyParsingTdh, name, err)
+	// Custom properties from map are always strings.
+	if len(e.PropertiesCustom) > 0 {
+		for name, p := range e.PropertiesCustom {
+			if !e.shouldParse(name) {
+				continue
+			}
+			*eventData = append(*eventData,
+				EventProperty{Name: name, Type: TypeString, StringValue: p.value})
+		}
+	}
+
+	// Arrays are complex types, store them in OtherValue.
+	if len(e.storage.usedArrayIndices) > 0 {
+		for _, i := range e.storage.usedArrayIndices {
+			pname := names[i]
+			if !e.shouldParse(pname) {
+				continue
+			}
+			props := *(*e.ArrayProperties)[i]
+			values := make([]string, 0, len(props))
+
+			for _, p := range props {
+				var v string
+				if v, err = p.FormatToString(); err != nil {
+					last = fmt.Errorf("%w array %s: %s", ErrPropertyParsingTdh, pname, err)
+				}
+				values = append(values, v)
+			}
+			*eventData = append(*eventData,
+				EventProperty{Name: pname, Type: TypeOther, OtherValue: values})
+		}
+	}
+
+	// Structs are complex types, store them in OtherValue.
+	if len(e.storage.usedStructArrIndices) > 0 {
+		for _, i := range e.storage.usedStructArrIndices {
+			name := names[i]
+			if !e.shouldParse(name) {
+				continue
+			}
+			structs := (*e.StructArrays)[i]
+			if structArray, err := e.formatStructs(structs, name); err != nil {
+				last = err
 			} else {
-				*eventData = append(*eventData, EventProperty{Name: name, Value: val})
+				*eventData = append(*eventData,
+					EventProperty{Name: name, Type: TypeOther, OtherValue: structArray})
 			}
-		}
-	}
-
-	// Custom properties from map
-	for name, p := range e.PropertiesCustom {
-		if !e.shouldParse(name) {
-			continue
-		}
-		// This property was added by manually, value is already a string.
-		*eventData = append(*eventData, EventProperty{Name: name, Value: p.value})
-	}
-
-	// Arrays
-	for pname, propsPtr := range e.ArrayProperties {
-		if !e.shouldParse(pname) {
-			continue
-		}
-		props := *propsPtr
-		values := make([]string, 0, len(props))
-
-		// iterate over the properties
-		for _, p := range props {
-			var v string
-			if v, err = p.FormatToString(); err != nil {
-				last = fmt.Errorf("%w array %s: %s", ErrPropertyParsingTdh, pname, err)
-			}
-			values = append(values, v)
-		}
-		*eventData = append(*eventData, EventProperty{Name: pname, Value: values})
-	}
-
-	// Handle struct arrays
-	for name, structs := range e.StructArrays {
-		if !e.shouldParse(name) {
-			continue
-		}
-		if structArray, err := e.formatStructs(structs, name); err != nil {
-			last = err
-		} else {
-			*eventData = append(*eventData, EventProperty{Name: name, Value: structArray})
 		}
 	}
 
@@ -1501,7 +1548,8 @@ func (e *EventRecordHelper) parseAndSetAllProperties(out *Event) (last error) {
 		if structs, err := e.formatStructs(*e.StructSingle, StructurePropertyName); err != nil {
 			last = err
 		} else {
-			*eventData = append(*eventData, EventProperty{Name: StructurePropertyName, Value: structs})
+			*eventData = append(*eventData,
+				EventProperty{Name: StructurePropertyName, Type: TypeOther, OtherValue: structs})
 		}
 	}
 
@@ -1574,25 +1622,39 @@ func (e *EventRecordHelper) EventID() uint16 {
 	Values are cached after first access.
 */
 
-// TODO: make the names of this functions match the common types of etw properties to go, GetPropertyAsGoType
+// getPrepProperty is a private helper that centralizes the logic for finding a
+// property by name.
+func (e *EventRecordHelper) getPrepProperty(name string) (p *Property, isCustom bool, err error) {
+	// Check schema-defined properties first (the common case).
+	nameToIndex := e.getCachedNameToIndexMap() // <- this was cached before we got here, so it's fast
+	if index, ok := nameToIndex[name]; ok {    // <- this is the same as p := Properties[name] would have done it.
+		// Lazily prepare properties up to the requested target ID (index+1)
+		if err = e.preparePropertiesUpTo(uint32(index) + 1); err != nil {
+			return nil, false, err
+		}
+		// The bounds check is a safety measure. It should not happen.
+		if index < len(*e.PropertiesByIndex) {
+			if p = (*e.PropertiesByIndex)[index]; p != nil {
+				return p, false, nil // Found in schema properties.
+			}
+		}
+	}
+
+	if p, ok := e.PropertiesCustom[name]; ok {
+		return p, true, nil // Found in custom properties.
+	}
+
+	return nil, false, fmt.Errorf("%w %s", ErrUnknownProperty, name)
+}
 
 // GetPropertyString returns the formatted string value of the named property.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error) {
-	nameToIndex := e.getCachedNameToIndexMap() // <- this was cached before we got here, so it's fast
-	if index, ok := nameToIndex[name]; ok {    // <- this is the same as p := Properties[name] would have done it.
-		if index < len(*e.PropertiesByIndex) { // <- this is fast
-			if p := (*e.PropertiesByIndex)[index]; p != nil { // <- this is fast, no bound check.
-				return p.FormatToString()
-				// So, the cost of a p := Properties[name] vs this is negligible
-				// but we gain +100% (yes, double) speed on the preparing part.
-			}
-		}
+	p, _, err := e.getPrepProperty(name)
+	if err != nil {
+		return "", err
 	}
-	if p, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
-		return p.FormatToString()
-	}
-	return "", fmt.Errorf("%w %s", ErrUnknownProperty, name)
+	return p.FormatToString()
 }
 
 // GetPropertyInt returns the property value as int64.
@@ -1602,18 +1664,14 @@ func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error)
 // Returns overflow error for unsigned values exceeding math.MaxInt64.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyInt(name string) (i int64, err error) {
-	nameToIndex := e.getCachedNameToIndexMap()
-	if index, ok := nameToIndex[name]; ok {
-		if index < len(*e.PropertiesByIndex) {
-			if p := (*e.PropertiesByIndex)[index]; p != nil {
-				return p.GetInt()
-			}
-		}
+	p, isCustom, err := e.getPrepProperty(name)
+	if err != nil {
+		return 0, err
 	}
-	if _, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
+	if isCustom {
 		return 0, fmt.Errorf("custom property %s cannot be read as integer", name)
 	}
-	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
+	return p.GetInt()
 }
 
 // GetPropertyWmiTime retrieves a timestamp property from the event record
@@ -1660,54 +1718,42 @@ func (e *EventRecordHelper) GetPropertyFileTime(name string) (time.Time, error) 
 // Returns conversion error for negative signed values.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyUint(name string) (uint64, error) {
-	nameToIndex := e.getCachedNameToIndexMap()
-	if index, ok := nameToIndex[name]; ok {
-		if index < len(*e.PropertiesByIndex) {
-			if p := (*e.PropertiesByIndex)[index]; p != nil {
-				return p.GetUInt()
-			}
-		}
+	p, isCustom, err := e.getPrepProperty(name)
+	if err != nil {
+		return 0, err
 	}
-	if _, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
+	if isCustom {
 		return 0, fmt.Errorf("custom property %s cannot be read as integer", name)
 	}
-	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
+	return p.GetUInt()
 }
 
 // GetPropertyFloat returns the property value as float64.
 // Supports 32-bit and 64-bit IEEE 754 formats.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyFloat(name string) (float64, error) {
-	nameToIndex := e.getCachedNameToIndexMap()
-	if index, ok := nameToIndex[name]; ok {
-		if index < len(*e.PropertiesByIndex) {
-			if p := (*e.PropertiesByIndex)[index]; p != nil {
-				return p.GetFloat()
-			}
-		}
+	p, isCustom, err := e.getPrepProperty(name)
+	if err != nil {
+		return 0, err
 	}
-	if _, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
+	if isCustom {
 		return 0, fmt.Errorf("custom property %s cannot be read as float", name)
 	}
-	return 0, fmt.Errorf("%w %s", ErrUnknownProperty, name)
+	return p.GetFloat()
 }
 
 // GetPropertyPGUID returns the property value as a pointer to a GUID struct.
 // Returns a pointer to a GUID struct, which should not be modified, copy it if needed.
 // Returns ErrUnknownProperty if the property doesn't exist.
 func (e *EventRecordHelper) GetPropertyPGUID(name string) (g *GUID, err error) {
-	nameToIndex := e.getCachedNameToIndexMap()
-	if index, ok := nameToIndex[name]; ok {
-		if index < len(*e.PropertiesByIndex) {
-			if p := (*e.PropertiesByIndex)[index]; p != nil {
-				return p.GetGUID()
-			}
-		}
+	p, isCustom, err := e.getPrepProperty(name)
+	if err != nil {
+		return nil, err
 	}
-	if _, ok := e.PropertiesCustom[name]; ok { // Check for custom properties last. (rare)
+	if isCustom {
 		return nil, fmt.Errorf("custom property %s cannot be read as GUID", name)
 	}
-	return nil, fmt.Errorf("%w %s", ErrUnknownProperty, name)
+	return p.GetGUID()
 }
 
 // SetCustomProperty sets or updates a property value in the CustomProperties map.
@@ -1732,12 +1778,92 @@ func (e *EventRecordHelper) SetCustomProperty(name, value string) *Property {
 	return p
 }
 
+// GetHelper is the entry point for on-demand event parsing. It retrieves a
+// temporary helper object that provides access to the event's schema and
+// parsing methods.
+//
+// On its first call for an event, it performs the necessary schema cache lookup
+// Subsequent calls for the same event return the already prepared helper instantly.
+//
+// The returned helper is only valid within the scope of the EventRecordCallback
+// from which it was called.
+func (er *EventRecord) GetHelper() (*EventRecordHelper, error) {
+	usrCtx := er.userContext()
+	storage := usrCtx.storage
+	if storage.helper.TraceInfo != nil {
+		// already initialized, return it
+		return &storage.helper, nil
+	}
+
+	// we get the TraceContext from EventRecord.UserContext
+	// Parse TRACE_EVENT_INFO from the event record
+	if h, err := newEventRecordHelper(er, storage); err == nil {
+
+		// Convert EventRecord timestamp to FILETIME based on Session
+		// ClientContext settings (Controller side where the trace is).
+		// Does nothing if PROCESS_TRACE_MODE_RAW_TIMESTAMP (Consumer side) is not set.
+		// If that flag is not set, ETW already converts it to FILETIME format.
+		if usrCtx.trace.processTraceMode&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
+			h.timestamp = usrCtx.trace.fromRawTimestamp(er.EventHeader.TimeStamp)
+		} else {
+			h.timestamp = er.EventHeader.TimeStamp
+		}
+
+		// initialize before preparing properties
+		h.initialize()
+
+		return h, nil
+	} else {
+		// On failure, we must still reset the helper so the next event can try again.
+		storage.helper.reset()
+		return nil, err
+	}
+}
+
+// PrepareAll ensures all properties for the event are prepared.
+// This is optional. If not called, properties will be prepared on-demand
+// when a GetProperty* method is called. Use this if you intend to iterate
+// over all properties and want to pay the preparation cost up-front.
+func (e *EventRecordHelper) PrepareAll() error {
+	// Call the engine with the highest possible index to ensure everything is prepared.
+	return e.preparePropertiesUpTo(e.TraceInfo.TopLevelPropertyCount)
+}
+
 /*
 	ETW Property Parsing Methods
 
 	Converts raw binary event data into formatted values on-demand. Uses custom
 	decoders for performance with TDH fallback for complex types. Results are cached.
 */
+
+// GetParsedEvent performs a full parse of the event, creating the final *Event object
+// with all its metadata and properties formatted.
+//
+// The returned *Event object is retrieved from a pool and should
+// be released via `event.Release()` when you are done with it, especially if
+// you are not using the default `Consumer.EventCallback`.
+func (h *EventRecordHelper) GetParsedEvent() (*Event, error) {
+	if h.storage.parsedEvent != nil {
+		return h.storage.parsedEvent, nil
+	}
+	// Ensure properties are prepared before building the final event.
+	if err := h.PrepareAll(); err != nil {
+		return nil, err
+	}
+
+	// buildEvent creates the final object and populates all fields.
+	event, err := h.buildEvent()
+	if err != nil {
+		if event != nil {
+			event.Release()
+		}
+		return nil, err
+	}
+
+	// Cache the result before returning.
+	h.storage.parsedEvent = event
+	return event, nil
+}
 
 // ParseProperties parses multiple properties by name, returning the first error encountered.
 func (e *EventRecordHelper) ParseProperties(names ...string) (err error) {
@@ -1762,6 +1888,7 @@ func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 	// Parse simple property from schema using the index map for a fast lookup.
 	nameToIndex := e.getCachedNameToIndexMap()
 	if index, ok := nameToIndex[name]; ok {
+
 		if index < len(*e.PropertiesByIndex) {
 			if p := (*e.PropertiesByIndex)[index]; p != nil {
 				if _, err = p.FormatToString(); err != nil {
@@ -1769,24 +1896,28 @@ func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 				}
 			}
 		}
-	}
 
-	// Parse array of properties.
-	if propSlicePtr, ok := e.ArrayProperties[name]; ok {
-		// iterate over the properties
-		for _, p := range *propSlicePtr {
-			if _, err = p.FormatToString(); err != nil {
-				return fmt.Errorf("%w array %s: %s", ErrPropertyParsingTdh, name, err)
+		// Parse array of properties.
+		if index < len(*e.ArrayProperties) {
+			if propSlicePtr := (*e.ArrayProperties)[index]; propSlicePtr != nil {
+				// iterate over the properties
+				for _, p := range *propSlicePtr {
+					if _, err = p.FormatToString(); err != nil {
+						return fmt.Errorf("%w array %s: %s", ErrPropertyParsingTdh, name, err)
+					}
+				}
 			}
 		}
-	}
 
-	// Parse struct array property.
-	if structs, ok := e.StructArrays[name]; ok {
-		for _, propStruct := range structs {
-			for field, prop := range propStruct {
-				if _, err = prop.FormatToString(); err != nil {
-					return fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsingTdh, name, field, err)
+		// Parse struct array property.
+		if index < len(*e.StructArrays) {
+			if structs := (*e.StructArrays)[index]; structs != nil {
+				for _, propStruct := range structs {
+					for field, prop := range propStruct {
+						if _, err = prop.FormatToString(); err != nil {
+							return fmt.Errorf("%w struct %s.%s: %s", ErrPropertyParsingTdh, name, field, err)
+						}
+					}
 				}
 			}
 		}
@@ -1807,15 +1938,7 @@ func (e *EventRecordHelper) ParseProperty(name string) (err error) {
 	return
 }
 
-// Skippable marks the event as "droppable" when the consumer channel is full.
-// Events marked as skippable will not block the ETW callback when trying to send
-// to a full Event channel. Instead, they will be counted in [Consumer.Skipped] and dropped.
-// This is useful for high-volume, low-priority events where losing some events
-// is preferable to blocking the ETW callback.
-func (e *EventRecordHelper) Skippable() {
-	e.Flags.Skippable = true
-}
-
+// TODO: delete this when done with the new callback system
 // Skip marks the event to be completely ignored during processing.
 // When an event is marked with Skip, it will not be parsed or sent to
 // the consumer channel at all. The event processing stops immediately

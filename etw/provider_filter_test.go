@@ -92,19 +92,12 @@ func TestProviderFiltering(t *testing.T) {
 			defer cancel()
 
 			c := NewConsumer(ctx).FromSessions(ses)
-			err = c.Start()
-			if err != nil {
-				tc.Message = fmt.Sprintf("Consumer start failed: %v", err)
-				tt.Assert(tc.Result == BehaviorUnsupported, tc.Message)
-				return
-			}
-			defer c.Stop()
 
 			var eventCount int
 			var violationFound bool
 			var violationMsg string
-
-			go c.ProcessEvents(func(e *Event) {
+			c.EventCallback = func(e *Event) error {
+				defer e.Release()
 				eventCount++
 
 				// Check if filter is being ignored
@@ -140,7 +133,16 @@ func TestProviderFiltering(t *testing.T) {
 				if eventCount >= 30 {
 					cancel()
 				}
-			})
+				return nil
+			}
+
+			err = c.Start()
+			if err != nil {
+				tc.Message = fmt.Sprintf("Consumer start failed: %v", err)
+				tt.Assert(tc.Result == BehaviorUnsupported, tc.Message)
+				return
+			}
+			defer c.Stop()
 
 			<-ctx.Done()
 

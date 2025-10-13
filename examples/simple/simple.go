@@ -38,19 +38,19 @@ func main() {
 
 	c.FromSessions(s)
 
-	// When events are parsed they get sent to Consumer's
-	// Events channel by the default EventCallback method
-	// EventCallback can be modified to do otherwise
-	go func() {
+	// When events are parsed they get sent to this callback.
+	c.EventCallback = func(e *etw.Event) error {
+		defer e.Release()
+
 		var b []byte
 		var err error
-		c.ProcessEvents(func(e *etw.Event) {
-			if b, err = json.Marshal(e); err != nil {
-				panic(err)
-			}
-			fmt.Println(string(b))
-		})
-	}()
+		if b, err = json.Marshal(e); err != nil {
+			panic(err)
+		}
+		fmt.Println(string(b))
+
+		return nil
+	}
 
 	if err := c.Start(); err != nil {
 		panic(err)

@@ -1384,13 +1384,13 @@ func (e *EventRecord) Timestamp() time.Time {
 	return e.TimestampFromProp(e.EventHeader.TimeStamp)
 }
 
-func (e *EventRecord) TimestampDebugTest() time.Time { // TODO: test performance
-	usrCtx := e.userContext()
-	if usrCtx.trace.processTraceMode&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
-		return e.TimestampFromProp(e.EventHeader.TimeStamp)
-	}
-	return FromFiletime(e.EventHeader.TimeStamp)
-}
+// func (e *EventRecord) timestampDebugTest() time.Time { // TODO: test performance
+// 	usrCtx := e.userContext()
+// 	if usrCtx.trace.processTraceMode&PROCESS_TRACE_MODE_RAW_TIMESTAMP != 0 {
+// 		return e.TimestampFromProp(e.EventHeader.TimeStamp)
+// 	}
+// 	return FromFiletime(e.EventHeader.TimeStamp)
+// }
 
 // TimestampFromProp converts a raw timestamp value from an event property (like WmiTime)
 // into an absolute time.Time, using the session's clock type and conversion settings.
@@ -1399,6 +1399,15 @@ func (e *EventRecord) TimestampFromProp(propTimestamp int64) time.Time {
 	// userContext() will not be nil if The Consumer is running and processing events.
 	filetime := e.userContext().trace.fromRawTimestamp(propTimestamp)
 	return FromFiletime(filetime)
+}
+
+// TimestampFromPropNanos converts a raw timestamp value from an event property (like WmiTime)
+// into an absolute nanosecond epoch value, using the session's clock type and conversion settings.
+// This requieres the trace session to be running.
+func (e *EventRecord) TimestampFromPropNanos(propTimestamp int64) int64 {
+	// userContext() will not be nil if The Consumer is running and processing events.
+	trace := e.userContext().trace
+	return trace.fromRawTimestampNanos(propTimestamp)
 }
 
 // TimestampNanos converts the event's raw timestamp directly to a nanosecond epoch value.

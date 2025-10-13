@@ -355,6 +355,8 @@ type TraceEventInfo struct {
 	// the struct itself.
 }
 
+const gEpiSize = unsafe.Sizeof(EventPropertyInfo{})
+
 func (t *TraceEventInfo) pointer() uintptr {
 	return uintptr(unsafe.Pointer(t))
 }
@@ -620,6 +622,7 @@ func (t *TraceEventInfo) GetEventPropertyInfoAt(i uint32) *EventPropertyInfo {
 	panic(fmt.Errorf("index out of range"))
 }
 
+// Get the pointer to the property name string at index i
 func (t *TraceEventInfo) PropertyNamePointer(i uint32) uintptr {
 	return t.pointer() + uintptr(t.GetEventPropertyInfoAt(i).NameOffset)
 }

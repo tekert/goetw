@@ -14,6 +14,29 @@ import (
 const rune1Max = 1<<7 - 1
 const rune2Max = 1<<11 - 1
 
+func getLengths(src []uint16) (maxLen int, charLen int) {
+	for i, v := range src {
+		if v == 0 {
+			return maxLen, i // Found null, return current lengths.
+		}
+		switch {
+		case v <= rune1Max:
+			maxLen += 1
+		case v <= rune2Max:
+			maxLen += 2
+		default:
+			// r is a non-surrogate that decodes to 3 bytes,
+			// or is an unpaired surrogate (also 3 bytes in WTF-8),
+			// or is one half of a valid surrogate pair.
+			// If it is half of a pair, we will add 3 for the second surrogate
+			// (total of 6) and overestimate by 2 bytes for the pair,
+			// since the resulting rune only requires 4 bytes.
+			maxLen += 3
+		}
+	}
+	return maxLen, len(src) // No null found, use full slice length.
+}
+
 // DecodeWtf8 provides a highly optimized, pure Go conversion from a UTF-16 slice
 // to a WTF-8 encoded string. It is the recommended and fastest pure Go converter
 // in this package.
@@ -29,27 +52,11 @@ func DecodeWtf8(src []uint16) string {
 	}
 
 	// Pre-calculate max size
-	maxLen := 0
-	for i, v := range src {
-		if v == 0 {
-			src = src[0:i]
-			break
-		}
-		switch {
-		case v <= rune1Max:
-			maxLen += 1
-		case v <= rune2Max:
-			maxLen += 2
-		default:
-			// r is a non-surrogate that decodes to 3 bytes,
-			// or is an unpaired surrogate (also 3 bytes in WTF-8),
-			// or is one half of a valid surrogate pair.
-			// If it is half of a pair, we will add 3 for the second surrogate
-			// (total of 6) and overestimate by 2 bytes for the pair,
-			// since the resulting rune only requires 4 bytes.
-			maxLen += 3
-		}
+	maxLen, charLen := getLengths(src)
+	if charLen == 0 {
+		return ""
 	}
+	src = src[:charLen] // important: Truncate the slice
 
 	// Single allocation for buffer
 	buf := make([]byte, maxLen)
@@ -65,42 +72,57 @@ func DecodeWtf8(src []uint16) string {
 // If the provided buffer `buf` is nil or has insufficient capacity, a new buffer
 // is allocated. The returned slice for the buffer should be used in subsequent
 // calls to amortize the allocation.
-func DecodeWtf8Buf(src []uint16, buf []byte) (string) {
+func DecodeWtf8Buf(src []uint16, buf []byte) string {
 	if len(src) == 0 {
 		return ""
 	}
 
 	// Pre-calculate max size
-	maxLen := 0
-	for i, v := range src {
-		if v == 0 {
-			src = src[0:i]
-			break
-		}
-		switch {
-		case v <= rune1Max:
-			maxLen += 1
-		case v <= rune2Max:
-			maxLen += 2
-		default:
-			// r is a non-surrogate that decodes to 3 bytes,
-			// or is an unpaired surrogate (also 3 bytes in WTF-8),
-			// or is one half of a valid surrogate pair.
-			// If it is half of a pair, we will add 3 for the second surrogate
-			// (total of 6) and overestimate by 2 bytes for the pair,
-			// since the resulting rune only requires 4 bytes.
-			maxLen += 3
-		}
+	maxLen, charLen := getLengths(src)
+	if charLen == 0 {
+		return ""
 	}
+	src = src[:charLen] // important: Truncate the slice
 
-    if cap(buf) < maxLen {
-        buf = make([]byte, maxLen)
-    }
+	if cap(buf) < maxLen {
+		buf = make([]byte, maxLen)
+	}
 
 	written := utf16_convert_nobounds(unsafe.SliceData(buf), unsafe.SliceData(src), len(src))
 
 	// Zero-allocation string conversion
 	return unsafe.String(unsafe.SliceData(buf), written)
+}
+
+// AppendWtf8 decodes a UTF-16 slice and appends the resulting WTF-8 bytes
+// to the destination buffer. It handles growing the buffer if necessary.
+func AppendWtf8(dst []byte, src []uint16) []byte {
+	if len(src) == 0 {
+		return dst
+	}
+
+	// Calculate the maximum possible number of bytes the UTF-8 string could take.
+	maxLen, charLen := getLengths(src)
+	src = src[:charLen] // Truncate the slice at the null terminator.
+
+	startOffset := len(dst)
+
+	// Grow the destination slice if it doesn't have enough capacity.
+	if cap(dst)-startOffset < maxLen {
+		// This is a standard Go pattern for growing a slice.
+		newDst := make([]byte, startOffset+maxLen)
+		copy(newDst, dst)
+		dst = newDst
+	}
+
+	// Get a slice to the available capacity to write into.
+	writeBuf := dst[startOffset : startOffset+maxLen]
+
+	// Perform the conversion directly into the buffer's capacity.
+	written := utf16_convert_nobounds(unsafe.SliceData(writeBuf), unsafe.SliceData(src), len(src))
+
+	// Extend the length of the original slice to include the newly written bytes.
+	return dst[:startOffset+written]
 }
 
 // DecodeWtf8_SliceVer provides a safe, slice-based conversion from a UTF-16 slice
@@ -135,9 +157,12 @@ func DecodeWtf8_SliceVer(src []uint16) string {
 		}
 	}
 
-	if len(src) == 0 {
+	// Pre-calculate max size
+	maxLen, charLen := getLengths(src)
+	if charLen == 0 {
 		return ""
 	}
+	src = src[:charLen] // important: Truncate the slice
 
 	// Pre-allocate max possible size
 	buf := make([]byte, maxLen)

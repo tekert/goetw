@@ -84,8 +84,15 @@ func (p *Property) MarshalJSON() ([]byte, error) {
 // Sets all fields of the struct to zero/empty values.
 // This is called by the helper before a property is reused.
 func (p *Property) reset() {
-	// Simple reset, no more complex pool management.
-	*p = Property{}
+	//*p = Property{} // this is expensive, 5-6% performance drop.
+
+	// This is a targeted reset. Fields like erh, traceInfo, pointerSize,
+	// evtPropInfo, name, pValue, and userDataRemaining are guaranteed to be
+	// overwritten in newProperty() and prepareProperty(). We only need to
+	// clear the fields that hold calculated results.
+	p.length = 0
+	p.sizeBytes = 0
+	p.value = ""
 }
 
 func (p *Property) Parseable() bool {
@@ -149,8 +156,11 @@ func (p *Property) FormatToString() (string, error) {
 		if p.evtPropInfo.MapNameOffset() > 0 {
 			p.value, _, err = p.formatToStringTdh() // use tdh for maps
 		} else {
-			p.value, err = p.decodeToString(p.evtPropInfo.OutType())
-			if err != nil {
+			var buf []byte
+			buf, err = p.decodeToString(p.evtPropInfo.OutType(), buf)
+			if err == nil {
+				p.value = string(buf)
+			} else {
 				conlog.SampledTraceWithErrSig("decodeToString", err).
 					Msg("failed to parse property with custom parser")
 				// fallback to tdh parser

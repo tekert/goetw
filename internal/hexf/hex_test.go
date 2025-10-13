@@ -1,6 +1,8 @@
 package hexf
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -284,30 +286,31 @@ func TestNumEncodePrefix(t *testing.T) {
 	}
 }
 
-func TestAppendUint(t *testing.T) {
+func TestAppendPaddedUint(t *testing.T) {
 	tests := []struct {
 		name     string
 		fn       func(dst []byte) []byte
 		expected string
 	}{
-		{"Uint64_Zero", func(dst []byte) []byte { return AppendUint64(dst, 0) }, "PREFIX0000000000000000"},
-		{"Uint64_Mid", func(dst []byte) []byte { return AppendUint64(dst, 0x12345) }, "PREFIX0000000000012345"},
-		{"Uint64_Max", func(dst []byte) []byte { return AppendUint64(dst, 0xFFFFFFFFFFFFFFFF) }, "PREFIXFFFFFFFFFFFFFFFF"},
-		{"Uint32_Zero", func(dst []byte) []byte { return AppendUint32(dst, 0) }, "PREFIX00000000"},
-		{"Uint32_Mid", func(dst []byte) []byte { return AppendUint32(dst, 0x1234) }, "PREFIX00001234"},
-		{"Uint32_Max", func(dst []byte) []byte { return AppendUint32(dst, 0xFFFFFFFF) }, "PREFIXFFFFFFFF"},
-		{"Uint16_Zero", func(dst []byte) []byte { return AppendUint16(dst, 0) }, "PREFIX0000"},
-		{"Uint16_Mid", func(dst []byte) []byte { return AppendUint16(dst, 0x12) }, "PREFIX0012"},
-		{"Uint16_Max", func(dst []byte) []byte { return AppendUint16(dst, 0xFFFF) }, "PREFIXFFFF"},
-		{"Uint8_Zero", func(dst []byte) []byte { return AppendUint8(dst, 0) }, "PREFIX00"},
-		{"Uint8_Mid", func(dst []byte) []byte { return AppendUint8(dst, 0x1) }, "PREFIX01"},
-		{"Uint8_Max", func(dst []byte) []byte { return AppendUint8(dst, 0xFF) }, "PREFIXFF"},
+		// Uppercase padded tests
+		{"Uint64_Zero", func(dst []byte) []byte { return AppendUint64PaddedU(dst, 0) }, "PREFIX..0000000000000000"},
+		{"Uint64_Mid", func(dst []byte) []byte { return AppendUint64PaddedU(dst, 0x12345) }, "PREFIX..0000000000012345"},
+		{"Uint64_Max", func(dst []byte) []byte { return AppendUint64PaddedU(dst, 0xFFFFFFFFFFFFFFFF) }, "PREFIX..FFFFFFFFFFFFFFFF"},
+		{"Uint32_Zero", func(dst []byte) []byte { return AppendUint32PaddedU(dst, 0) }, "PREFIX..00000000"},
+		{"Uint32_Mid", func(dst []byte) []byte { return AppendUint32PaddedU(dst, 0x1234) }, "PREFIX..00001234"},
+		{"Uint32_Max", func(dst []byte) []byte { return AppendUint32PaddedU(dst, 0xFFFFFFFF) }, "PREFIX..FFFFFFFF"},
+		{"Uint16_Zero", func(dst []byte) []byte { return AppendUint16PaddedU(dst, 0) }, "PREFIX..0000"},
+		{"Uint16_Mid", func(dst []byte) []byte { return AppendUint16PaddedU(dst, 0x12) }, "PREFIX..0012"},
+		{"Uint16_Max", func(dst []byte) []byte { return AppendUint16PaddedU(dst, 0xFFFF) }, "PREFIX..FFFF"},
+		{"Uint8_Zero", func(dst []byte) []byte { return AppendUint8PaddedU(dst, 0) }, "PREFIX..00"},
+		{"Uint8_Mid", func(dst []byte) []byte { return AppendUint8PaddedU(dst, 0x1) }, "PREFIX..01"},
+		{"Uint8_Max", func(dst []byte) []byte { return AppendUint8PaddedU(dst, 0xFF) }, "PREFIX..FF"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Start with a non-empty buffer to test appending.
-			buf := []byte("PREFIX")
+			buf := []byte("PREFIX..")
 			result := tt.fn(buf)
 			if string(result) != tt.expected {
 				t.Errorf("Append failed: got %s, want %s", string(result), tt.expected)
@@ -351,10 +354,52 @@ func BenchmarkMarshalKeywords(b *testing.B) {
 			size := 26 + 18 + 20 // Rough size
 			buf := make([]byte, 0, size)
 			buf = append(buf, `{"Mask":"0x`...)
-			buf = AppendUint64(buf, k.Mask)
+			buf = AppendUint64PaddedU(buf, k.Mask)
 			buf = append(buf, `","Name":["one","two","three"]}`...)
 		}
 	})
+}
+
+func TestAppendNum(t *testing.T) {
+	numTests := []struct {
+		name     string
+		noTrim   string
+		trimmed  string
+		fnNoTrim func(dst []byte) []byte
+		fnTrim   func(dst []byte) []byte
+	}{
+		{"Uint64", "0x0000000000001234", "0x1234",
+			func(dst []byte) []byte { return AppendNUm64p(dst, uint64(0x1234), false) },
+			func(dst []byte) []byte { return AppendNUm64p(dst, uint64(0x1234), true) }},
+		{"Uint32", "0x0000ABCD", "0xABCD",
+			func(dst []byte) []byte { return AppendNUm32p(dst, uint32(0xABCD), false) },
+			func(dst []byte) []byte { return AppendNUm32p(dst, uint32(0xABCD), true) }},
+	}
+
+	for _, tt := range numTests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf []byte
+			// Test no trim
+			buf = tt.fnNoTrim(buf)
+			if string(buf) != tt.noTrim {
+				t.Errorf("%s (no trim) = %s, want %s", tt.name, string(buf), tt.noTrim)
+			}
+
+			// Test trim
+			buf = buf[:0]
+			buf = tt.fnTrim(buf)
+			if string(buf) != tt.trimmed {
+				t.Errorf("%s (trimmed) = %s, want %s", tt.name, string(buf), tt.trimmed)
+			}
+
+			// Test appending to existing buffer
+			buf = []byte("PREFIX")
+			buf = tt.fnTrim(buf)
+			if !bytes.HasSuffix(buf, []byte(tt.trimmed)) {
+				t.Errorf("%s (append) failed, got %s", tt.name, string(buf))
+			}
+		})
+	}
 }
 
 func BenchmarkEncodeCompare(b *testing.B) {
@@ -418,74 +463,29 @@ func BenchmarkEncodeCompare(b *testing.B) {
 	}
 }
 
-// func BenchmarkHexConversions(b *testing.B) {
-//     testCases := []struct {
-//         name string
-//         fn   func(b *testing.B)
-//     }{
-//         {
-//             name: "Uint64U_Direct",
-//             fn: func(b *testing.B) {
-//                 n := uint64(0xDEADBEEF)
-//                 b.ResetTimer()
-//                 for i := 0; i < b.N; i++ {
-//                     _ = Uint64U(n)
-//                 }
-//             },
-//         },
-//         {
-//             name: "NumberToHexU_Generic_Uint64",
-//             fn: func(b *testing.B) {
-//                 n := uint64(0xDEADBEEF)
-//                 b.ResetTimer()
-//                 for i := 0; i < b.N; i++ {
-//                     _ = NumberToHexU(n)
-//                 }
-//             },
-//         },
-//         {
-//             name: "Uint64UPrefix_Direct",
-//             fn: func(b *testing.B) {
-//                 n := uint64(0xDEADBEEF)
-//                 b.ResetTimer()
-//                 for i := 0; i < b.N; i++ {
-//                     _ = Uint64UPrefix(n, true)
-//                 }
-//             },
-//         },
-//         {
-//             name: "NumberToHexUPrefix_Generic_Uint64",
-//             fn: func(b *testing.B) {
-//                 n := uint64(0xDEADBEEF)
-//                 b.ResetTimer()
-//                 for i := 0; i < b.N; i++ {
-//                     _ = NumberToHexUPrefix(n, true)
-//                 }
-//             },
-//         },
-//         {
-//             name: "Uint8U_Direct",
-//             fn: func(b *testing.B) {
-//                 n := uint8(0xFF)
-//                 b.ResetTimer()
-//                 for i := 0; i < b.N; i++ {
-//                     _ = Uint8U(n)
-//                 }
-//             },
-//         },
-//         {
-//             name: "NumberToHexU_Generic_Uint8",
-//             fn: func(b *testing.B) {
-//                 n := uint8(0xFF)
-//                 b.ResetTimer()
-//                 for i := 0; i < b.N; i++ {
-//                     _ = NumberToHexU(n)
-//                 }
-//             },
-//         },
-//     }
+func BenchmarkAppendUint64PaddedCompare(b *testing.B) {
+	const testValue = 0x123456789ABCDEF0
+	var buf []byte // Reused to avoid allocations from growing the slice capacity in the loop.
 
-//     for _, tc := range testCases {
-//         b.Run(tc.name, tc.fn)
-//     }
-// }
+	b.Run("TwoPass_BinaryPutAndEncodeU", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			// This benchmark tests the alternative two-pass implementation
+			var srcBytes [8]byte
+			binary.BigEndian.PutUint64(srcBytes[:], testValue)
+
+			var dstHex [16]byte
+			EncodeU(dstHex[:], srcBytes[:])
+			buf = append(buf[:0], dstHex[:]...)
+		}
+	})
+
+	b.Run("DirectEncode_encodeUintPadded", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			// This benchmark tests the current implementation in hex.go
+			buf = AppendUint64PaddedU(buf[:0], testValue)
+		}
+	})
+
+}

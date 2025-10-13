@@ -11,7 +11,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -78,36 +77,34 @@ func TestProducerConsumer(t *testing.T) {
 	defer cancel()
 	c := NewConsumer(ctx).FromSessions(ses) //.FromTraces(EventlogSecurity)
 
+	c.EventCallback = func(e *Event) (err error) {
+		defer e.Release()
+		eventCount++
+
+		if e.System.Provider.Name == KernelFileProviderName {
+			tt.Assert(e.System.EventID == 12 ||
+				e.System.EventID == 13 ||
+				e.System.EventID == 14 ||
+				e.System.EventID == 15 ||
+				e.System.EventID == 16)
+		}
+
+		_, err = json.Marshal(&e)
+		tt.CheckErr(err)
+		//t.Log(string(b))
+
+		// Stop after receiving one event.
+		if eventCount > 0 {
+			cancel()
+		}
+		return err
+	}
+
 	// we have to declare a func otherwise c.Stop seems to be called
 	defer func() { tt.CheckErr(c.Stop()) }()
 	// starting consumer
 	tt.CheckErr(c.Start())
-
 	start := time.Now()
-	// consuming events in Golang
-	go func() {
-		//for e := range c.Events {
-		c.ProcessEvents(func(e *Event) {
-			eventCount++
-
-			if e.System.Provider.Name == KernelFileProviderName {
-				tt.Assert(e.System.EventID == 12 ||
-					e.System.EventID == 13 ||
-					e.System.EventID == 14 ||
-					e.System.EventID == 15 ||
-					e.System.EventID == 16)
-			}
-
-			_, err := json.Marshal(&e)
-			tt.CheckErr(err)
-			//t.Log(string(b))
-
-			// Stop after receiving one event.
-			if eventCount > 0 {
-				cancel()
-			}
-		})
-	}()
 
 	// Wait for the consumer to be canceled.
 	<-ctx.Done()
@@ -153,27 +150,23 @@ func TestKernelSession(t *testing.T) {
 	// we have to declare a func otherwise c.Stop seems to be called
 	defer func() { tt.CheckErr(c.Stop()) }()
 
+	c.EventCallback = func(e *Event) error {
+		defer e.Release()
+		eventCount++
+
+		_, err := json.Marshal(&e)
+		tt.CheckErr(err)
+		//t.Log(string(b))
+
+		// Stop after receiving one event.
+		if eventCount > 0 {
+			cancel()
+		}
+		return nil
+	}
+
 	tt.CheckErr(c.Start())
-
 	start := time.Now()
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		//for e := range c.Events {
-		c.ProcessEvents(func(e *Event) {
-			eventCount++
-
-			_, err := json.Marshal(&e)
-			tt.CheckErr(err)
-			//t.Log(string(b))
-
-			// Stop after receiving one event.
-			if eventCount > 0 {
-				cancel()
-			}
-		})
-	}()
 
 	// Wait for the context to be canceled or a timeout.
 	select {
@@ -185,7 +178,6 @@ func TestKernelSession(t *testing.T) {
 
 	tt.CheckErr(c.Stop())
 	tt.CheckErr(kp.Stop())
-	wg.Wait()
 
 	delta := time.Since(start)
 	eps := float64(eventCount) / delta.Seconds()
@@ -225,9 +217,10 @@ func TestEventMapInfo(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	c := NewConsumer(ctx).FromSessions(prod)
-	// reducing size of channel so that we are obliged to skip events
-	c.Events.Channel = make(chan []*Event)
-	c.Events.BatchSize = 1
+	// TODO: remove commented code.
+	// // reducing size of channel so that we are obliged to skip events
+	// c.Events.Channel = make(chan []*Event)
+	// c.Events.BatchSize = 1
 	c.EventPreparedCallback = func(erh *EventRecordHelper) error {
 
 		erh.TraceInfo.EventMessage()
@@ -254,28 +247,24 @@ func TestEventMapInfo(t *testing.T) {
 	// we have to declare a func otherwise c.Stop seems to be called
 	defer func() { tt.CheckErr(c.Stop()) }()
 
+	c.EventCallback = func(e *Event) error {
+		defer e.Release()
+		eventCount++
+
+		_, err := json.Marshal(&e)
+		tt.CheckErr(err)
+		if e.System.Correlation.ActivityID != nullGUIDStr && e.System.Correlation.RelatedActivityID != nullGUIDStr {
+			t.Logf("Provider=%s ActivityID=%s RelatedActivityID=%s", e.System.Provider.Name, e.System.Correlation.ActivityID, e.System.Correlation.RelatedActivityID)
+		}
+		// Stop after receiving one event.
+		if eventCount > 0 {
+			cancel()
+		}
+		return nil
+	}
+
 	tt.CheckErr(c.Start())
-
 	start := time.Now()
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		//for e := range c.Events {
-		c.ProcessEvents(func(e *Event) {
-			eventCount++
-
-			_, err := json.Marshal(&e)
-			tt.CheckErr(err)
-			if e.System.Correlation.ActivityID != nullGUIDStr && e.System.Correlation.RelatedActivityID != nullGUIDStr {
-				t.Logf("Provider=%s ActivityID=%s RelatedActivityID=%s", e.System.Provider.Name, e.System.Correlation.ActivityID, e.System.Correlation.RelatedActivityID)
-			}
-			// Stop after receiving one event.
-			if eventCount > 0 {
-				cancel()
-			}
-		})
-	}()
 
 	// Wait for the context to be canceled or a timeout.
 	select {
@@ -287,7 +276,6 @@ func TestEventMapInfo(t *testing.T) {
 	}
 
 	tt.CheckErr(c.Stop())
-	wg.Wait()
 
 	// // we got many events so some must have been skipped
 	// t.Logf("skipped %d events", c.Skipped.Load())
@@ -338,15 +326,16 @@ func TestLostEvents(t *testing.T) {
 	// we have to declare a func otherwise c.Stop does not seem to be called
 	defer func() { tt.CheckErr(c.Stop()) }()
 
+	cnt := uint64(0)
+	c.EventRecordCallback = func(e *EventRecord) bool {
+		//for range c.Events {
+		//c.ProcessEvents(func(e *Event) {
+		atomic.AddUint64(&cnt, 1)
+		return false
+	}
+
 	// starting consumer
 	tt.CheckErr(c.Start())
-	cnt := uint64(0)
-	go func() {
-		//for range c.Events {
-		c.ProcessEvents(func(e *Event) {
-			atomic.AddUint64(&cnt, 1)
-		})
-	}()
 
 	// Periodically check for lost events until they are detected or timeout.
 	checkForLostEvents := func() bool {
@@ -468,11 +457,11 @@ func TestConsumerCallbacks(t *testing.T) {
 
 	fileObjectMapping := make(map[string]*file)
 	c.EventPreparedCallback = func(h *EventRecordHelper) error {
-		tt.Assert(h.Provider() == prov.Name)
+		tt.Assert(h.ProviderName() == prov.Name)
 		tt.Assert(h.ProviderGUID() == prov.GUID)
 		tt.Assert(h.EventRec.EventHeader.ProviderId.Equals(&kernelProviderGUID))
 		tt.Assert(h.TraceInfo.ProviderGUID.Equals(&kernelProviderGUID))
-		tt.Assert(h.Channel() == kernelFileProviderChannel)
+		tt.Assert(h.ChannelName() == kernelFileProviderChannel)
 
 		switch h.EventID() {
 		case 12:
@@ -538,9 +527,6 @@ func TestConsumerCallbacks(t *testing.T) {
 			f.flags.read = (h.EventID() == 15)
 			f.flags.write = (h.EventID() == 16)
 
-			// event volume will so low that this call should have no effect
-			h.Skippable()
-
 		default:
 			h.Skip()
 		}
@@ -548,54 +534,52 @@ func TestConsumerCallbacks(t *testing.T) {
 		return nil
 	}
 
-	// we have to declare a func otherwise c.Stop does not seem to be called
-	defer func() { tt.CheckErr(c.Stop()) }()
-
-	// starting consumer
-	tt.CheckErr(c.Start())
-
 	//testfile := `\Windows\Temp\test.txt`
 	testfile := filepath.Join(t.TempDir()[2:], "test.txt")
 	// Strip drive letter from testfile (e.g. "E:" -> "")
 	t.Logf("testfile: %s", testfile)
 
-	start := time.Now()
 	var etwread int32
 	var etwwrite int32
 
 	pid := os.Getpid()
-	// consuming events in Golang
-	go func() {
-		c.ProcessEvents(func(e *Event) {
-			eventCount++
+	c.EventCallback = func(e *Event) error {
+		defer e.Release()
+		eventCount++
 
-			_, err := json.Marshal(&e)
-			tt.CheckErr(err)
-			switch e.System.EventID {
-			case 15, 16:
-				var fn string
-				var ok bool
+		_, err := json.Marshal(&e)
+		tt.CheckErr(err)
+		switch e.System.EventID {
+		case 15, 16:
+			var fn string
+			var ok bool
 
-				if fn, ok = e.GetPropertyString("FileName"); !ok {
-					break
-				}
-
-				if !strings.Contains(fn, testfile) {
-					break
-				}
-
-				if e.System.Execution.ProcessID != uint32(pid) {
-					break
-				}
-
-				if e.System.EventID == 15 {
-					atomic.AddInt32(&etwread, 1)
-				} else {
-					atomic.AddInt32(&etwwrite, 1)
-				}
+			if fn, ok = e.GetPropertyString("FileName"); !ok {
+				break
 			}
-		})
-	}()
+
+			if !strings.Contains(fn, testfile) {
+				break
+			}
+
+			if e.System.Execution.ProcessID != uint32(pid) {
+				break
+			}
+
+			if e.System.EventID == 15 {
+				atomic.AddInt32(&etwread, 1)
+			} else {
+				atomic.AddInt32(&etwwrite, 1)
+			}
+		}
+		return nil
+	}
+
+	// we have to declare a func otherwise c.Stop does not seem to be called
+	defer func() { tt.CheckErr(c.Stop()) }()
+	// starting consumer
+	tt.CheckErr(c.Start())
+	start := time.Now()
 
 	// creating test files
 	nReadWrite := 0
@@ -964,6 +948,16 @@ func TestQueryTraceMethods(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	c := NewConsumer(ctx).FromSessions(ses)
+
+	eventsReceived := uint32(0)
+	c.EventCallback = func(e *Event) error {
+		defer e.Release()
+		if atomic.AddUint32(&eventsReceived, 1) > 10 {
+			cancel()
+		}
+		return nil
+	}
+
 	defer c.Stop()
 	tt.CheckErr(c.Start())
 
@@ -977,15 +971,6 @@ func TestQueryTraceMethods(t *testing.T) {
 	assertStaticPropsEqual(tt, sesData, conProp, "Controller vs. Consumer (Static)")
 
 	t.Log("Phase 3: Runtime Stats Validation")
-	// Let events flow
-	eventsReceived := uint32(0)
-	go func() {
-		c.ProcessEvents(func(e *Event) {
-			if atomic.AddUint32(&eventsReceived, 1) > 10 {
-				cancel()
-			}
-		})
-	}()
 
 	// Wait for context to be canceled or timeout
 	select {

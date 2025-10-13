@@ -221,6 +221,7 @@ func run() error {
 
 	// 5. Event Processing
 	c.EventCallback = func(e *etw.Event) error {
+		defer e.Release()
 		b, err := json.Marshal(e)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error marshaling event: %v\n", err)
@@ -289,7 +290,6 @@ func run() error {
 	} else {
 		c.Wait() // Wait for ETL file processing to finish
 		fmt.Println("\nETL file processing finished.")
-		c.CloseEventsChannel()
 	}
 
 	traces := c.GetTraces()

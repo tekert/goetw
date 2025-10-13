@@ -90,6 +90,13 @@ func FromUTF16Slice(s []uint16) string {
 	return decodeUtf16(s, 0, len(s))
 }
 
+// AppendFromUTF16Slice decodes a UTF-16 slice and appends the resulting
+// UTF-8 bytes to the destination buffer, grows the destination buffer as needed.
+func AppendFromUTF16Slice(dst []byte, s []uint16) []byte {
+    return utf16f.AppendWtf8(dst, s)
+}
+
+
 // FromUTF16AtOffset converts a UTF-16 string at a given offset from a pointer.
 func FromUTF16AtOffset(pstruct uintptr, offset uintptr) string {
 	ptr := (*uint16)(unsafe.Pointer(pstruct + offset))

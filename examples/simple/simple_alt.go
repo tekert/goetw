@@ -33,26 +33,22 @@ func main2() {
 
 	// Consuming from the trace
 	c := etw.NewConsumer(context.Background())
-
 	defer c.Stop()
 
 	c.FromSessions(s)
 
-	// When events are parsed they get sent to Consumer's
-	// Events channel by the default EventCallback method
-	// EventCallback can be modified to do otherwise
-	go func() {
+	c.EventCallback = func(e *etw.Event) error {
+		defer e.Release()
+		
 		var b []byte
 		var err error
-		for batch := range c.Events.Channel {
-			for _, e := range batch {
-				if b, err = json.Marshal(e); err != nil {
-					panic(err)
-				}
-				fmt.Println(string(b))
-			}
+		if b, err = json.Marshal(e); err != nil {
+			panic(err)
 		}
-	}()
+		fmt.Println(string(b))
+
+		return nil
+	}
 
 	if err := c.Start(); err != nil {
 		panic(err)

@@ -103,8 +103,7 @@ type Consumer struct {
 	// [4] Callback executed after the event got parsed and defines what to do
 	// with the event (printed, sent to a channel ...)
 	//
-	// NOTE: Remember to call e.Release() after processing the event.
-	// to improve performance when using this type of processing.
+	//  NOTE: Remember to call e.Release() after processing the event. ~50% performane increase.
 	//
 	// Errors returned by this callback are logged but do not stop processing.
 	EventCallback func(*Event) error
@@ -121,11 +120,6 @@ type Consumer struct {
 	// when closing the Consumer. If ProcessTrace doesn't return within this timeout,
 	// the Consumer will attempt to force termination.
 	closeTimeout time.Duration
-
-	// Events provides a buffered channel interface for batch event processing.
-	// When configured, events are queued in batches rather than processed individually
-	// through callbacks, allowing for more efficient bulk processing patterns.
-	Events *EventBuffer
 }
 
 // traceContext holds the context information passed to ETW callbacks.
@@ -150,15 +144,13 @@ func (e *EventTraceLogfile) getContext() *traceContext {
 // NewConsumer creates a new Consumer to consume ETW
 func NewConsumer(ctx context.Context) (c *Consumer) {
 	c = &Consumer{
-		Events:        NewEventBuffer(),
 		stoppedTraces: make(chan *ConsumerTrace, 16), // Buffer to handle multiple traces stopping at once.
 	}
 
 	c.ctx, c.cancel = context.WithCancel(ctx)
-	// DefaultEventRecordHelperCallback is removed as filtering is now handled by EnableProvider.
-	// Users can set their own callback for custom post-collection filtering if needed.
+
 	c.EventRecordHelperCallback = nil
-	c.EventCallback = c.DefaultEventCallback
+	c.EventCallback = nil
 
 	return c
 }
@@ -183,19 +175,6 @@ func SessionSlice(i any) (out []Session) {
 	}
 
 	return
-}
-
-// SetTraceInfoCache enables or disables the caching of the TRACE_EVENT_INFO schema buffer.
-// Disabling this forces a call to TdhGetEventInformation for every event, which is
-// useful for debugging but will impact performance.
-//
-// This function is not thread-safe and must be called before the consumer is started.
-func (c *Consumer) SetTraceInfoCache(enable bool) error {
-	if c.started.Load() {
-		return errors.New("cannot change trace info cache setting after consumer has started")
-	}
-	globalTraceEventInfoCacheEnabled = enable
-	return nil
 }
 
 // getOrAddTrace gets or creates a new one if it doesn't exist.
@@ -384,6 +363,79 @@ func (c *Consumer) bufferCallback(e *EventTraceLogfile) uintptr {
 	return 1
 }
 
+// TODO: implement in v1.0
+func (c *Consumer) callback_new(er *EventRecord) (re uintptr) {
+	// Count the number of events with errors, but only once per event.
+	setError := func(err error) {
+		er.userContext().trace.ErrorEvents.Add(1)
+		c.reportError(err, er)
+		c.lastError.Store(err) // TODO: no longer useful?
+	}
+
+	// We must always get the context first. just in case. if the context is there
+	// then everything inside is valid while ProcessTrace is running.
+	usrCtx := er.userContext()
+	if usrCtx == nil {
+		setError(fmt.Errorf("EventRecord has no UserContext, skipping event"))
+		return
+	}
+
+	// Skips the event if it is the event trace header. Log files contain this event
+	// but real-time sessions do not. The event contains the same information as
+	// the EVENT_TRACE_LOGFILE.LogfileHeader member that you can access when you open
+	// the trace.
+	if !usrCtx.trace.realtime {
+		if er.EventHeader.ProviderId.Equals(EventTraceGuid) &&
+			er.EventHeader.EventDescriptor.Opcode == EVENT_TRACE_TYPE_INFO {
+			conlog.Debug().Interface("event", er).Msg("Skipping EventTraceGuid event")
+			// Skip this event.
+			return
+		}
+	}
+
+	if er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
+		c.handleLostEvent(er)
+		return
+	}
+
+	// If no callbacks are set, there's nothing to do.
+	if c.EventRecordCallback == nil && c.EventCallback == nil {
+		return
+	}
+
+	// Dont use defer (2% performance drop)
+	_h := &usrCtx.storage.helper
+	_h.reset()
+
+	// calling EventHeaderCallback if possible
+	if c.EventRecordCallback != nil {
+		if !c.EventRecordCallback(er) {
+			return
+		}
+	}
+
+	// --- Stage 2: Parsed Event Callback (Optional) ---
+	if c.EventCallback != nil {
+		// To get a parsed event, we must have an initialized helper.
+		h, err := er.GetHelper()
+		if err != nil {
+			setError(fmt.Errorf("GetHelper failed: %w", err))
+			return
+		}
+		event, err := h.GetParsedEvent()
+		if err != nil {
+			setError(fmt.Errorf("GetParsedEvent failed: %w", err))
+			return
+		}
+		if err := c.EventCallback(event); err != nil {
+			setError(fmt.Errorf("EventCallback failed: %w", err))
+		}
+
+		//event.release() // important: if releasing here make the function private to prevent multiple releases
+	}
+	return
+}
+
 // https://learn.microsoft.com/en-us/windows/win32/api/evntrace/nc-evntrace-pevent_record_callback
 //
 // Called when ProcessTrace gets an event record.
@@ -426,6 +478,10 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		return
 	}
 
+	// Dont use defer (2% performance drop)
+	_h := &usrCtx.storage.helper
+	_h.reset()
+
 	// calling EventHeaderCallback if possible
 	if c.EventRecordCallback != nil {
 		if !c.EventRecordCallback(er) {
@@ -435,7 +491,7 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 
 	// we get the TraceContext from EventRecord.UserContext
 	// Parse TRACE_EVENT_INFO from the event record
-	if h, err := newEventRecordHelper(er); err == nil {
+	if h, err := newEventRecordHelper(er, usrCtx.storage); err == nil {
 
 		// Convert EventRecord timestamp to FILETIME based on Session
 		// ClientContext settings (Controller side where the trace is).
@@ -446,10 +502,6 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		} else {
 			h.timestamp = er.EventHeader.TimeStamp
 		}
-
-		// return mem to pool when done (big performance improvement)
-		// only releases non nil allocations so it's safe to use before h.initialize.
-		defer h.release()
 
 		if c.EventRecordHelperCallback != nil {
 			if err = c.EventRecordHelperCallback(h); err != nil {
@@ -469,7 +521,8 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		h.initialize()
 
 		// Use TraceInfo to prepare properties without parsing the values yet.
-		if err := h.prepareProperties(); err != nil {
+		if err := h.preparePropertiesUpTo(h.TraceInfo.TopLevelPropertyCount); err != nil {
+			//if err := h.preparePropertiesTEST(); err != nil {
 			setError(fmt.Errorf("prepareProperties failed: %w", err))
 			return
 		}
@@ -636,8 +689,6 @@ func (c *Consumer) closeConsumer(wait bool) (lastErr error) {
 		return true
 	})
 
-	c.Events.close()
-
 	// After all processing is complete, flush the global sampler to report
 	// a summary of suppressed logs that occurred during the consumer's lifetime.
 	GetLogManager().GetSampler().Flush()
@@ -798,71 +849,6 @@ func (c *Consumer) FromTraces(names ...string) *Consumer {
 		c.getOrAddTrace(n)
 	}
 	return c
-}
-
-// Will only work while using the [DefaultEventCallback] method.
-// This is an example of how to read events with channels, 6% overhead
-// vs reading events from custom EventCallback function
-//
-// ProcessEvents processes events from the Consumer.EventsBatch channel.
-// This function blocks.
-// The function fn is called for each event.
-// To cancel it just call [Consumer.Stop()] or close the context.
-//
-// For the func(*Event) error: return err to unblock.
-//
-//	go func() {
-//		c.ProcessEvents(func(e *etw.Event) {
-//			_ = e
-//		})
-//	}()
-//
-// or
-//
-//	err := c.ProcessEvents(func(e *Event) error {
-//	    _ = e
-//	   if someCondition {
-//	       return fmt.Errorf("error") // stops processing
-//	   }
-//	   return nil // continues processing
-//	})
-func (c *Consumer) ProcessEvents(fn any) error {
-	switch cb := fn.(type) {
-	case func(*Event):
-		// Simple callback without return
-		for batch := range c.Events.Channel {
-			for _, e := range batch {
-				cb(e)
-				e.Release()
-			}
-		}
-	case func(*Event) error:
-		// Callback with bool return to control flow
-		for batch := range c.Events.Channel {
-			for _, e := range batch {
-				if err := cb(e); err != nil {
-					e.Release()
-					return err
-				}
-				e.Release()
-			}
-		}
-	}
-	return nil
-}
-
-// DefaultEventCallback is the default [Consumer.EventCallback] method applied
-// to Consumer created with NewConsumer
-// Receives parsed events and sends them in batches to the Consumer.EventsBatch channel.
-//
-// Sends event in batches to the Consumer.EventsBatch channel. (better performance)
-// After 200ms have passed or after 20 events have been queued by default.
-func (c *Consumer) DefaultEventCallback(event *Event) error {
-	// Check context before sending to avoid sending events during shutdown.
-	if c.ctx.Err() == nil {
-		c.Events.Send(event) // blocks if channel is full.
-	}
-	return nil
 }
 
 // RestartTrace attempts to restart a consumer's connection to a single trace by name.
@@ -1209,16 +1195,4 @@ func (c *Consumer) StopTrace(name string, timeout ...time.Duration) error {
 		t = timeout[0]
 	}
 	return c.stopTrace(name, t)
-}
-
-// CloseEventsChannel safely closes the Consumer's Events channel.
-// This signals the end of event processing and unblocks any goroutines
-// waiting on the channel. It is safe to call multiple times.
-//
-// Only useful if consuming from the c.ProcessEvents(func(e *etw.Event) error method.
-// No need to call this if using c.Stop() or c.Abort() as they call it internally.
-func (c *Consumer) CloseEventsChannel() {
-	if c.Events != nil {
-		c.Events.close() // Use the internal close method
-	}
 }
