@@ -281,3 +281,19 @@ func (g GUID) MarshalJSON() ([]byte, error) {
 
 	return b[:], nil
 }
+
+// AppendText appends the string representation of the GUID to the buffer, avoiding allocations.
+func (g GUID) AppendText(buf []byte) []byte {
+	buf = append(buf, '{')
+	buf = hexf.AppendUint32PaddedU(buf, g.Data1)
+	buf = append(buf, '-')
+	buf = hexf.AppendUint16PaddedU(buf, g.Data2)
+	buf = append(buf, '-')
+	buf = hexf.AppendUint16PaddedU(buf, g.Data3)
+	buf = append(buf, '-')
+	buf = hexf.AppendEncodeU(buf, g.Data4[:2])
+	buf = append(buf, '-')
+	buf = hexf.AppendEncodeU(buf, g.Data4[2:])
+	buf = append(buf, '}')
+	return buf
+}

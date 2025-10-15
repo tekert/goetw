@@ -417,6 +417,7 @@ func (t *TraceEventInfo) ProviderMessage() string {
 	return t.cleanStringAt(uintptr(t.ProviderMessageOffset))
 }
 
+// ProviderName returns the name of the event provider.
 func (t *TraceEventInfo) ProviderName() string {
 	return t.cleanStringAt(uintptr(t.ProviderNameOffset))
 }
@@ -487,6 +488,10 @@ func (t *TraceEventInfo) KeywordsName() []string {
 	return names
 }
 
+// ChannelName returns the name of the channel the event was logged to.
+// A channel belongs to one of the four types: admin, operational, analytic, and debug.
+//
+// https://learn.microsoft.com/en-us/archive/msdn-magazine/2007/april/event-tracing-improve-debugging-and-performance-tuning-with-etw
 func (t *TraceEventInfo) ChannelName() string {
 	return t.cleanStringAt(uintptr(t.ChannelNameOffset))
 }
@@ -934,28 +939,28 @@ type EventPropertyInfo struct {
 	ResTagUnion uint32
 }
 
-// SetInType sets the InType for the property.
-func (i *EventPropertyInfo) SetInType(inType TdhInType) {
+// setInType sets the InType for the property.
+func (i *EventPropertyInfo) setInType(inType TdhInType) {
 	i.TypeUnion.u1 = uint16(inType)
 }
 
-// SetOutType sets the OutType for the property.
-func (i *EventPropertyInfo) SetOutType(outType TdhOutType) {
+// setOutType sets the OutType for the property.
+func (i *EventPropertyInfo) setOutType(outType TdhOutType) {
 	i.TypeUnion.u2 = uint16(outType)
 }
 
-// SetCount sets the fixed count for the property.
-func (i *EventPropertyInfo) SetCount(count uint16) {
+// setCount sets the fixed count for the property.
+func (i *EventPropertyInfo) setCount(count uint16) {
 	i.CountUnion = count
 }
 
-// SetCountPropertyIndex sets the index of the property that contains the count.
-func (i *EventPropertyInfo) SetCountPropertyIndex(index uint16) {
+// setCountPropertyIndex sets the index of the property that contains the count.
+func (i *EventPropertyInfo) setCountPropertyIndex(index uint16) {
 	i.CountUnion = index
 }
 
-// SetLength sets the fixed length for the property.
-func (i *EventPropertyInfo) SetLength(length uint16) {
+// setLength sets the fixed length for the property.
+func (i *EventPropertyInfo) setLength(length uint16) {
 	i.LengthUnion = length
 }
 

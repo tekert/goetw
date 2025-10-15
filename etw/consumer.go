@@ -71,25 +71,17 @@ type Consumer struct {
 
 	lastError atomic.Value // stores error
 
-	// [1] First callback executed, it allows to filter out events
-	// based on fields of raw ETW EventRecord structure. When this callback
-	// returns true event processing will continue, otherwise it is aborted.
-	// Filtering out events here has the lowest overhead on the consumer side, but the
-	// full cost of event generation and delivery has already been incurred.
+	// [1] Callback executed for every EventRecord received, before any parsing.
 	//
 	// NOTE: The timestamp in
-	// EventRecord.EventHeader.TimeStamp is the raw timestamp and its in FILETIME
+	// EventRecord.EventHeader.TimeStamp is the raw timestamp and it's in FILETIME
 	// format only if PROCESS_TRACE_MODE_RAW_TIMESTAMP is not set.
-	// if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set, use EventRecord.Timestamp() to
-	// get the correct timestamp as time.Time based on trace Clocktype used.
+	// if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set, use EventRecord.Timestamp()
+	// or use EventRecord.TimestampNanos() to get the correct timestamp as time.Time
+	// based on trace Clocktype used.
 	EventRecordCallback func(*EventRecord) bool
 
 	// [2] Callback which executes after TraceEventInfo is parsed.
-	// To filter out some events call Skip method of EventRecordHelper
-	// As Properties are not parsed yet, trying to get/set Properties is
-	// not possible and might cause unexpected behaviours.
-	// errors returned by this callback will be logged.
-	// To skip further processing of the event set EventRecordHelper.Flags.Skip = true
 	EventRecordHelperCallback func(*EventRecordHelper) error
 
 	// [3] Callback executed after event properties got prepared (step before parsing).
@@ -98,6 +90,8 @@ type Consumer struct {
 	// NB: events skipped in EventRecordCallback never reach this function
 	// errors returned by this callback will be logged.
 	// To skip further processing of the event set EventRecordHelper.Flags.Skip = true
+	//
+	// Deprecated: use EventRecordCallback instead, which is more flexible. will be removed in 1.0
 	EventPreparedCallback func(*EventRecordHelper) error
 
 	// [4] Callback executed after the event got parsed and defines what to do
@@ -106,7 +100,9 @@ type Consumer struct {
 	//  NOTE: Remember to call e.Release() after processing the event. ~50% performane increase.
 	//
 	// Errors returned by this callback are logged but do not stop processing.
-	EventCallback func(*Event) error
+	//
+	// Deprecated: use EventRecordCallback instead, which is more flexible. will be removed in 1.0
+	EventCallback func(*EventRecordHelper) error
 
 	// LostEvents tracks the total number of events lost across all trace sessions.
 	// This is incremented based on RT_LostEvent notifications.
@@ -149,8 +145,8 @@ func NewConsumer(ctx context.Context) (c *Consumer) {
 
 	c.ctx, c.cancel = context.WithCancel(ctx)
 
+	c.EventRecordCallback = nil
 	c.EventRecordHelperCallback = nil
-	c.EventCallback = nil
 
 	return c
 }
@@ -364,7 +360,7 @@ func (c *Consumer) bufferCallback(e *EventTraceLogfile) uintptr {
 }
 
 // TODO: implement in v1.0
-func (c *Consumer) callback_new(er *EventRecord) (re uintptr) {
+func (c *Consumer) callback_new10(er *EventRecord) (re uintptr) {
 	// Count the number of events with errors, but only once per event.
 	setError := func(err error) {
 		er.userContext().trace.ErrorEvents.Add(1)
@@ -380,26 +376,13 @@ func (c *Consumer) callback_new(er *EventRecord) (re uintptr) {
 		return
 	}
 
-	// Skips the event if it is the event trace header. Log files contain this event
-	// but real-time sessions do not. The event contains the same information as
-	// the EVENT_TRACE_LOGFILE.LogfileHeader member that you can access when you open
-	// the trace.
-	if !usrCtx.trace.realtime {
-		if er.EventHeader.ProviderId.Equals(EventTraceGuid) &&
-			er.EventHeader.EventDescriptor.Opcode == EVENT_TRACE_TYPE_INFO {
-			conlog.Debug().Interface("event", er).Msg("Skipping EventTraceGuid event")
-			// Skip this event.
-			return
-		}
-	}
-
 	if er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
 		c.handleLostEvent(er)
 		return
 	}
 
 	// If no callbacks are set, there's nothing to do.
-	if c.EventRecordCallback == nil && c.EventCallback == nil {
+	if c.EventRecordCallback == nil && c.EventRecordHelperCallback == nil {
 		return
 	}
 
@@ -407,7 +390,7 @@ func (c *Consumer) callback_new(er *EventRecord) (re uintptr) {
 	_h := &usrCtx.storage.helper
 	_h.reset()
 
-	// calling EventHeaderCallback if possible
+
 	if c.EventRecordCallback != nil {
 		if !c.EventRecordCallback(er) {
 			return
@@ -415,23 +398,16 @@ func (c *Consumer) callback_new(er *EventRecord) (re uintptr) {
 	}
 
 	// --- Stage 2: Parsed Event Callback (Optional) ---
-	if c.EventCallback != nil {
+	if c.EventRecordHelperCallback != nil {
 		// To get a parsed event, we must have an initialized helper.
 		h, err := er.GetHelper()
 		if err != nil {
 			setError(fmt.Errorf("GetHelper failed: %w", err))
 			return
 		}
-		event, err := h.GetParsedEvent()
-		if err != nil {
-			setError(fmt.Errorf("GetParsedEvent failed: %w", err))
-			return
-		}
-		if err := c.EventCallback(event); err != nil {
+		if err := c.EventRecordHelperCallback(h); err != nil {
 			setError(fmt.Errorf("EventCallback failed: %w", err))
 		}
-
-		//event.release() // important: if releasing here make the function private to prevent multiple releases
 	}
 	return
 }
@@ -449,7 +425,7 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	setError := func(err error) {
 		er.userContext().trace.ErrorEvents.Add(1)
 		c.reportError(err, er)
-		c.lastError.Store(err) // TODO: no longer useful?
+		c.lastError.Store(err)
 	}
 
 	// We must always get the context first. just in case. if the context is there
@@ -538,11 +514,8 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 			return
 		}
 
-		var event *Event
-		if event, err = h.buildEvent(); err != nil {
-			setError(fmt.Errorf("buildEvent failed: %w", err))
-		}
-		if err := c.EventCallback(event); err != nil {
+		// TODO: delete this callback, or do marshal.
+		if err := c.EventCallback(h); err != nil {
 			setError(fmt.Errorf("EventCallback failed: %w", err))
 		}
 	} else {
@@ -992,6 +965,19 @@ func (c *Consumer) Start() (err error) {
 
 	return
 }
+
+// TODO: call processTrace directly
+// StartAndWait starts the consumer and blocks until all trace processing has
+// finished. This is a convenience method equivalent to calling Start()
+// followed by Wait(). It returns the last error encountered by the consumer.
+func (c *Consumer) startAndWait() error {
+    if err := c.Start(); err != nil {
+        return err
+    }
+    c.Wait()
+    return c.LastError()
+}
+
 
 // startTraceGoroutine launches the ProcessTrace loop for a single trace.
 func (c *Consumer) startTraceGoroutine(name string, trace *ConsumerTrace) {

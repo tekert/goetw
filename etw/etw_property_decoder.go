@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 	"unicode/utf8"
@@ -22,15 +23,183 @@ import (
 	"github.com/tekert/goetw/internal/hexf"
 )
 
-// decodeToString attempts to parse the property value based on OutType.
+var stringBufferPool = sync.Pool{
+	New: func() interface{} {
+		// Pre-allocate a reasonably sized buffer to avoid resizing on common strings.
+		b := make([]byte, 0, 1024)
+		return &b
+	},
+}
+
+// decodeToString decodes the property to a raw string representation.
+func (p *Property) decodeToString(dst []byte) ([]byte, error) {
+	return p._decodeValue(dst, false)
+}
+
+// decodeToJSON decodes the property to a JSON value (with quoting where needed).
+func (p *Property) decodeToJSON(buf []byte) ([]byte, error) {
+	return p._decodeValue(buf, true)
+}
+
+func appendQuotes(buf []byte, quote bool) []byte {
+	if quote {
+		buf = append(buf, '"')
+	}
+	return buf
+}
+
+// appendQuotedSlice appends the slice [start:] from stringBuf to dst with proper JSON quoting.
+// This is an inline helper to avoid repetition and ensure zero allocations.
+// It handles empty strings safely to avoid panic on &appended[0].
+func appendQuotedSlice(dst, stringBuf []byte, start int) []byte {
+	appended := stringBuf[start:]
+	dst = dst[:start]
+	// Handle empty string case to avoid panic on &appended[0]
+	if len(appended) == 0 {
+		return strconv.AppendQuote(dst, "")
+	}
+	// Use unsafe.String for zero-allocation conversion (32% faster than string(appended))
+	return strconv.AppendQuote(dst, unsafe.String(&appended[0], len(appended)))
+}
+
+// resolveOutType is a small, inlineable helper that contains the logic for mapping
+// a TDH InType to its default OutType when the event does not specify one.
+func (p *Property) resolveOutType(inType TdhInType) TdhOutType {
+	var outType TdhOutType
+	// Get InType and map to default OutType
+	switch inType {
+	// String Types -> TDH_OUTTYPE_STRING:
+	//   - TDH_INTYPE_UNICODESTRING
+	//   - TDH_INTYPE_ANSISTRING
+	//   - TDH_INTYPE_COUNTEDSTRING
+	//   - TDH_INTYPE_REVERSEDCOUNTEDSTRING
+	//   - TDH_INTYPE_NONNULLTERMINATEDSTRING
+	//   - TDH_INTYPE_MANIFEST_COUNTEDSTRING
+	//   - TDH_INTYPE_MANIFEST_COUNTEDANSISTRING
+	//   - TDH_INTYPE_COUNTEDANSISTRING
+	//   - TDH_INTYPE_NONNULLTERMINATEDANSISTRING
+	case TDH_INTYPE_UNICODESTRING,
+		TDH_INTYPE_ANSISTRING,
+		TDH_INTYPE_COUNTEDSTRING,
+		TDH_INTYPE_REVERSEDCOUNTEDSTRING,
+		TDH_INTYPE_NONNULLTERMINATEDSTRING,
+		TDH_INTYPE_MANIFEST_COUNTEDSTRING,
+		TDH_INTYPE_MANIFEST_COUNTEDANSISTRING,
+		TDH_INTYPE_COUNTEDANSISTRING,
+		TDH_INTYPE_NONNULLTERMINATEDANSISTRING:
+		outType = TDH_OUTTYPE_STRING
+
+	// Character Types -> TDH_OUTTYPE_STRING:
+	//   - TDH_INTYPE_UNICODECHAR
+	//   - TDH_INTYPE_ANSICHAR
+	case TDH_INTYPE_UNICODECHAR, TDH_INTYPE_ANSICHAR:
+		outType = TDH_OUTTYPE_STRING
+
+	// Integer Types:
+	//   - TDH_INTYPE_INT8 -> TDH_OUTTYPE_BYTE
+	//   - TDH_INTYPE_UINT8 -> TDH_OUTTYPE_UNSIGNEDBYTE
+	//   - TDH_INTYPE_INT16 -> TDH_OUTTYPE_SHORT
+	//   - TDH_INTYPE_UINT16 -> TDH_OUTTYPE_UNSIGNEDSHORT
+	//   - TDH_INTYPE_INT32 -> TDH_OUTTYPE_INT
+	//   - TDH_INTYPE_UINT32 -> TDH_OUTTYPE_UNSIGNEDINT
+	//   - TDH_INTYPE_INT64 -> TDH_OUTTYPE_LONG
+	//   - TDH_INTYPE_UINT64 -> TDH_OUTTYPE_UNSIGNEDLONG
+	case TDH_INTYPE_INT8:
+		outType = TDH_OUTTYPE_BYTE
+	case TDH_INTYPE_UINT8:
+		outType = TDH_OUTTYPE_UNSIGNEDBYTE
+	case TDH_INTYPE_INT16:
+		outType = TDH_OUTTYPE_SHORT
+	case TDH_INTYPE_UINT16:
+		outType = TDH_OUTTYPE_UNSIGNEDSHORT
+	case TDH_INTYPE_INT32:
+		outType = TDH_OUTTYPE_INT
+	case TDH_INTYPE_UINT32:
+		outType = TDH_OUTTYPE_UNSIGNEDINT
+	case TDH_INTYPE_INT64:
+		outType = TDH_OUTTYPE_LONG
+	case TDH_INTYPE_UINT64:
+		outType = TDH_OUTTYPE_UNSIGNEDLONG
+
+	// Float Types:
+	//   - TDH_INTYPE_FLOAT -> TDH_OUTTYPE_FLOAT
+	//   - TDH_INTYPE_DOUBLE -> TDH_OUTTYPE_DOUBLE
+	case TDH_INTYPE_FLOAT:
+		outType = TDH_OUTTYPE_FLOAT
+	case TDH_INTYPE_DOUBLE:
+		outType = TDH_OUTTYPE_DOUBLE
+
+	// Binary Types -> TDH_OUTTYPE_HEXBINARY:
+	//   - TDH_INTYPE_BINARY
+	//   - TDH_INTYPE_HEXDUMP
+	//   - TDH_INTYPE_MANIFEST_COUNTEDBINARY
+	case TDH_INTYPE_BINARY, TDH_INTYPE_HEXDUMP, TDH_INTYPE_MANIFEST_COUNTEDBINARY:
+		outType = TDH_OUTTYPE_HEXBINARY
+
+	// Special Types:
+	//   - TDH_INTYPE_BOOLEAN -> TDH_OUTTYPE_BOOLEAN
+	//   - TDH_INTYPE_GUID -> TDH_OUTTYPE_GUID
+	//   - TDH_INTYPE_POINTER -> TDH_OUTTYPE_HEXINT32/64 (arch dependent)
+	//   - TDH_INTYPE_FILETIME -> TDH_OUTTYPE_DATETIME
+	//   - TDH_INTYPE_SYSTEMTIME -> TDH_OUTTYPE_DATETIME
+	//   - TDH_INTYPE_SID -> TDH_OUTTYPE_STRING
+	//   - TDH_INTYPE_WBEMSID -> TDH_OUTTYPE_STRING
+	//   - TDH_INTYPE_HEXINT32 -> TDH_OUTTYPE_HEXINT32
+	//   - TDH_INTYPE_HEXINT64 -> TDH_OUTTYPE_HEXINT64
+	//   - TDH_INTYPE_SIZET -> TDH_OUTTYPE_HEXINT64
+	case TDH_INTYPE_BOOLEAN:
+		outType = TDH_OUTTYPE_BOOLEAN
+	case TDH_INTYPE_GUID:
+		outType = TDH_OUTTYPE_GUID
+	case TDH_INTYPE_POINTER:
+		if p.pointerSize == 8 {
+			return TDH_OUTTYPE_HEXINT64
+		}
+		return TDH_OUTTYPE_HEXINT32
+	case TDH_INTYPE_FILETIME, TDH_INTYPE_SYSTEMTIME:
+		outType = TDH_OUTTYPE_DATETIME
+	case TDH_INTYPE_SID, TDH_INTYPE_WBEMSID:
+		outType = TDH_OUTTYPE_STRING
+	case TDH_INTYPE_HEXINT32:
+		outType = TDH_OUTTYPE_HEXINT32
+	case TDH_INTYPE_HEXINT64,
+		TDH_INTYPE_SIZET:
+		outType = TDH_OUTTYPE_HEXINT64
+	default:
+		return TDH_OUTTYPE_NULL // Indicates an unhandled or error case
+	}
+	return outType
+}
+
+// _decodeValue attempts to parse the property value based on OutType.
 // If OutType is not set, it will infer OutType from InType.
 // This is appended to the dst slice, which is grown as needed.
-func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error) {
-	if !p.Parseable() {
-		return dst, fmt.Errorf("property not parseable")
-	}
-
+// quote indicates if the value should be JSON quoted (for strings).
+func (p *Property) _decodeValue(dst []byte, quote bool) ([]byte, error) {
 	inType := p.evtPropInfo.InType()
+	outType := p.evtPropInfo.OutType()
+
+	// If OutType is NULL, resolve it to its default based on InType.
+	// Reference: Windows Event Tracing API tdh.h
+	if outType == TDH_OUTTYPE_NULL {
+		// Get InType and map to default OutType
+
+		//* Handle special MOF case
+		if inType == TDH_INTYPE_POINTER && p.isNtKernelTcpUdpConnid() {
+			if p.pointerSize == 8 {
+				v := *(*uint32)(unsafe.Pointer(p.pValue)) // is a pointer but holds a uint32 value
+				return strconv.AppendUint(dst, uint64(v), 10), nil
+			}
+		}
+
+		outType = p.resolveOutType(inType)
+		if outType == TDH_OUTTYPE_NULL {
+			if inType == TDH_INTYPE_NULL {
+				return nil, fmt.Errorf("null InType")
+			}
+			return nil, fmt.Errorf("unsupported InType for NULL OutType: %v", inType)
+		}
+	}
 
 	switch outType {
 	case TDH_OUTTYPE_STRING:
@@ -38,16 +207,32 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 		case TDH_INTYPE_INT8, TDH_INTYPE_UINT8, TDH_INTYPE_ANSICHAR:
 			// Single ANSI character
 			b := *(*uint8)(unsafe.Pointer(p.pValue))
+			if quote {
+				return strconv.AppendQuote(dst, string(rune(b))), nil
+			}
 			return utf8.AppendRune(dst, rune(b)), nil
 
 		case TDH_INTYPE_UINT16, TDH_INTYPE_UNICODECHAR:
 			// Single UTF-16 character
 			w := *(*uint16)(unsafe.Pointer(p.pValue))
+			if quote {
+				return strconv.AppendQuote(dst, string(rune(w))), nil
+			}
 			return utf8.AppendRune(dst, rune(w)), nil
 
 		case TDH_INTYPE_SID, TDH_INTYPE_WBEMSID:
-			sidStr, err := p.decodeSIDIntype()
-			return append(dst, sidStr...), err
+			if quote {
+				tmpBufPtr := stringBufferPool.Get().(*[]byte)
+				stringBuf, err := p.decodeSIDIntype((*tmpBufPtr)[:0])
+				if err != nil {
+					stringBufferPool.Put(tmpBufPtr)
+					return dst, err
+				}
+				dst = strconv.AppendQuote(dst, unsafe.String(&stringBuf[0], len(stringBuf)))
+				stringBufferPool.Put(tmpBufPtr)
+				return dst, nil
+			}
+			return p.decodeSIDIntype(dst)
 
 		case TDH_INTYPE_UNICODESTRING,
 			TDH_INTYPE_ANSISTRING,
@@ -58,18 +243,30 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 			TDH_INTYPE_MANIFEST_COUNTEDANSISTRING,
 			TDH_INTYPE_COUNTEDANSISTRING,
 			TDH_INTYPE_NONNULLTERMINATEDANSISTRING:
+			if quote {
+				// Use a temporary buffer from the pool to decode the raw string.
+				// This prevents memory overlap when we pass it to strconv.AppendQuote.
+				tmpBufPtr := stringBufferPool.Get().(*[]byte)
+				stringBuf, err := p.decodeStringIntype((*tmpBufPtr)[:0])
+				if err != nil {
+					stringBufferPool.Put(tmpBufPtr)
+					return stringBuf, err
+				}
+
+				if len(stringBuf) > 0 {
+					dst = strconv.AppendQuote(dst, unsafe.String(&stringBuf[0], len(stringBuf)))
+				} else {
+					dst = strconv.AppendQuote(dst, "")
+				}
+
+				stringBufferPool.Put(tmpBufPtr)
+				return dst, nil
+			}
 			return p.decodeStringIntype(dst)
 
 		default:
 			return nil, fmt.Errorf("invalid string InType: %v", inType)
 		}
-
-	case TDH_OUTTYPE_PID, TDH_OUTTYPE_TID:
-		if inType != TDH_INTYPE_UINT32 {
-			return nil, fmt.Errorf("invalid PID/TID InType: %v", inType)
-		}
-		v := *(*uint32)(unsafe.Pointer(p.pValue))
-		return strconv.AppendUint(dst, uint64(v), 10), nil
 
 	case TDH_OUTTYPE_BYTE:
 		if inType != TDH_INTYPE_INT8 {
@@ -156,31 +353,79 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 		}
 		return append(dst, "false"...), nil
 
-	case TDH_OUTTYPE_IPV4:
-		// IPV4 uses uint32 as InType (4 bytes)
-		if inType != TDH_INTYPE_UINT32 {
-			return nil, fmt.Errorf("invalid IPv4 InType: %v", inType)
+	case TDH_OUTTYPE_GUID:
+		if inType != TDH_INTYPE_GUID {
+			return dst, fmt.Errorf("invalid GUID InType: %v", inType)
 		}
-		//v := *(*uint32)(unsafe.Pointer(p.pValue))
-		//ip := net.IPv4(byte(v), byte(v>>8), byte(v>>16), byte(v>>24))
+		guid := (*GUID)(unsafe.Pointer(p.pValue))
+		dst = appendQuotes(dst, quote)
+		dst = guid.AppendText(dst)
+		dst = appendQuotes(dst, quote)
+		return dst, nil
 
-		// ETW stores IPv4 addresses as uint32 in network byte order (big-endian)
-		ip := net.IP(unsafe.Slice((*byte)(unsafe.Pointer(p.pValue)), 4))
-		return append(dst, ip.String()...), nil
-
-	case TDH_OUTTYPE_IPV6:
-		// Update to include all BINARY types
+	case TDH_OUTTYPE_HEXBINARY:
 		switch inType {
 		case TDH_INTYPE_BINARY,
+			TDH_INTYPE_HEXDUMP,
 			TDH_INTYPE_MANIFEST_COUNTEDBINARY:
-			if p.length != 16 {
-				return nil, fmt.Errorf("invalid IPv6 address length: %d", p.length)
-			}
-			ip := net.IP(unsafe.Slice((*byte)(unsafe.Pointer(p.pValue)), 16))
-			return append(dst, ip.String()...), nil
+			bytes := unsafe.Slice((*byte)(unsafe.Pointer(p.pValue)), p.length)
+			dst = appendQuotes(dst, quote)
+			dst = hexf.AppendEncodeToStringUPrefix(dst, bytes)
+			dst = appendQuotes(dst, quote)
+			return dst, nil
 		default:
-			return nil, fmt.Errorf("invalid IPv6 InType: %v", inType)
+			return dst, fmt.Errorf("invalid HEXBINARY InType: %v", inType)
 		}
+
+	case TDH_OUTTYPE_HEXINT8:
+		if inType != TDH_INTYPE_UINT8 {
+			return dst, fmt.Errorf("invalid HEXINT8 InType: %v", inType)
+		}
+		v := *(*uint8)(unsafe.Pointer(p.pValue))
+		dst = appendQuotes(dst, quote)
+		dst = hexf.AppendNUm8p(dst, v, true)
+		dst = appendQuotes(dst, quote)
+		return dst, nil
+
+	case TDH_OUTTYPE_HEXINT16:
+		if inType != TDH_INTYPE_UINT16 {
+			return dst, fmt.Errorf("invalid HEXINT16 InType: %v", inType)
+		}
+		v := *(*uint16)(unsafe.Pointer(p.pValue))
+		dst = appendQuotes(dst, quote)
+		dst = hexf.AppendNUm16p(dst, v, true)
+		dst = appendQuotes(dst, quote)
+		return dst, nil
+
+	case TDH_OUTTYPE_HEXINT32:
+		if inType != TDH_INTYPE_UINT32 &&
+			inType != TDH_INTYPE_HEXINT32 {
+			return dst, fmt.Errorf("invalid HEXINT32 InType: %v", inType)
+		}
+		v := *(*uint32)(unsafe.Pointer(p.pValue))
+		dst = appendQuotes(dst, quote)
+		dst = hexf.AppendNUm32p(dst, v, true)
+		dst = appendQuotes(dst, quote)
+		return dst, nil
+
+	case TDH_OUTTYPE_HEXINT64:
+		if inType != TDH_INTYPE_UINT64 &&
+			inType != TDH_INTYPE_HEXINT64 &&
+			inType != TDH_INTYPE_POINTER {
+			return dst, fmt.Errorf("invalid HEXINT64 InType: %v", inType)
+		}
+		v := *(*uint64)(unsafe.Pointer(p.pValue))
+		dst = appendQuotes(dst, quote)
+		dst = hexf.AppendNUm64p(dst, v, true)
+		dst = appendQuotes(dst, quote)
+		return dst, nil
+
+	case TDH_OUTTYPE_PID, TDH_OUTTYPE_TID:
+		if inType != TDH_INTYPE_UINT32 {
+			return nil, fmt.Errorf("invalid PID/TID InType: %v", inType)
+		}
+		v := *(*uint32)(unsafe.Pointer(p.pValue))
+		return strconv.AppendUint(dst, uint64(v), 10), nil
 
 	case TDH_OUTTYPE_PORT:
 		// Port uses UINT16 as InType
@@ -191,68 +436,50 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 		port = Swap16(port) // Convert from network byte order
 		return strconv.AppendUint(dst, uint64(port), 10), nil
 
+	case TDH_OUTTYPE_IPV4:
+		// IPV4 uses uint32 as InType (4 bytes)
+		if inType != TDH_INTYPE_UINT32 {
+			return nil, fmt.Errorf("invalid IPv4 InType: %v", inType)
+		}
+		//v := *(*uint32)(unsafe.Pointer(p.pValue))
+		//ip := net.IPv4(byte(v), byte(v>>8), byte(v>>16), byte(v>>24))
+
+		// ETW stores IPv4 addresses as uint32 in network byte order (big-endian)
+		ip := net.IP(unsafe.Slice((*byte)(unsafe.Pointer(p.pValue)), 4))
+		dst = appendQuotes(dst, quote)
+		dst, err := ip.AppendText(dst)
+		dst = appendQuotes(dst, quote)
+		return dst, err
+
+	case TDH_OUTTYPE_IPV6:
+		// Update to include all BINARY types
+		switch inType {
+		case TDH_INTYPE_BINARY,
+			TDH_INTYPE_MANIFEST_COUNTEDBINARY:
+			if p.length != 16 {
+				return nil, fmt.Errorf("invalid IPv6 address length: %d", p.length)
+			}
+			ip := net.IP(unsafe.Slice((*byte)(unsafe.Pointer(p.pValue)), 16))
+			dst = appendQuotes(dst, quote)
+			dst, err := ip.AppendText(dst)
+			dst = appendQuotes(dst, quote)
+			return dst, err
+		default:
+			return nil, fmt.Errorf("invalid IPv6 InType: %v", inType)
+		}
+
 	case TDH_OUTTYPE_SOCKETADDRESS:
 		switch inType {
 		case TDH_INTYPE_BINARY,
 			TDH_INTYPE_MANIFEST_COUNTEDBINARY:
 			sockaddr := (*syscall.RawSockaddrAny)(unsafe.Pointer(p.pValue))
-			s, err := formatSockAddr(sockaddr)
-			if err != nil {
-				return dst, err
-			}
-			return append(dst, s...), nil
+			dst = appendQuotes(dst, quote)
+			dst, err := appendSockAddr(dst, sockaddr)
+			dst = appendQuotes(dst, quote)
+			return dst, err
 		default:
 			return dst, fmt.Errorf("invalid SocketAddress InType: %v", inType)
 		}
-
-	case TDH_OUTTYPE_HEXBINARY:
-		switch inType {
-		case TDH_INTYPE_BINARY,
-			TDH_INTYPE_HEXDUMP,
-			TDH_INTYPE_MANIFEST_COUNTEDBINARY:
-			bytes := unsafe.Slice((*byte)(unsafe.Pointer(p.pValue)), p.length)
-			return hexf.AppendEncodeToStringUPrefix(dst, bytes), nil
-		default:
-			return dst, fmt.Errorf("invalid HEXBINARY InType: %v", inType)
-		}
-
-	case TDH_OUTTYPE_HEXINT8:
-		if inType != TDH_INTYPE_UINT8 {
-			return dst, fmt.Errorf("invalid HEXINT8 InType: %v", inType)
-		}
-		v := *(*uint8)(unsafe.Pointer(p.pValue))
-		return hexf.AppendNUm8p(dst, v, true), nil
-
-	case TDH_OUTTYPE_HEXINT16:
-		if inType != TDH_INTYPE_UINT16 {
-			return dst, fmt.Errorf("invalid HEXINT16 InType: %v", inType)
-		}
-		v := *(*uint16)(unsafe.Pointer(p.pValue))
-		return hexf.AppendNUm16p(dst, v, true), nil
-
-	case TDH_OUTTYPE_HEXINT32:
-		if inType != TDH_INTYPE_UINT32 &&
-			inType != TDH_INTYPE_HEXINT32 {
-			return dst, fmt.Errorf("invalid HEXINT32 InType: %v", inType)
-		}
-		v := *(*uint32)(unsafe.Pointer(p.pValue))
-		return hexf.AppendNUm32p(dst, v, true), nil
-
-	case TDH_OUTTYPE_HEXINT64:
-		if inType != TDH_INTYPE_UINT64 &&
-			inType != TDH_INTYPE_HEXINT64 &&
-			inType != TDH_INTYPE_POINTER {
-			return dst, fmt.Errorf("invalid HEXINT64 InType: %v", inType)
-		}
-		v := *(*uint64)(unsafe.Pointer(p.pValue))
-		return hexf.AppendNUm64p(dst, v, true), nil
-
-	case TDH_OUTTYPE_GUID:
-		if inType != TDH_INTYPE_GUID {
-			return dst, fmt.Errorf("invalid GUID InType: %v", inType)
-		}
-		guid := (*GUID)(unsafe.Pointer(p.pValue))
-		return append(dst, guid.String()...), nil
 
 	case TDH_OUTTYPE_DATETIME,
 		TDH_OUTTYPE_DATETIME_UTC,
@@ -276,7 +503,10 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 				t = t.UTC()
 			}
 			// Use RFC3339 for culture-insensitive format
-			return append(dst, t.Format(time.RFC3339)...), nil
+			dst = appendQuotes(dst, quote)
+			dst, err := t.AppendText(dst)
+			dst = appendQuotes(dst, quote)
+			return dst, err
 
 		case TDH_INTYPE_SYSTEMTIME:
 			st := (*syscall.Systemtime)(unsafe.Pointer(p.pValue))
@@ -289,7 +519,10 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 				int(st.Hour), int(st.Minute), int(st.Second),
 				int(st.Milliseconds)*1e6, tz)
 
-			return append(dst, t.Format(time.RFC3339)...), nil
+			dst = appendQuotes(dst, quote)
+			dst, err := t.AppendText(dst)
+			dst = appendQuotes(dst, quote)
+			return dst, err
 
 		default:
 			return nil, fmt.Errorf("invalid datetime InType: %v", inType)
@@ -306,10 +539,62 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 			TDH_INTYPE_MANIFEST_COUNTEDANSISTRING,
 			TDH_INTYPE_COUNTEDANSISTRING,
 			TDH_INTYPE_NONNULLTERMINATEDANSISTRING:
+			if quote {
+				tmpBufPtr := stringBufferPool.Get().(*[]byte)
+				stringBuf, err := p.decodeStringIntype((*tmpBufPtr)[:0])
+				if err != nil {
+					stringBufferPool.Put(tmpBufPtr)
+					return stringBuf, err
+				}
+				if len(stringBuf) > 0 {
+					dst = strconv.AppendQuote(dst, unsafe.String(&stringBuf[0], len(stringBuf)))
+				} else {
+					dst = strconv.AppendQuote(dst, "")
+				}
+				stringBufferPool.Put(tmpBufPtr)
+				return dst, nil
+			}
 			return p.decodeStringIntype(dst)
 		default:
 			return nil, fmt.Errorf("invalid XML/JSON InType: %v", inType)
 		}
+
+	case TDH_OUTTYPE_ERRORCODE:
+		if inType != TDH_INTYPE_UINT32 {
+			return dst, fmt.Errorf("invalid ERRORCODE InType: %v", inType)
+		}
+		v := *(*uint32)(unsafe.Pointer(p.pValue))
+		dst = appendQuotes(dst, quote)
+		dst = hexf.AppendNUm32p(dst, v, false)
+		dst = appendQuotes(dst, quote)
+		return dst, nil
+
+	case TDH_OUTTYPE_WIN32ERROR, TDH_OUTTYPE_NTSTATUS:
+		if inType != TDH_INTYPE_UINT32 &&
+			inType != TDH_INTYPE_HEXINT32 {
+			return dst, fmt.Errorf("invalid error code InType: %v", inType)
+		}
+		v, err := p.ToUInt() // uint32
+		if err != nil {
+			return dst, err
+		}
+		dst = appendQuotes(dst, quote)
+		dst = hexf.AppendNUm32p(dst, uint32(v), false)
+		dst = appendQuotes(dst, quote)
+		return dst, nil
+
+	case TDH_OUTTYPE_HRESULT:
+		if inType != TDH_INTYPE_INT32 {
+			return dst, fmt.Errorf("invalid HRESULT InType: %v", inType)
+		}
+		v, err := p.ToInt() // int32
+		if err != nil {
+			return dst, err
+		}
+		dst = appendQuotes(dst, quote)
+		dst = hexf.AppendNUm32p(dst, int32(v), false)
+		dst = appendQuotes(dst, quote)
+		return dst, nil
 
 	case TDH_OUTTYPE_UTF8:
 		switch inType {
@@ -317,6 +602,21 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 			TDH_INTYPE_COUNTEDANSISTRING,
 			TDH_INTYPE_MANIFEST_COUNTEDANSISTRING,
 			TDH_INTYPE_NONNULLTERMINATEDANSISTRING:
+			if quote {
+				tmpBufPtr := stringBufferPool.Get().(*[]byte)
+				stringBuf, err := p.decodeStringIntype((*tmpBufPtr)[:0])
+				if err != nil {
+					stringBufferPool.Put(tmpBufPtr)
+					return stringBuf, err
+				}
+				if len(stringBuf) > 0 {
+					dst = strconv.AppendQuote(dst, unsafe.String(&stringBuf[0], len(stringBuf)))
+				} else {
+					dst = strconv.AppendQuote(dst, "")
+				}
+				stringBufferPool.Put(tmpBufPtr)
+				return dst, nil
+			}
 			return p.decodeStringIntype(dst)
 		default:
 			return nil, fmt.Errorf("invalid UTF8 InType: %v", inType)
@@ -327,7 +627,10 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 		case TDH_INTYPE_BINARY,
 			TDH_INTYPE_MANIFEST_COUNTEDBINARY:
 			bytes := unsafe.Slice((*byte)(unsafe.Pointer(p.pValue)), p.length)
-			return hexf.AppendEncodeToStringUPrefix(dst, bytes), nil
+			dst = appendQuotes(dst, quote)
+			dst = hexf.AppendEncodeToStringUPrefix(dst, bytes)
+			dst = appendQuotes(dst, quote)
+			return dst, nil
 		default:
 			return dst, fmt.Errorf("invalid PKCS7 InType: %v", inType)
 		}
@@ -339,42 +642,17 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 			TDH_INTYPE_HEXINT32,
 			TDH_INTYPE_HEXINT64,
 			TDH_INTYPE_POINTER:
-			v, err := p.GetUInt()
+			v, err := p.ToUInt()
 			if err != nil {
 				return dst, err
 			}
-			return hexf.AppendNUm64p(dst, v, false), nil
+			dst = appendQuotes(dst, quote)
+			dst = hexf.AppendNUm64p(dst, v, false)
+			dst = appendQuotes(dst, quote)
+			return dst, nil
 		default:
 			return dst, fmt.Errorf("invalid CODE_POINTER InType: %v", inType)
 		}
-
-	case TDH_OUTTYPE_WIN32ERROR, TDH_OUTTYPE_NTSTATUS:
-		if inType != TDH_INTYPE_UINT32 &&
-			inType != TDH_INTYPE_HEXINT32 {
-			return dst, fmt.Errorf("invalid error code InType: %v", inType)
-		}
-		v, err := p.GetUInt() // uint32
-		if err != nil {
-			return dst, err
-		}
-		return hexf.AppendNUm32p(dst, uint32(v), false), nil
-
-	case TDH_OUTTYPE_HRESULT:
-		if inType != TDH_INTYPE_INT32 {
-			return dst, fmt.Errorf("invalid HRESULT InType: %v", inType)
-		}
-		v, err := p.GetInt() // int32
-		if err != nil {
-			return dst, err
-		}
-		return hexf.AppendNUm32p(dst, int32(v), false), nil
-
-	case TDH_OUTTYPE_ERRORCODE:
-		if inType != TDH_INTYPE_UINT32 {
-			return dst, fmt.Errorf("invalid ERRORCODE InType: %v", inType)
-		}
-		v := *(*uint32)(unsafe.Pointer(p.pValue))
-		return hexf.AppendNUm32p(dst, v, false), nil
 
 	case TDH_OUTTYPE_NOPRINT:
 		// Return empty string for NOPRINT as spec indicates field should not be shown
@@ -382,118 +660,10 @@ func (p *Property) decodeToString(outType TdhOutType, dst []byte) ([]byte, error
 
 	// TODO: CIMDATETIME and ETWTIME are rarely used and can fallback to default handling
 
-	// Default OutType mappings when OutType is NULL:
-	// Reference: Windows Event Tracing API tdh.h
+	// This case is now handled by the logic at the top of the function.
+	// We leave the case here to make it clear it's intentionally blank.
 	case TDH_OUTTYPE_NULL:
-		// Get InType and map to default OutType
-		switch inType {
-		// String Types -> TDH_OUTTYPE_STRING:
-		//   - TDH_INTYPE_UNICODESTRING
-		//   - TDH_INTYPE_ANSISTRING
-		//   - TDH_INTYPE_COUNTEDSTRING
-		//   - TDH_INTYPE_REVERSEDCOUNTEDSTRING
-		//   - TDH_INTYPE_NONNULLTERMINATEDSTRING
-		//   - TDH_INTYPE_MANIFEST_COUNTEDSTRING
-		//   - TDH_INTYPE_MANIFEST_COUNTEDANSISTRING
-		//   - TDH_INTYPE_COUNTEDANSISTRING
-		//   - TDH_INTYPE_NONNULLTERMINATEDANSISTRING
-		case TDH_INTYPE_UNICODESTRING,
-			TDH_INTYPE_ANSISTRING,
-			TDH_INTYPE_COUNTEDSTRING,
-			TDH_INTYPE_REVERSEDCOUNTEDSTRING,
-			TDH_INTYPE_NONNULLTERMINATEDSTRING,
-			TDH_INTYPE_MANIFEST_COUNTEDSTRING,
-			TDH_INTYPE_MANIFEST_COUNTEDANSISTRING,
-			TDH_INTYPE_COUNTEDANSISTRING,
-			TDH_INTYPE_NONNULLTERMINATEDANSISTRING:
-			return p.decodeToString(TDH_OUTTYPE_STRING, dst)
-
-		// Character Types -> TDH_OUTTYPE_STRING:
-		//   - TDH_INTYPE_UNICODECHAR
-		//   - TDH_INTYPE_ANSICHAR
-		case TDH_INTYPE_UNICODECHAR, TDH_INTYPE_ANSICHAR:
-			return p.decodeToString(TDH_OUTTYPE_STRING, dst)
-
-		// Integer Types:
-		//   - TDH_INTYPE_INT8 -> TDH_OUTTYPE_BYTE
-		//   - TDH_INTYPE_UINT8 -> TDH_OUTTYPE_UNSIGNEDBYTE
-		//   - TDH_INTYPE_INT16 -> TDH_OUTTYPE_SHORT
-		//   - TDH_INTYPE_UINT16 -> TDH_OUTTYPE_UNSIGNEDSHORT
-		//   - TDH_INTYPE_INT32 -> TDH_OUTTYPE_INT
-		//   - TDH_INTYPE_UINT32 -> TDH_OUTTYPE_UNSIGNEDINT
-		//   - TDH_INTYPE_INT64 -> TDH_OUTTYPE_LONG
-		//   - TDH_INTYPE_UINT64 -> TDH_OUTTYPE_UNSIGNEDLONG
-		case TDH_INTYPE_INT8:
-			return p.decodeToString(TDH_OUTTYPE_BYTE, dst)
-		case TDH_INTYPE_UINT8:
-			return p.decodeToString(TDH_OUTTYPE_UNSIGNEDBYTE, dst)
-		case TDH_INTYPE_INT16:
-			return p.decodeToString(TDH_OUTTYPE_SHORT, dst)
-		case TDH_INTYPE_UINT16:
-			return p.decodeToString(TDH_OUTTYPE_UNSIGNEDSHORT, dst)
-		case TDH_INTYPE_INT32:
-			return p.decodeToString(TDH_OUTTYPE_INT, dst)
-		case TDH_INTYPE_UINT32:
-			return p.decodeToString(TDH_OUTTYPE_UNSIGNEDINT, dst)
-		case TDH_INTYPE_INT64:
-			return p.decodeToString(TDH_OUTTYPE_LONG, dst)
-		case TDH_INTYPE_UINT64:
-			return p.decodeToString(TDH_OUTTYPE_UNSIGNEDLONG, dst)
-
-		// Float Types:
-		//   - TDH_INTYPE_FLOAT -> TDH_OUTTYPE_FLOAT
-		//   - TDH_INTYPE_DOUBLE -> TDH_OUTTYPE_DOUBLE
-		case TDH_INTYPE_FLOAT:
-			return p.decodeToString(TDH_OUTTYPE_FLOAT, dst)
-		case TDH_INTYPE_DOUBLE:
-			return p.decodeToString(TDH_OUTTYPE_DOUBLE, dst)
-
-		// Binary Types -> TDH_OUTTYPE_HEXBINARY:
-		//   - TDH_INTYPE_BINARY
-		//   - TDH_INTYPE_HEXDUMP
-		//   - TDH_INTYPE_MANIFEST_COUNTEDBINARY
-		case TDH_INTYPE_BINARY, TDH_INTYPE_HEXDUMP, TDH_INTYPE_MANIFEST_COUNTEDBINARY:
-			return p.decodeToString(TDH_OUTTYPE_HEXBINARY, dst)
-
-		// Special Types:
-		//   - TDH_INTYPE_BOOLEAN -> TDH_OUTTYPE_BOOLEAN
-		//   - TDH_INTYPE_GUID -> TDH_OUTTYPE_GUID
-		//   - TDH_INTYPE_POINTER -> TDH_OUTTYPE_HEXINT32/64 (arch dependent)
-		//   - TDH_INTYPE_FILETIME -> TDH_OUTTYPE_DATETIME
-		//   - TDH_INTYPE_SYSTEMTIME -> TDH_OUTTYPE_DATETIME
-		//   - TDH_INTYPE_SID -> TDH_OUTTYPE_STRING
-		//   - TDH_INTYPE_WBEMSID -> TDH_OUTTYPE_STRING
-		//   - TDH_INTYPE_HEXINT32 -> TDH_OUTTYPE_HEXINT32
-		//   - TDH_INTYPE_HEXINT64 -> TDH_OUTTYPE_HEXINT64
-		//   - TDH_INTYPE_SIZET -> TDH_OUTTYPE_HEXINT64
-		case TDH_INTYPE_BOOLEAN:
-			return p.decodeToString(TDH_OUTTYPE_BOOLEAN, dst)
-		case TDH_INTYPE_GUID:
-			return p.decodeToString(TDH_OUTTYPE_GUID, dst)
-		case TDH_INTYPE_POINTER:
-			if p.pointerSize == 8 {
-				if p.isNtKernelTcpUdpConnid() { //* Handle special MOF case
-					v := *(*uint32)(unsafe.Pointer(p.pValue)) // is a pointer but holds a uint32 value
-					return strconv.AppendUint(dst, uint64(v), 10), nil
-				}
-				return p.decodeToString(TDH_OUTTYPE_HEXINT64, dst) // Pass buffer down
-			} else {
-				return p.decodeToString(TDH_OUTTYPE_HEXINT32, dst) // Pass buffer down
-			}
-		case TDH_INTYPE_FILETIME, TDH_INTYPE_SYSTEMTIME:
-			return p.decodeToString(TDH_OUTTYPE_DATETIME, dst)
-		case TDH_INTYPE_SID, TDH_INTYPE_WBEMSID:
-			return p.decodeToString(TDH_OUTTYPE_STRING, dst)
-		case TDH_INTYPE_HEXINT32:
-			return p.decodeToString(TDH_OUTTYPE_HEXINT32, dst)
-		case TDH_INTYPE_HEXINT64,
-			TDH_INTYPE_SIZET:
-			return p.decodeToString(TDH_OUTTYPE_HEXINT64, dst)
-
-		// NULL
-		case TDH_INTYPE_NULL:
-			return nil, fmt.Errorf("null InType")
-		}
+		break
 	}
 
 	// Default to Parse_WithTdh parsing for unhandled OutTypes
@@ -506,35 +676,50 @@ func Swap16(n uint16) uint16 {
 }
 
 // Helper to format socket address
-func formatSockAddr(sa *syscall.RawSockaddrAny) (string, error) {
+func appendSockAddr(dst []byte, sa *syscall.RawSockaddrAny) ([]byte, error) {
 	// Convert RawSockaddrAny to actual address
 	switch sa.Addr.Family {
 	case syscall.AF_INET:
 		addr4 := (*syscall.RawSockaddrInet4)(unsafe.Pointer(sa))
 		ip := net.IP(addr4.Addr[:])
 		port := Swap16(addr4.Port)
-		return ip.String() + ":" + strconv.Itoa(int(port)), nil
+
+		// Format as ip:port
+		var err error
+		dst, err = ip.AppendText(dst)
+		if err != nil {
+			dst = append(dst, "<invalid IPv4 address>"...)
+		}
+		dst = append(dst, ':')
+		dst = strconv.AppendUint(dst, uint64(port), 10)
+		return dst, nil
 
 	case syscall.AF_INET6:
 		addr6 := (*syscall.RawSockaddrInet6)(unsafe.Pointer(sa))
 		ip := net.IP(addr6.Addr[:])
 		port := Swap16(addr6.Port)
-		return "[" + ip.String() + "]:" + strconv.Itoa(int(port)), nil
+
+		// Format as [ip]:port
+		dst = append(dst, '[')
+		dst, err := ip.AppendText(dst)
+		if err != nil {
+			dst = append(dst, "<invalid IPv6 address>"...)
+		}
+		dst = append(dst, ']')
+		dst = append(dst, ':')
+		dst = strconv.AppendUint(dst, uint64(port), 10)
+		return dst, nil
 
 	default:
-		return "", fmt.Errorf("unsupported address family: %d", sa.Addr.Family)
+		return dst, fmt.Errorf("unsupported address family: %d", sa.Addr.Family)
 	}
 }
 
 // Parses the property value to a string based on the property's InType and OutType
-func (p *Property) decodeSIDIntype() (string, error) {
-	if !p.Parseable() {
-		return "", fmt.Errorf("property not parseable")
-	}
-
+func (p *Property) decodeSIDIntype(buf []byte) ([]byte, error) {
 	// Add validation for minimum SID size (8 bytes header)
 	if int(p.userDataRemaining) < 8 {
-		return "", fmt.Errorf("invalid SID: data too small for header")
+		return buf, fmt.Errorf("invalid SID: data too small for header")
 	}
 
 	// For WBEMSID, skip pointer-sized TOKEN_USER structure
@@ -550,30 +735,26 @@ func (p *Property) decodeSIDIntype() (string, error) {
 	// Validate Max SID
 	sid := (*SID)(unsafe.Pointer(sidPtr))
 	if sid.SubAuthorityCount > 15 { // SID_MAX_SUB_AUTHORITIES
-		return "", fmt.Errorf("invalid SID: too many sub-authorities")
+		return buf, fmt.Errorf("invalid SID: too many sub-authorities")
 	}
 	// Calculate expected size (p.sizeBytes already has it too)
 	expectedSize := 8 + (4 * int(sid.SubAuthorityCount)) // 8 bytes header + 4 bytes per sub-authority
 	if expectedSize > int(p.userDataRemaining) {
-		return "", fmt.Errorf("invalid SID: insufficient data")
+		return buf, fmt.Errorf("invalid SID: insufficient data")
 	}
 	// Convert SID to string
 	//sidStr, err := ConvertSidToStringSidW(sid) // cgo is slow
-	sidStr, err := ConvertSidToStringSidGO(sid)
+	buf, err := sid.AppendText(buf)
 	if err != nil {
 		// rawBytes := unsafe.Slice((*byte)(unsafe.Pointer(sidPtr)), p.userDataLength)
 		// fmt.Printf("Raw bytes: %x\n", rawBytes[:expectedSize])
 		// sidStr = fmt.Sprintf("0x%X", rawBytes)
-		return "", fmt.Errorf("failed to convert SID to string: %w", err)
+		return buf, fmt.Errorf("failed to convert SID to string: %w", err)
 	}
-	return sidStr, nil
+	return buf, nil
 }
 
 func (p *Property) decodeStringIntype(dst []byte) ([]byte, error) {
-	if !p.Parseable() {
-		return dst, fmt.Errorf("property not parseable")
-	}
-
 	// p.length has already been set from either:
 	// - Length field
 	// - LengthPropertyIndex field (PropertyParamLength)
@@ -702,10 +883,6 @@ func (p *Property) decodeStringIntype(dst []byte) ([]byte, error) {
 }
 
 func (p *Property) decodeFloatIntype() (float64, error) {
-	if !p.Parseable() {
-		return 0, fmt.Errorf("property not parseable")
-	}
-
 	switch p.evtPropInfo.InType() {
 	case TDH_INTYPE_FLOAT:
 		return (float64)(*(*float32)(unsafe.Pointer(p.pValue))), nil
@@ -718,10 +895,6 @@ func (p *Property) decodeFloatIntype() (float64, error) {
 
 // returns pointer to GUID (live data, use with care)
 func (p *Property) decodeGUIDIntype() (*GUID, error) {
-	if !p.Parseable() {
-		return nil, fmt.Errorf("property not parseable")
-	}
-
 	if p.evtPropInfo.InType() != TDH_INTYPE_GUID {
 		return nil, fmt.Errorf("type %v is not a GUID", p.evtPropInfo.InType())
 	}
@@ -734,10 +907,6 @@ func (p *Property) decodeGUIDIntype() (*GUID, error) {
 // should be interpreted as signed
 // Returns (uint64Value, isSigned, error)
 func (p *Property) decodeScalarIntype() (uint64, bool, error) {
-	if !p.Parseable() {
-		return 0, false, fmt.Errorf("property not parseable")
-	}
-
 	switch p.evtPropInfo.InType() {
 	// Signed integers - return as uint64 with signed flag
 	case TDH_INTYPE_INT8:

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strconv"
 	"syscall"
 	"unsafe"
 )
@@ -56,7 +57,7 @@ func (p *Property) MarshalJSON() ([]byte, error) {
 	// Ensure the string value is populated for JSON marshaling.
 	valueStr := p.value
 	if valueStr == "" && p.Parseable() {
-		valueStr, _ = p.FormatToString()
+		valueStr, _ = p.ToString()
 	}
 
 	return json.Marshal(struct {
@@ -99,10 +100,13 @@ func (p *Property) Parseable() bool {
 	return p.erh != nil && p.evtPropInfo != nil && p.pValue > 0
 }
 
-// GetInt returns the property value as int64.
+// ToInt returns the property value as int64.
 // Filetime intypes are returned as int64 nanoseconds.
 // Only if the data is a scalar InType
-func (p *Property) GetInt() (int64, error) {
+func (p *Property) ToInt() (int64, error) {
+	if !p.Parseable() {
+		return 0, fmt.Errorf("property not parseable")
+	}
 	v, signed, err := p.decodeScalarIntype()
 	if err != nil {
 		return 0, err
@@ -116,10 +120,13 @@ func (p *Property) GetInt() (int64, error) {
 	return int64(v), nil
 }
 
-// GetUInt returns the property value as uint64.
+// ToUInt returns the property value as uint64.
 // Filetime intypes are returned as uint64 nanoseconds.
 // Only if the data is a scalar InType
-func (p *Property) GetUInt() (uint64, error) {
+func (p *Property) ToUInt() (uint64, error) {
+	if !p.Parseable() {
+		return 0, fmt.Errorf("property not parseable")
+	}
 	v, signed, err := p.decodeScalarIntype()
 	if err != nil {
 		return 0, err
@@ -133,48 +140,158 @@ func (p *Property) GetUInt() (uint64, error) {
 	return v, nil
 }
 
-// GetFloat returns the property value as float64
+// ToFloat returns the property value as float64
 // Only if the data is a float InType
-func (p *Property) GetFloat() (float64, error) {
+func (p *Property) ToFloat() (float64, error) {
+	if !p.Parseable() {
+		return 0, fmt.Errorf("property not parseable")
+	}
 	return p.decodeFloatIntype()
 }
 
-// GetGUID returns the property value as a pointer to GUID (live data)
+// ToGUID returns the property value as a pointer to GUID (live data)
 // This is mostly used for comparing GUIDs so that's why we return a pointer.
 // Only if the data is a GUID InType
-func (p *Property) GetGUID() (*GUID, error) {
+func (p *Property) ToGUID() (*GUID, error) {
+	if !p.Parseable() {
+		return nil, fmt.Errorf("property not parseable")
+	}
 	return p.decodeGUIDIntype()
 }
 
-// FormatToString formats the property data value to a string representation.
-// Uses a Custom parser (improves performance by 30%, fallbacks to tdh on error)
-func (p *Property) FormatToString() (string, error) {
-	var err error
-
-	if p.value == "" && p.Parseable() {
-		// Use tdh if we have map info, else try custom parser first.
-		if p.evtPropInfo.MapNameOffset() > 0 {
-			p.value, _, err = p.formatToStringTdh() // use tdh for maps
-		} else {
-			var buf []byte
-			buf, err = p.decodeToString(p.evtPropInfo.OutType(), buf)
-			if err == nil {
-				p.value = string(buf)
-			} else {
-				conlog.SampledTraceWithErrSig("decodeToString", err).
-					Msg("failed to parse property with custom parser")
-				// fallback to tdh parser
-				p.value, _, err = p.formatToStringTdh()
-				// error and p.evtRecordHelper.addPropError() already handled inside.
-			}
-		}
+// AppendText appends the textual representation of the property to the end of b
+// and returns the updated slice. It is a zero-allocation method.
+// The appended data is only valid for the lifecycle of the buffer.
+func (p *Property) AppendText(buf []byte) ([]byte, error) {
+	if !p.Parseable() {
+		return buf, fmt.Errorf("property not parseable")
 	}
 
-	return p.value, err
+	// For properties with value maps, we MUST use the TDH-based formatter.
+	if p.evtPropInfo.MapNameOffset() > 0 {
+		val, _, err := p.formatToStringTdh()
+		if err != nil {
+			return buf, err
+		}
+		return append(buf, val...), nil
+	}
+
+	// For all other properties, try the high-performance internal appender first.
+	res, err := p.decodeToString(buf)
+	if err == nil {
+		return res, nil
+	}
+
+	// On failure, fallback to the TDH-based formatter.
+	conlog.SampledTraceWithErrSig("decodeToString", err).
+		Msg("failed to parse property with custom parser, falling back to TDH")
+	val, _, err := p.formatToStringTdh()
+	if err != nil {
+		return buf, err
+	}
+	return append(buf, val...), nil
+}
+
+// AppendToJSON appends the JSON representation of the property to the end of b
+// and returns the updated slice. It is a zero-allocation method that handles
+// JSON-specific formatting like quoting strings.
+func (p *Property) AppendToJSON(buf []byte) ([]byte, error) {
+	if !p.Parseable() {
+		return buf, fmt.Errorf("property not parseable")
+	}
+
+	// For properties with value maps, we MUST use the TDH-based formatter.
+	// The result of a map is always a string, so it must be quoted.
+	if p.evtPropInfo.MapNameOffset() > 0 {
+		val, _, err := p.formatToStringTdh()
+		if err != nil {
+			return buf, err
+		}
+		return strconv.AppendQuote(buf, val), nil
+	}
+
+	// For all other properties, try the high-performance internal JSON appender first.
+	res, err := p.decodeToJSON(buf)
+	if err == nil {
+		return res, nil
+	}
+
+	// On failure, fallback to the TDH-based formatter and quote the result.
+	conlog.SampledTraceWithErrSig("decodeToJSON", err).
+		Msg("failed to parse property with custom JSON parser, falling back to TDH")
+	val, _, err := p.formatToStringTdh()
+	if err != nil {
+		return buf, err
+	}
+	return strconv.AppendQuote(buf, val), nil
+}
+
+// ToString formats the property to a string.
+// This method is a convenient, safe wrapper around AppendText. It allocates a new
+// string for the result, making it safe to store. For performance-critical paths,
+// use AppendText with a reusable buffer.
+func (p *Property) ToString() (string, error) {
+	if p.value != "" {
+		return p.value, nil
+	}
+	if !p.Parseable() {
+		return "", nil
+	}
+
+	// Use the helper's reusable buffer for the temporary formatting.
+	start := len(p.erh.storage.dataBuffer)
+	buf, err := p.AppendText(p.erh.storage.dataBuffer)
+	if err != nil {
+		// On error, rewind the buffer to its original state.
+		p.erh.storage.dataBuffer = p.erh.storage.dataBuffer[:start]
+		return "", err
+	}
+
+	// Create a safe, independent copy of the formatted string for the user.
+	appended := buf[start:]
+	p.value = string(appended) // Cache the safe copy.
+
+	// Rewind the reusable buffer so it can be used by the next property.
+	p.erh.storage.dataBuffer = p.erh.storage.dataBuffer[:start]
+
+	return p.value, nil
+}
+
+// FormatToString is deprecated. Use ToString() for a safe string copy, or
+// AppendText() for a high-performance, zero-allocation append to a buffer.
+//
+// Deprecated: This method will be removed in a future version.
+func (p *Property) FormatToString() (string, error) {
+	return p.ToString()
+
+	// var err error
+
+	// if p.value == "" && p.Parseable() {
+	// 	// Use tdh if we have map info, else try custom parser first.
+	// 	if p.evtPropInfo.MapNameOffset() > 0 {
+	// 		p.value, _, err = p.formatToStringTdh() // use tdh for maps
+	// 	} else {
+	// 		var buf []byte
+	// 		buf, err = p.decodeToString(buf)
+	// 		if err == nil {
+	// 			p.value = string(buf)
+	// 		} else {
+	// 			conlog.SampledTraceWithErrSig("decodeToString", err).
+	// 				Msg("failed to parse property with custom parser")
+	// 			// fallback to tdh parser
+	// 			p.value, _, err = p.formatToStringTdh()
+	// 			// error and p.evtRecordHelper.addPropError() already handled inside.
+	// 		}
+	// 	}
+	// }
+
+	// return p.value, err
 }
 
 // FormatToStringTdh formats the property data value to a string representation.
 // Uses TDH functions to parse the property (very slow, uses cgo for each prop)
+//
+// Deprecated: This method will be made private in a future version.
 func (p *Property) FormatToStringTdh() (string, error) {
 	var err error
 

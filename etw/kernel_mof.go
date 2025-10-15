@@ -293,7 +293,7 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 	tei := (*TraceEventInfo)(unsafe.Pointer(&buffer[0]))
 	tei.ProviderGUID = *SystemTraceControlGuid
 	tei.EventGUID = mofClass.GUID
-	//tei.EventDescriptor = er.EventHeader.EventDescriptor // EventDescriptor is patched at runtime from the live event.
+	//tei.EventDescriptor = er.EventHeader.EventDescriptor // EventDescriptor is patched at runtime from the live event. (this one is cached)
 	tei.DecodingSource = DecodingSourceWbem
 	tei.PropertyCount = uint32(propCount)
 	tei.TopLevelPropertyCount = uint32(propCount) // MOF properties are flat.
@@ -384,35 +384,35 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 		// --- End of transformation ---
 
 		// Set types
-		epi.SetInType(finalInType)
-		epi.SetOutType(finalOutType)
+		epi.setInType(finalInType)
+		epi.setOutType(finalOutType)
 
 		// Set fixed length for scalar types
 		if !propDef.IsArray && propDef.SizeFromID == 0 {
 			if fixedSize := getTdhInTypeFixedSize(propDef.InType, er); fixedSize > 0 {
-				epi.SetLength(fixedSize)
+				epi.setLength(fixedSize)
 				// epi.Flags |= PropertyParamFixedLength // This flag should not be set for implicitly sized MOF types.
 			} else if propDef.InType == TDH_INTYPE_BINARY && propDef.OutType == TDH_OUTTYPE_IPV6 {
 				// Special case for IPV6 addresses, which have a fixed length of 16
 				// but are of InType BINARY (which is normally variable length).
-				epi.SetLength(16)
+				epi.setLength(16)
 				epi.Flags |= PropertyParamFixedLength
 			}
 		}
 
 		// Set length/count for arrays
 		if propDef.IsArray {
-			epi.SetCount(uint16(propDef.ArraySize))
+			epi.setCount(uint16(propDef.ArraySize))
 			// For legacy MOF events, the API doesn't seem to set PropertyParamFixedCount.
 			// The presence of a Count > 1 is enough to indicate an array.
 			// epi.Flags |= PropertyParamFixedCount
 
 			// The API also sets the Length to the size of a single array element.
 			if elementSize := getTdhInTypeFixedSize(propDef.InType, er); elementSize > 0 {
-				epi.SetLength(elementSize)
+				epi.setLength(elementSize)
 			}
 		} else {
-			epi.SetCount(1) // For non-array properties, count is 1.
+			epi.setCount(1) // For non-array properties, count is 1.
 		}
 	}
 
@@ -422,7 +422,7 @@ func (mofClass *MofClassDef) buildTraceInfoTemplate(er *EventRecord) []byte {
 			// Use the locally-calculated map.
 			if countPropIndex, ok := wmiIDToIndex[uint16(propDef.SizeFromID)]; ok {
 				eventProperties[i].Flags |= PropertyParamCount
-				eventProperties[i].SetCountPropertyIndex(countPropIndex)
+				eventProperties[i].setCountPropertyIndex(countPropIndex)
 			}
 		}
 	}

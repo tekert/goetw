@@ -77,19 +77,18 @@ func TestProducerConsumer(t *testing.T) {
 	defer cancel()
 	c := NewConsumer(ctx).FromSessions(ses) //.FromTraces(EventlogSecurity)
 
-	c.EventCallback = func(e *Event) (err error) {
-		defer e.Release()
+	c.EventCallback = func(h *EventRecordHelper) (err error) {
 		eventCount++
-
-		if e.System.Provider.Name == KernelFileProviderName {
-			tt.Assert(e.System.EventID == 12 ||
-				e.System.EventID == 13 ||
-				e.System.EventID == 14 ||
-				e.System.EventID == 15 ||
-				e.System.EventID == 16)
+		systemMetadata := h.System()
+		if systemMetadata.Provider.Name == KernelFileProviderName {
+			tt.Assert(systemMetadata.EventID == 12 ||
+				systemMetadata.EventID == 13 ||
+				systemMetadata.EventID == 14 ||
+				systemMetadata.EventID == 15 ||
+				systemMetadata.EventID == 16)
 		}
 
-		_, err = json.Marshal(&e)
+		_, err = json.Marshal(&h)
 		tt.CheckErr(err)
 		//t.Log(string(b))
 
@@ -150,8 +149,7 @@ func TestKernelSession(t *testing.T) {
 	// we have to declare a func otherwise c.Stop seems to be called
 	defer func() { tt.CheckErr(c.Stop()) }()
 
-	c.EventCallback = func(e *Event) error {
-		defer e.Release()
+	c.EventCallback = func(e *EventRecordHelper) error {
 		eventCount++
 
 		_, err := json.Marshal(&e)
@@ -247,14 +245,14 @@ func TestEventMapInfo(t *testing.T) {
 	// we have to declare a func otherwise c.Stop seems to be called
 	defer func() { tt.CheckErr(c.Stop()) }()
 
-	c.EventCallback = func(e *Event) error {
-		defer e.Release()
+	c.EventCallback = func(h *EventRecordHelper) error {
 		eventCount++
 
-		_, err := json.Marshal(&e)
+		_, err := json.Marshal(h)
 		tt.CheckErr(err)
-		if e.System.Correlation.ActivityID != nullGUIDStr && e.System.Correlation.RelatedActivityID != nullGUIDStr {
-			t.Logf("Provider=%s ActivityID=%s RelatedActivityID=%s", e.System.Provider.Name, e.System.Correlation.ActivityID, e.System.Correlation.RelatedActivityID)
+		systemMetadata := h.System()
+		if systemMetadata.Correlation.ActivityID != nullGUIDStr && systemMetadata.Correlation.RelatedActivityID != nullGUIDStr {
+			t.Logf("Provider=%s ActivityID=%s RelatedActivityID=%s", systemMetadata.Provider.Name, systemMetadata.Correlation.ActivityID, systemMetadata.Correlation.RelatedActivityID)
 		}
 		// Stop after receiving one event.
 		if eventCount > 0 {
@@ -457,11 +455,11 @@ func TestConsumerCallbacks(t *testing.T) {
 
 	fileObjectMapping := make(map[string]*file)
 	c.EventPreparedCallback = func(h *EventRecordHelper) error {
-		tt.Assert(h.ProviderName() == prov.Name)
-		tt.Assert(h.ProviderGUID() == prov.GUID)
+		tt.Assert(h.TraceInfo.ProviderName() == prov.Name)
+		tt.Assert(h.TraceInfo.ProviderGUID == prov.GUID)
 		tt.Assert(h.EventRec.EventHeader.ProviderId.Equals(&kernelProviderGUID))
 		tt.Assert(h.TraceInfo.ProviderGUID.Equals(&kernelProviderGUID))
-		tt.Assert(h.ChannelName() == kernelFileProviderChannel)
+		tt.Assert(h.TraceInfo.ChannelName() == kernelFileProviderChannel)
 
 		switch h.EventID() {
 		case 12:
@@ -543,18 +541,17 @@ func TestConsumerCallbacks(t *testing.T) {
 	var etwwrite int32
 
 	pid := os.Getpid()
-	c.EventCallback = func(e *Event) error {
-		defer e.Release()
+	c.EventCallback = func(h *EventRecordHelper) error {
 		eventCount++
 
-		_, err := json.Marshal(&e)
+		_, err := json.Marshal(h)
 		tt.CheckErr(err)
-		switch e.System.EventID {
+		systemMetadata := h.System()
+		switch systemMetadata.EventID {
 		case 15, 16:
 			var fn string
-			var ok bool
 
-			if fn, ok = e.GetPropertyString("FileName"); !ok {
+			if fn, err = h.GetPropertyString("FileName"); err != nil {
 				break
 			}
 
@@ -562,11 +559,11 @@ func TestConsumerCallbacks(t *testing.T) {
 				break
 			}
 
-			if e.System.Execution.ProcessID != uint32(pid) {
+			if systemMetadata.Execution.ProcessID != uint32(pid) {
 				break
 			}
 
-			if e.System.EventID == 15 {
+			if systemMetadata.EventID == 15 {
 				atomic.AddInt32(&etwread, 1)
 			} else {
 				atomic.AddInt32(&etwwrite, 1)
@@ -950,8 +947,7 @@ func TestQueryTraceMethods(t *testing.T) {
 	c := NewConsumer(ctx).FromSessions(ses)
 
 	eventsReceived := uint32(0)
-	c.EventCallback = func(e *Event) error {
-		defer e.Release()
+	c.EventCallback = func(e *EventRecordHelper) error {
 		if atomic.AddUint32(&eventsReceived, 1) > 10 {
 			cancel()
 		}
@@ -1406,4 +1402,24 @@ func compareTraceInfo(generated, original *TraceEventInfo, t *testing.T, isMof b
 		}
 	}
 	return mismatchMask
+}
+
+// BenchmarkRFC3339NanoCompare benchmarks both appendRFC3339Nano and time.AppendFormat for RFC3339Nano formatting.
+func BenchmarkRFC3339NanoCompare(b *testing.B) {
+	buf := make([]byte, 0, 64)
+	t := time.Now()
+
+	b.Run("StdTimeAppendFormat", func(b *testing.B) {
+		for b.Loop() {
+			buf = buf[:0]
+			buf = t.AppendFormat(buf, `"`+time.RFC3339Nano+`"`)
+		}
+	})
+
+		b.Run("StdTimeAppendFormat2", func(b *testing.B) {
+		for b.Loop() {
+			buf = buf[:0]
+			buf, _ = t.AppendText(buf)
+		}
+	})
 }

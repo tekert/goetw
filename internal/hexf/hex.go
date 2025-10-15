@@ -313,12 +313,12 @@ func Num8p[T Uint8Like](n T, trim bool) string {
 
 // AppendUPrefix appends the uppercase hex of src to dst with a "0x" prefix.
 func AppendEncodeToStringUPrefix(dst, src []byte) []byte {
-    dst = append(dst, '0', 'x')
-    n := len(dst)
-    // Grow the slice to accommodate the new hex characters
-    dst = append(dst, make([]byte, len(src)*2)...)
-    EncodeU(dst[n:], src)
-    return dst
+	dst = append(dst, '0', 'x')
+	n := len(dst)
+	// Grow the slice to accommodate the new hex characters
+	dst = append(dst, make([]byte, len(src)*2)...)
+	EncodeU(dst[n:], src)
+	return dst
 }
 
 // AppendNUm64p appends the uppercase, '0x' prefixed hex representation of a 64-bit integer.
@@ -378,6 +378,15 @@ func AppendNUm8p[T Uint8Like](dst []byte, n T, trim bool) []byte {
 	return append(dst, tempBuf[:]...)
 }
 
+// AppendEncodeU appends the uppercase hex encoding of src to dst and returns the new slice.
+func AppendEncodeU(dst, src []byte) []byte {
+	n := len(dst)
+	// Grow slice once to avoid multiple reallocations in the loop.
+	dst = append(dst, make([]byte, len(src)*2)...)
+	EncodeU(dst[n:], src)
+	return dst
+}
+
 // encodeUintPadded writes the zero-padded, uppercase hex representation of n
 // into dst. len(dst) must be sizeof(n) * 2.
 //
@@ -396,31 +405,35 @@ func encodeUintPadded(dst []byte, n uint64, size int) {
 // zero-padded to 16 characters (8 bytes). This version is optimized to process
 // one byte (two hex chars) per loop iteration.
 func AppendUint64PaddedU(dst []byte, n uint64) []byte {
-	var b [16]byte
-	encodeUintPadded(b[:], n, 8)
-	return append(dst, b[:]...)
+	n_ := len(dst)
+	dst = append(dst, "0000000000000000"...)
+	encodeUintPadded(dst[n_:], n, 8)
+	return dst
 }
 
 // AppendUint32PaddedU appends the hexadecimal representation of a uint32 to a byte slice,
 // zero-padded to 8 characters (4 bytes).
 func AppendUint32PaddedU(dst []byte, n uint32) []byte {
-	var b [8]byte
-	encodeUintPadded(b[:], uint64(n), 4)
-	return append(dst, b[:]...)
+	n_ := len(dst)
+	dst = append(dst, "00000000"...)
+	encodeUintPadded(dst[n_:], uint64(n), 4)
+	return dst
 }
 
 // AppendUint16PaddedU appends the hexadecimal representation of a uint16 to a byte slice,
 // zero-padded to 4 characters (2 bytes).
 func AppendUint16PaddedU(dst []byte, n uint16) []byte {
-	var b [4]byte
-	encodeUintPadded(b[:], uint64(n), 2)
-	return append(dst, b[:]...)
+	n_ := len(dst)
+	dst = append(dst, "0000"...)
+	encodeUintPadded(dst[n_:], uint64(n), 2)
+	return dst
 }
 
 // AppendUint8PaddedU appends the hexadecimal representation of a uint8 to a byte slice,
 // zero-padded to 2 characters (1 byte).
 func AppendUint8PaddedU(dst []byte, n uint8) []byte {
-	var b [2]byte // 1 byte * 2 hex chars/byte
-	encodeUintPadded(b[:], uint64(n), 1)
-	return append(dst, b[:]...)
+	n_ := len(dst)
+	dst = append(dst, "00"...)
+	encodeUintPadded(dst[n_:], uint64(n), 1)
+	return dst
 }

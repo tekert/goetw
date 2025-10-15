@@ -37,9 +37,7 @@ func main2() {
 
 	c.FromSessions(s)
 
-	c.EventCallback = func(e *etw.Event) error {
-		defer e.Release()
-		
+	c.EventCallback = func(e *etw.EventRecordHelper) error {
 		var b []byte
 		var err error
 		if b, err = json.Marshal(e); err != nil {

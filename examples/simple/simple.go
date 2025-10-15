@@ -39,9 +39,7 @@ func main() {
 	c.FromSessions(s)
 
 	// When events are parsed they get sent to this callback.
-	c.EventCallback = func(e *etw.Event) error {
-		defer e.Release()
-
+	c.EventCallback = func(e *etw.EventRecordHelper) error {
 		var b []byte
 		var err error
 		if b, err = json.Marshal(e); err != nil {

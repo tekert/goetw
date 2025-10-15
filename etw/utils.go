@@ -45,9 +45,8 @@ func FromFiletime(fileTime int64) time.Time {
 //
 //go:inline
 func FromFiletimeNanos(fileTime int64) int64 {
-	return (fileTime-FiletimeEpoch)*100
+	return (fileTime - FiletimeEpoch) * 100
 }
-
 
 // FromFiletimeUTC converts a Windows FILETIME (100-nanosecond intervals since 1601)
 // to a Unix UTC time.Time
@@ -95,24 +94,15 @@ func UUID() (uuid string, err error) {
 	return
 }
 
-// ConvertSidToStringSidGO converts a SID structure to its string representation.
-// This version is optimized to reduce memory allocations by using a byte buffer
-// and strconv.AppendUint.
-// No cgo/syscalls needed
-// replaces ConvertSidToStringSidW from Windows API
-func ConvertSidToStringSidGO(sid *SID) (string, error) {
+func (sid *SID) AppendText(buf []byte) ([]byte, error) {
 	if sid == nil {
-		return "", nil
+		return buf, nil
 	}
 
 	// Validate SID structure // SID_MAX_SUB_AUTHORITIES = 15
 	if sid.Revision != 1 || sid.SubAuthorityCount > 15 {
-		return "", fmt.Errorf("the SID is not valid")
+		return buf, fmt.Errorf("the SID is not valid")
 	}
-
-	// A typical SID string is around 40-70 chars. Pre-allocating a buffer of
-	// 64 bytes is a good starting point to avoid reallocations.
-	buf := make([]byte, 0, 64)
 
 	buf = append(buf, 'S', '-')
 	buf = strconv.AppendUint(buf, uint64(sid.Revision), 10)
@@ -133,7 +123,25 @@ func ConvertSidToStringSidGO(sid *SID) (string, error) {
 		buf = strconv.AppendUint(buf, uint64(subAuth), 10)
 	}
 
-	return string(buf), nil
+	return buf, nil
+}
+
+// ConvertSidToStringSidGO converts a SID structure to its string representation.
+// This version is optimized to reduce memory allocations by using a byte buffer
+// and strconv.AppendUint.
+// No cgo/syscalls needed
+// replaces ConvertSidToStringSidW from Windows API
+func ConvertSidToStringSidGO(sid *SID) (string, error) {
+	if sid == nil {
+		return "", nil
+	}
+	var err error
+		// A typical SID string is around 40-70 chars. Pre-allocating a buffer of
+	// 64 bytes is a good starting point to avoid reallocations.
+	buf := make([]byte, 0, 64)
+	buf, err = sid.AppendText(buf)
+
+	return string(buf), err
 }
 
 func isETLFile(path string) bool {

@@ -96,35 +96,36 @@ func TestProviderFiltering(t *testing.T) {
 			var eventCount int
 			var violationFound bool
 			var violationMsg string
-			c.EventCallback = func(e *Event) error {
-				defer e.Release()
+			c.EventCallback = func(h *EventRecordHelper) error {
 				eventCount++
+
+				systemMetadata := h.System()
 
 				// Check if filter is being ignored
 				switch tc.FilterType {
 				case "EventID-Include":
-					if e.System.EventID != tc.TestEventID {
+					if systemMetadata.EventID != tc.TestEventID {
 						violationFound = true
-						violationMsg = fmt.Sprintf("Got EventID %d, expected only %d", e.System.EventID, tc.TestEventID)
+						violationMsg = fmt.Sprintf("Got EventID %d, expected only %d", systemMetadata.EventID, tc.TestEventID)
 						cancel()
 					}
 				case "EventID-Exclude":
-					if e.System.EventID == tc.TestEventID {
+					if systemMetadata.EventID == tc.TestEventID {
 						violationFound = true
-						violationMsg = fmt.Sprintf("Got excluded EventID %d", e.System.EventID)
+						violationMsg = fmt.Sprintf("Got excluded EventID %d", systemMetadata.EventID)
 						cancel()
 					}
 				case "PID":
-					if e.System.Execution.ProcessID != currentPID {
+					if systemMetadata.Execution.ProcessID != currentPID {
 						violationFound = true
-						violationMsg = fmt.Sprintf("Got PID %d, expected %d", e.System.Execution.ProcessID, currentPID)
+						violationMsg = fmt.Sprintf("Got PID %d, expected %d", systemMetadata.Execution.ProcessID, currentPID)
 						cancel()
 					}
 				case "ExeName":
 					// For exe name, we just check if we get events from other PIDs
-					if e.System.Execution.ProcessID != currentPID {
+					if systemMetadata.Execution.ProcessID != currentPID {
 						violationFound = true
-						violationMsg = fmt.Sprintf("Got PID %d, expected current process %d", e.System.Execution.ProcessID, currentPID)
+						violationMsg = fmt.Sprintf("Got PID %d, expected current process %d", systemMetadata.Execution.ProcessID, currentPID)
 						cancel()
 					}
 				}

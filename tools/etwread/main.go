@@ -220,8 +220,7 @@ func run() error {
 	}
 
 	// 5. Event Processing
-	c.EventCallback = func(e *etw.Event) error {
-		defer e.Release()
+	c.EventCallback = func(e *etw.EventRecordHelper) error {
 		b, err := json.Marshal(e)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error marshaling event: %v\n", err)
