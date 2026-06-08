@@ -172,6 +172,44 @@ type ProviderEnumerationInfo struct {
 	TraceProviderInfoArray [1]TraceProviderInfo // This is a variable size array in C
 }
 
+// https://learn.microsoft.com/en-us/windows/win32/api/tdh/ns-tdh-provider_filter_info
+// v10.0.19041.0 /tdh.h
+/*
+	typedef struct _PROVIDER_FILTER_INFO {
+	UCHAR               Id;
+	UCHAR               Version;
+	ULONG               MessageOffset;
+	ULONG               Reserved;
+	ULONG               PropertyCount;
+	EVENT_PROPERTY_INFO EventPropertyInfoArray[ANYSIZE_ARRAY];
+	} PROVIDER_FILTER_INFO, *PPROVIDER_FILTER_INFO;
+*/
+// Defines a filter and its data.
+type ProviderFilterInfo struct {
+	Id                     uint8
+	Version                uint8
+	MessageOffset          uint32
+	Reserved               uint32
+	PropertyCount          uint32
+	EventPropertyInfoArray [1]EventPropertyInfo // variant
+}
+
+// https://learn.microsoft.com/en-us/windows/win32/api/tdh/ns-tdh-payload_filter_predicate
+/*
+	typedef struct _PAYLOAD_FILTER_PREDICATE {
+		LPWSTR FieldName;
+		USHORT CompareOp;
+		LPWSTR Value;
+	} PAYLOAD_FILTER_PREDICATE, *PPAYLOAD_FILTER_PREDICATE;
+*/
+// Defines an event payload filter predicate that describes how to filter
+// on a single field in a trace session.
+type PayloadFilterPredicate struct {
+	FieldName  *uint16
+	CompareOp  uint16
+	Value      *uint16
+}
+
 // https://learn.microsoft.com/en-us/windows/win32/api/tdh/ns-tdh-trace_provider_info
 // v10.0.19041.0 /tdh.h
 /*

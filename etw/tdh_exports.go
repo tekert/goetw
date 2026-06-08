@@ -13,6 +13,7 @@ var (
 	tdhDll                                         = syscall.MustLoadDLL("tdh.dll")
 	tdhEnumerateProviderFieldInformation           = tdh.NewProc("TdhEnumerateProviderFieldInformation")
 	tdhEnumerateProviderFilters                    = tdh.NewProc("TdhEnumerateProviderFilters")
+	tdhCreatePayloadFilter                         = tdh.NewProc("TdhCreatePayloadFilter")
 	tdhEnumerateProviders                          = tdh.NewProc("TdhEnumerateProviders")
 	tdhEnumerateRemoteWBEMProviderFieldInformation = tdh.NewProc("TdhEnumerateRemoteWBEMProviderFieldInformation")
 	tdhEnumerateRemoteWBEMProviders                = tdh.NewProc("TdhEnumerateRemoteWBEMProviders")

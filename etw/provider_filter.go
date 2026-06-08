@@ -18,6 +18,7 @@ import (
 // in a trace, but it does not reduce the initial CPU overhead of event creation.
 //
 // Example usage:
+//
 //	Filters: []etw.ProviderFilter{
 //		etw.NewEventIDFilter(true, 10, 11),
 //		//etw.NewPIDFilter(1234, 5678),                             // read doc about limitations
@@ -58,6 +59,7 @@ func NewEventIDFilter(filterIn bool, ids ...uint16) *EventIDFilter {
 }
 
 func (f *EventIDFilter) build() (EventFilterDescriptor, any) {
+	// LIMIT: MAX_EVENT_FILTER_EVENT_ID_COUNT (64)
 	if len(f.IDs) == 0 || len(f.IDs) > MAX_EVENT_FILTER_EVENT_ID_COUNT {
 		return EventFilterDescriptor{}, nil
 	}
@@ -103,8 +105,8 @@ func NewPIDFilter(pids ...uint32) *PIDFilter {
 }
 
 func (f *PIDFilter) build() (EventFilterDescriptor, any) {
-	const maxPIDs = 8 // MAX_EVENT_FILTER_PID_COUNT
-	if len(f.PIDs) == 0 || len(f.PIDs) > maxPIDs {
+	// LIMIT: MAX_EVENT_FILTER_PID_COUNT (8)
+	if len(f.PIDs) == 0 || len(f.PIDs) > MAX_EVENT_FILTER_PID_COUNT {
 		return EventFilterDescriptor{}, nil
 	}
 
@@ -157,12 +159,385 @@ func (f *ExecutableNameFilter) build() (EventFilterDescriptor, any) {
 		return EventFilterDescriptor{}, nil
 	}
 
-	desc := EventFilterDescriptor{
-		Ptr:  uint64(uintptr(unsafe.Pointer(&utf16Str[0]))),
-		Size: uint32(len(utf16Str) * 2), // size in bytes, including null terminator
-		Type: EVENT_FILTER_TYPE_EXECUTABLE_NAME,
+	// LIMIT: MAX_EVENT_FILTER_DATA_SIZE (1024)
+	size := uint32(len(utf16Str) * 2) // size in bytes, including null terminator
+	if size > MAX_EVENT_FILTER_DATA_SIZE {
+		return EventFilterDescriptor{}, nil
 	}
-	//cleanup := func() { _ = utf16Str }
 
-	return desc, &utf16Str
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(&utf16Str[0]))),
+		Size: size,
+		Type: EVENT_FILTER_TYPE_EXECUTABLE_NAME,
+	}, &utf16Str
+}
+
+// EventNameFilter filters TraceLogging events based on their names.
+//
+// # CPU Performance Impact: Medium
+//
+// This is an "attribute filter" applied by the ETW runtime to TraceLogging providers.
+// It allows enabling or disabling specific events by name, further refined by
+// level and keywords.
+//
+// If applied to a non-TraceLogging provider, this filter is ignored.
+type EventNameFilter struct {
+	Names           []string
+	MatchAnyKeyword uint64
+	MatchAllKeyword uint64
+	Level           uint8
+	FilterIn        bool // True to include these names, false to exclude them.
+}
+
+// NewEventNameFilter creates a new filter for the given TraceLogging event names.
+// If filterIn is true, only events with these names are captured; otherwise, they are excluded.
+func NewEventNameFilter(filterIn bool, names ...string) *EventNameFilter {
+	return &EventNameFilter{
+		Names:    names,
+		FilterIn: filterIn,
+	}
+}
+
+func (f *EventNameFilter) build() (EventFilterDescriptor, any) {
+	filter, totalSize, keepAlive := AllocEventFilterEventName(f.Names)
+	// LIMIT: MAX_EVENT_FILTER_EVENT_NAME_SIZE (4096)
+	if filter == nil || totalSize > MAX_EVENT_FILTER_EVENT_NAME_SIZE {
+		return EventFilterDescriptor{}, nil
+	}
+
+	// Set the remaining filter criteria
+	filter.MatchAnyKeyword = f.MatchAnyKeyword
+	filter.MatchAllKeyword = f.MatchAllKeyword
+	filter.Level = f.Level
+	if f.FilterIn {
+		filter.FilterIn = 1
+	} else {
+		filter.FilterIn = 0
+	}
+
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(filter))),
+		Size: uint32(totalSize),
+		Type: EVENT_FILTER_TYPE_EVENT_NAME,
+	}, keepAlive
+}
+
+// EventLevelKWFilter filters stack collection based on event level and keywords.
+//
+// # CPU Performance Impact: Low (for the filter itself)
+//
+// This filter determines whether a stack trace should be captured for events
+// matching the specified level and keyword bitmasks.
+//
+// Note: To actually collect stacks, you must also specify
+// EVENT_ENABLE_PROPERTY_STACK_TRACE in the ENABLE_TRACE_PARAMETERS structure.
+type EventLevelKWFilter struct {
+	MatchAnyKeyword uint64
+	MatchAllKeyword uint64
+	Level           uint8
+	FilterIn        bool // True to collect stacks for matching events, false to disable.
+}
+
+// NewEventLevelKWFilter creates a new filter for stack collection based on level and keywords.
+func NewEventLevelKWFilter(filterIn bool, level uint8, anyKW, allKW uint64) *EventLevelKWFilter {
+	return &EventLevelKWFilter{
+		FilterIn:        filterIn,
+		Level:           level,
+		MatchAnyKeyword: anyKW,
+		MatchAllKeyword: allKW,
+	}
+}
+
+func (f *EventLevelKWFilter) build() (EventFilterDescriptor, any) {
+	filter := &EventFilterLevelKW{
+		MatchAnyKeyword: f.MatchAnyKeyword,
+		MatchAllKeyword: f.MatchAllKeyword,
+		Level:           f.Level,
+	}
+
+	if f.FilterIn {
+		filter.FilterIn = 1
+	} else {
+		filter.FilterIn = 0
+	}
+
+	// LIMIT: MAX_EVENT_FILTER_DATA_SIZE (1024)
+	size := uint32(unsafe.Sizeof(*filter))
+	if size > MAX_EVENT_FILTER_DATA_SIZE {
+		return EventFilterDescriptor{}, nil
+	}
+
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(filter))),
+		Size: size,
+		Type: EVENT_FILTER_TYPE_STACKWALK_LEVEL_KW,
+	}, filter // The struct itself acts as the keepAlive object
+}
+
+// StackWalkFilter filters stack collection based on specific event IDs.
+//
+// # CPU Performance Impact: Low
+//
+// This filter determines whether a stack trace should be captured for specific
+// event IDs. Each event write call will go through this array quickly to find
+// out whether the stack should be captured or not.
+//
+// When applied to a TraceLogging provider, this filter will be ignored as
+// TraceLogging events do not have static event IDs.
+//
+// Note: To actually collect stacks, you must also specify
+// EVENT_ENABLE_PROPERTY_STACK_TRACE in the EnableProperties of the Provider.
+//
+// The maximum number of event IDs allowed is limited by MAX_EVENT_FILTER_EVENT_ID_COUNT (64).
+type StackWalkFilter struct {
+	IDs      []uint16
+	FilterIn bool // True to collect stacks for these IDs, false to disable.
+}
+
+// NewStackWalkFilter creates a new filter for stack collection based on specific event IDs.
+func NewStackWalkFilter(filterIn bool, ids ...uint16) *StackWalkFilter {
+	return &StackWalkFilter{IDs: ids, FilterIn: filterIn}
+}
+
+func (f *StackWalkFilter) build() (EventFilterDescriptor, any) {
+	// LIMIT: MAX_EVENT_FILTER_EVENT_ID_COUNT (64)
+	if len(f.IDs) == 0 || len(f.IDs) > MAX_EVENT_FILTER_EVENT_ID_COUNT {
+		return EventFilterDescriptor{}, nil
+	}
+
+	// We reuse the EventID allocator since it's the exact same struct layout
+	filterData, keepAlive := AllocEventFilterEventID(f.IDs)
+	if f.FilterIn {
+		filterData.FilterIn = 1
+	} else {
+		filterData.FilterIn = 0
+	}
+
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(filterData))),
+		Size: uint32(filterData.Size()),
+		Type: EVENT_FILTER_TYPE_STACKWALK,
+	}, keepAlive
+}
+
+// StackWalkNameFilter filters stack collection for TraceLogging events based on their names.
+//
+// # CPU Performance Impact: Low
+//
+// This feature allows filtering of stack collection for TraceLogging events based on
+// the event names. You can further refine it using Keyword bitmasks and Level.
+//
+// When applied to a non-TraceLogging provider, this filter is ignored as those
+// events do not have names specified in their payload.
+//
+// Note: To actually collect stacks, you must also specify
+// EVENT_ENABLE_PROPERTY_STACK_TRACE in the EnableProperties of the Provider.
+type StackWalkNameFilter struct {
+	Names           []string
+	MatchAnyKeyword uint64
+	MatchAllKeyword uint64
+	Level           uint8
+	FilterIn        bool // True to collect stacks for matching events, false to disable.
+}
+
+// NewStackWalkNameFilter creates a new filter for stack collection based on TraceLogging event names.
+func NewStackWalkNameFilter(filterIn bool, names ...string) *StackWalkNameFilter {
+	return &StackWalkNameFilter{
+		Names:    names,
+		FilterIn: filterIn,
+	}
+}
+
+func (f *StackWalkNameFilter) build() (EventFilterDescriptor, any) {
+	// We reuse the EventName allocator since it's the exact same struct layout
+	filter, totalSize, keepAlive := AllocEventFilterEventName(f.Names)
+	// LIMIT: MAX_EVENT_FILTER_EVENT_NAME_SIZE (4096)
+	if filter == nil || totalSize > MAX_EVENT_FILTER_EVENT_NAME_SIZE {
+		return EventFilterDescriptor{}, nil
+	}
+
+	filter.MatchAnyKeyword = f.MatchAnyKeyword
+	filter.MatchAllKeyword = f.MatchAllKeyword
+	filter.Level = f.Level
+	if f.FilterIn {
+		filter.FilterIn = 1
+	} else {
+		filter.FilterIn = 0
+	}
+
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(filter))),
+		Size: uint32(totalSize),
+		Type: EVENT_FILTER_TYPE_STACKWALK_NAME, // Specify this is a StackWalk Name filter
+	}, keepAlive
+}
+
+// PayloadFilter filters events based on their payload content.
+//
+// # CPU Performance Impact: Medium to High
+//
+// This filter evaluates the actual binary payload of the event. It is incredibly
+// powerful but must be constructed using the Windows API `TdhCreatePayloadFilter`.
+// You pass the resulting binary blob to this structure.
+//
+// The maximum data size for an event payload filter is limited to MAX_EVENT_FILTER_PAYLOAD_SIZE (4096).
+type PayloadFilter struct {
+	Payload []byte
+}
+
+// NewPayloadFilter creates a new filter based on a payload filter blob.
+// The payload must be a valid binary blob generated by TdhCreatePayloadFilter.
+func NewPayloadFilter(payload []byte) *PayloadFilter {
+	return &PayloadFilter{Payload: payload}
+}
+
+func (f *PayloadFilter) build() (EventFilterDescriptor, any) {
+	// LIMIT: MAX_EVENT_FILTER_PAYLOAD_SIZE (4096)
+	if len(f.Payload) == 0 || len(f.Payload) > MAX_EVENT_FILTER_PAYLOAD_SIZE {
+		return EventFilterDescriptor{}, nil
+	}
+
+	payloadCopy := make([]byte, len(f.Payload))
+	copy(payloadCopy, f.Payload)
+
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(&payloadCopy[0]))),
+		Size: uint32(len(payloadCopy)),
+		Type: EVENT_FILTER_TYPE_PAYLOAD,
+	}, &payloadCopy
+}
+
+// SchematizedFilter represents a traditional provider-side filter defined in the manifest.
+//
+// # CPU Performance Impact: Low
+//
+// The controller defines a custom set of filters as a binary object. The provider
+// interprets this object and filters events *before* writing them, making it
+// highly efficient.
+type SchematizedFilter struct {
+	Id      uint16
+	Version uint8
+	Data    []byte // The custom binary data following the header
+}
+
+// NewSchematizedFilter creates a new schematized filter.
+// Use TdhEnumerateProviderFilters to retrieve the filters defined in a manifest.
+func NewSchematizedFilter(id uint16, version uint8, data []byte) *SchematizedFilter {
+	return &SchematizedFilter{
+		Id:      id,
+		Version: version,
+		Data:    data,
+	}
+}
+
+func (f *SchematizedFilter) build() (EventFilterDescriptor, any) {
+	headerSize := uint32(unsafe.Sizeof(EventFilterHeader{}))
+	totalSize := headerSize + uint32(len(f.Data))
+
+	// LIMIT: MAX_EVENT_FILTER_DATA_SIZE (1024)
+	if totalSize > MAX_EVENT_FILTER_DATA_SIZE {
+		return EventFilterDescriptor{}, nil
+	}
+
+	buf := make([]byte, totalSize)
+	header := (*EventFilterHeader)(unsafe.Pointer(&buf[0]))
+
+	header.Id = f.Id
+	header.Version = f.Version
+	header.Size = totalSize
+	// ETW documentation states: "the session must set InstanceId and NextOffset to zero"
+	header.InstanceId = 0
+	header.NextOffset = 0
+
+	if len(f.Data) > 0 {
+		copy(buf[headerSize:], f.Data)
+	}
+
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(&buf[0]))),
+		Size: totalSize,
+		Type: EVENT_FILTER_TYPE_SCHEMATIZED,
+	}, &buf
+}
+
+// PackageIDFilter filters events emitted from a particular Windows Store app package.
+//
+// # CPU Performance Impact: Low
+//
+// This is a "scope filter". It will only enable the provider for the specified
+// App Package IDs.
+//
+// The filter accepts multiple Package IDs, which will be separated by semicolons internally.
+type PackageIDFilter struct {
+	PackageIDs []string
+}
+
+// NewPackageIDFilter creates a new filter for the given Windows Store Package IDs.
+func NewPackageIDFilter(packageIDs ...string) *PackageIDFilter {
+	return &PackageIDFilter{PackageIDs: packageIDs}
+}
+
+func (f *PackageIDFilter) build() (EventFilterDescriptor, any) {
+	if len(f.PackageIDs) == 0 {
+		return EventFilterDescriptor{}, nil
+	}
+
+	joined := strings.Join(f.PackageIDs, ";")
+	utf16Str, err := syscall.UTF16FromString(joined)
+	if err != nil {
+		return EventFilterDescriptor{}, nil
+	}
+
+	// LIMIT: MAX_EVENT_FILTER_DATA_SIZE (1024)
+	size := uint32(len(utf16Str) * 2) // size in bytes, including null terminator
+	if size > MAX_EVENT_FILTER_DATA_SIZE {
+		return EventFilterDescriptor{}, nil
+	}
+
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(&utf16Str[0]))),
+		Size: size,
+		Type: EVENT_FILTER_TYPE_PACKAGE_ID,
+	}, &utf16Str
+}
+
+// PackageAppIDFilter filters events emitted from a particular Package Relative App ID (PRAID).
+//
+// # CPU Performance Impact: Low
+//
+// This is a "scope filter". It will only enable the provider for the specified PRAIDs.
+//
+// The filter accepts multiple PRAID, which will be separated by semicolons internally.
+type PackageAppIDFilter struct {
+	AppIDs []string
+}
+
+// NewPackageAppIDFilter creates a new filter for the given Package Relative App IDs (PRAID).
+// This can be used to filter providers to events emitted from a particular Windows Store app package.
+func NewPackageAppIDFilter(appIDs ...string) *PackageAppIDFilter {
+	return &PackageAppIDFilter{AppIDs: appIDs}
+}
+
+func (f *PackageAppIDFilter) build() (EventFilterDescriptor, any) {
+	if len(f.AppIDs) == 0 {
+		return EventFilterDescriptor{}, nil
+	}
+
+	joined := strings.Join(f.AppIDs, ";")
+	utf16Str, err := syscall.UTF16FromString(joined)
+	if err != nil {
+		return EventFilterDescriptor{}, nil
+	}
+
+	// LIMIT: MAX_EVENT_FILTER_DATA_SIZE (1024)
+	size := uint32(len(utf16Str) * 2) // size in bytes, including null terminator
+	if size > MAX_EVENT_FILTER_DATA_SIZE {
+		return EventFilterDescriptor{}, nil
+	}
+
+	return EventFilterDescriptor{
+		Ptr:  uint64(uintptr(unsafe.Pointer(&utf16Str[0]))),
+		Size: size,
+		Type: EVENT_FILTER_TYPE_PACKAGE_APP_ID,
+	}, &utf16Str
 }

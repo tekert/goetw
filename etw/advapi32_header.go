@@ -890,10 +890,123 @@ const (
 )
 
 const (
+	// The maximum number of EVENT_DATA_DESCRIPTORs that can be used in an event.
+	//  Used with EventWrite, EventWriteTransfer, EventWriteEx.
+	MAX_EVENT_DATA_DESCRIPTORS = 128
+
+	// The maximum data size for many of the filter types. Used with EVENT_FILTER_DESCRIPTOR.
 	MAX_EVENT_FILTER_DATA_SIZE = 1024
 
+	// The maximum data size for an event payload filter.
+	// Used with EVENT_FILTER_DESCRIPTOR of type EVENT_FILTER_TYPE_PAYLOAD.
+	MAX_EVENT_FILTER_PAYLOAD_SIZE = 4096
+
+	// The maximum data size for a name-based filter.
+	// Used with EVENT_FILTER_DESCRIPTOR for name-based filters.
+	MAX_EVENT_FILTER_EVENT_NAME_SIZE = 4096
+
+	// The maximum number of filters that can be provided in a call to EnableTraceEx2.
+	//  Used with ENABLE_TRACE_PARAMETERS.
+	MAX_EVENT_FILTERS_COUNT = 13
+
+	// The maximum number of process IDs in a PID filter.
+	//  Used with EVENT_FILTER_DESCRIPTOR of type EVENT_FILTER_TYPE_PID.
+	MAX_EVENT_FILTER_PID_COUNT = 8
+
+	// The maximum number of event IDs in an event ID or stackwalk filter.
+	//  Used with EVENT_FILTER_DESCRIPTOR of type EVENT_FILTER_TYPE_EVENT_ID or EVENT_FILTER_TYPE_STACKWALK.
 	MAX_EVENT_FILTER_EVENT_ID_COUNT = 64
 )
+
+// https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_filter_event_name
+/*
+	typedef struct _EVENT_FILTER_EVENT_NAME {
+	ULONGLONG MatchAnyKeyword;
+	ULONGLONG MatchAllKeyword;
+	UCHAR     Level;
+	BOOLEAN   FilterIn;
+	USHORT    NameCount;
+	UCHAR     Names[ANYSIZE_ARRAY];
+	} EVENT_FILTER_EVENT_NAME, *PEVENT_FILTER_EVENT_NAME;
+*/
+type EventFilterEventName struct {
+	MatchAnyKeyword uint64
+	MatchAllKeyword uint64
+	Level           uint8
+	FilterIn        uint8
+	NameCount       uint16
+	Names           [1]uint8
+}
+
+// AllocEventFilterEventName allocates a buffer for an EVENT_FILTER_EVENT_NAME structure
+// with a flexible array member for the event names.
+func AllocEventFilterEventName(names []string) (f *EventFilterEventName, size int, keepAlive *[]byte) {
+	if len(names) == 0 {
+		return nil, 0, nil
+	}
+
+	// Calculate total size for names: sum of (length + 1 for null terminator)
+	namesSize := 0
+	for _, name := range names {
+		namesSize += len(name) + 1
+	}
+
+	// Header size is 20 bytes (8+8+1+1+2).
+	// The Names array starts at offset 20.
+	totalSize := 20 + namesSize
+	buf := make([]byte, totalSize)
+
+	// Create EventFilterEventName from buffer
+	f = (*EventFilterEventName)(unsafe.Pointer(&buf[0]))
+	f.NameCount = uint16(len(names))
+
+	// Get the names memory as a byte slice.
+	namesData := unsafe.Slice(&f.Names[0], namesSize)
+	offset := 0
+	for _, name := range names {
+		copy(namesData[offset:], name)
+		namesData[offset+len(name)] = 0 // Null terminator
+		offset += len(name) + 1
+	}
+
+	return f, totalSize, &buf // This pointer keeps the slice alive
+}
+
+// https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_filter_level_kw
+/*
+typedef struct _EVENT_FILTER_LEVEL_KW {
+  ULONGLONG MatchAnyKeyword;
+  ULONGLONG MatchAllKeyword;
+  UCHAR     Level;
+  BOOLEAN   FilterIn;
+} EVENT_FILTER_LEVEL_KW, *PEVENT_FILTER_LEVEL_KW;
+*/
+type EventFilterLevelKW struct {
+	MatchAnyKeyword uint64
+	MatchAllKeyword uint64
+	Level           uint8
+	FilterIn        uint8
+}
+
+// https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_filter_header
+/*
+typedef struct _EVENT_FILTER_HEADER {
+  USHORT    Id;
+  UCHAR     Version;
+  UCHAR     Reserved[5];
+  ULONGLONG InstanceId;
+  ULONG     Size;
+  ULONG     NextOffset;
+} EVENT_FILTER_HEADER, *PEVENT_FILTER_HEADER;
+*/
+type EventFilterHeader struct {
+	Id         uint16
+	Version    uint8
+	Reserved   [5]uint8
+	InstanceId uint64
+	Size       uint32
+	NextOffset uint32
+}
 
 // https://learn.microsoft.com/en-us/windows/win32/api/evntprov/ns-evntprov-event_filter_event_id
 /*

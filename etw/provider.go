@@ -222,8 +222,15 @@ func ParseProvider(s string) (p Provider, err error) {
 		case 0: // Part 0: Name/GUID (required)
 			resolvedProvider := ResolveProvider(chunk)
 			if resolvedProvider.IsZero() {
-				err = fmt.Errorf("%w %s", ErrUnkownProvider, chunk)
-				return
+				// If it's not registered, but it's a valid GUID, allow it.
+				// This is critical for TraceLogging providers which are often not registered.
+				if g, errGUID := ParseGUID(chunk); errGUID == nil {
+					p.GUID = *g
+					p.Name = chunk
+				} else {
+					err = fmt.Errorf("%w %s", ErrUnkownProvider, chunk)
+					return
+				}
 			}
 			// Only copy the identifying information, preserving the defaults set above.
 			p.GUID = resolvedProvider.GUID

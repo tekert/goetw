@@ -36,16 +36,90 @@ func TdhEnumerateProviderFieldInformation(
 	return syscall.Errno(r1)
 }
 
+// https://learn.microsoft.com/en-us/windows/win32/api/tdh/nf-tdh-tdhenumerateproviderfilters
+/*
+	TDHSTATUS TdhEnumerateProviderFilters(
+		[in]            LPGUID                Guid,
+		[in]            ULONG                 TdhContextCount,
+		[in, optional]  PTDH_CONTEXT          TdhContext,
+		[in]            ULONG                 *FilterCount,
+		[out, optional] PPROVIDER_FILTER_INFO *Buffer,
+		[in, out]       ULONG                 *BufferSize
+	);
+*/
+// The TdhEnumerateProviderFilters function enumerates the filters
+// that the specified provider defined in the manifest.
+func TdhEnumerateProviderFilters(
+	pGuid *GUID,
+	tdhContextCount uint32,
+	pTdhContext *TdhContext,
+	filterCount *uint32,
+	pBuffer **ProviderFilterInfo,
+	pBufferSize *uint32) error {
+	r1, _, _ := tdhEnumerateProviderFilters.Call(
+		uintptr(unsafe.Pointer(pGuid)),
+		uintptr(tdhContextCount),
+		uintptr(unsafe.Pointer(pTdhContext)),
+		uintptr(unsafe.Pointer(filterCount)),
+		uintptr(unsafe.Pointer(pBuffer)),
+		uintptr(unsafe.Pointer(pBufferSize)))
+	if r1 == 0 {
+		return nil
+	}
+	return syscall.Errno(r1)
+}
+
+// https://learn.microsoft.com/en-us/windows/win32/api/tdh/nf-tdh-tdhcreatepayloadfilter
+/*
+	TDHSTATUS TdhCreatePayloadFilter(
+	[in]  LPCGUID                   ProviderGuid,
+	[in]  PCEVENT_DESCRIPTOR        EventDescriptor,
+	[in]  BOOLEAN                   EventMatchANY,
+	[in]  ULONG                     PayloadPredicateCount,
+	[in]  PPAYLOAD_FILTER_PREDICATE PayloadPredicates,
+	[out] PVOID                     *PayloadFilter
+	);
+*/
+// The TdhCreatePayloadFilter function creates a single filter
+// for a single payload to be used with the EnableTraceEx2 function.
+func TdhCreatePayloadFilter(
+	providerGuid *GUID,
+	eventDescriptor *EventDescriptor,
+	eventMatchANY bool,
+	payloadPredicateCount uint32,
+	payloadPredicates *PayloadFilterPredicate,
+	payloadFilter *unsafe.Pointer) error {
+
+	var val uintptr
+	if eventMatchANY {
+		val = 1
+	} else {
+		val = 0
+	}
+
+	r1, _, _ := tdhCreatePayloadFilter.Call(
+		uintptr(unsafe.Pointer(providerGuid)),
+		uintptr(unsafe.Pointer(eventDescriptor)),
+		uintptr(val),
+		uintptr(payloadPredicateCount),
+		uintptr(unsafe.Pointer(payloadPredicates)),
+		uintptr(unsafe.Pointer(payloadFilter)))
+	if r1 == 0 {
+		return nil
+	}
+	return syscall.Errno(r1)
+}
+
 // https://learn.microsoft.com/en-us/windows/win32/api/tdh/nf-tdh-tdhenumerateproviders
 /*
 TdhEnumerateProviders API wrapper generated from prototype
-ULONG __stdcall TdhEnumerateProviders(
-	 PPROVIDER_ENUMERATION_INFO pBuffer,
-	 ULONG *pBufferSize );
+	TDHSTATUS TdhEnumerateProviders(
+		[out]     PPROVIDER_ENUMERATION_INFO pBuffer,
+		[in, out] ULONG                      *pBufferSize
+	);
 
-Tested: NOK
+	Tested: NOK
 */
-
 // Retrieves a list of all providers that have registered on the computer.
 func TdhEnumerateProviders(
 	pBuffer *ProviderEnumerationInfo,

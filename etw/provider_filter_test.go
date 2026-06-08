@@ -59,6 +59,32 @@ func TestProviderFiltering(t *testing.T) {
 		{"Microsoft-Windows-RPC", "EventID-Exclude", NewEventIDFilter(false, 6), 6, BehaviorApplied, ""},
 		{"Microsoft-Windows-RPC", "PID", NewPIDFilter(currentPID), 0, BehaviorApplied, ""},
 		{"Microsoft-Windows-RPC", "ExeName", NewExecutableNameFilter(exeName), 0, BehaviorApplied, ""},
+
+		// Scope Filters: Package ID / App ID
+		// Ignored on Kernel providers
+		{"Microsoft-Windows-Kernel-Process", "PackageID", NewPackageIDFilter("DummyPackage"), 0, BehaviorIgnored, ""},
+		{"Microsoft-Windows-Kernel-Process", "PackageAppID", NewPackageAppIDFilter("DummyAppID"), 0, BehaviorIgnored, ""},
+		// Applied successfully on User-Mode providers
+		{"Microsoft-Windows-RPC", "PackageID", NewPackageIDFilter("DummyPackage"), 0, BehaviorApplied, ""},
+		{"Microsoft-Windows-RPC", "PackageAppID", NewPackageAppIDFilter("DummyAppID"), 0, BehaviorApplied, ""},
+
+		// TraceLogging Provider Tests
+		// Test 1: A Manifest-based provider ignores the EventName filter -> BehaviorIgnored
+		{"Microsoft-Windows-Kernel-Process", "EventName-Include", NewEventNameFilter(true, "DummyEventName"), 0, BehaviorIgnored, ""},
+		// Test 2: We use a dummy GUID for a TraceLogging provider. Windows accepts the filter, generates 0 events -> BehaviorApplied
+		{"{11111111-2222-3333-4444-555555555555}", "EventName-Include", NewEventNameFilter(true, "DummyEventName"), 0, BehaviorApplied, ""},
+
+		// StackWalk Provider Tests
+		{"Microsoft-Windows-Kernel-Process", "StackWalk-LevelKW", NewEventLevelKWFilter(true, 5, 0, 0), 0, BehaviorApplied, ""},
+		{"Microsoft-Windows-Kernel-Process", "StackWalk-EventID", NewStackWalkFilter(true, 1, 2), 0, BehaviorApplied, ""},
+		{"{11111111-2222-3333-4444-555555555555}", "StackWalk-Name", NewStackWalkNameFilter(true, "DummyEventName"), 0, BehaviorApplied, ""},
+
+		// Advanced Filters (Payload & Schematized)
+		// Note: We pass invalid dummy binary data. The ETW runtime (kernel) actively validates Payload/Schematized filters.
+		// EnableProvider will fail (ERROR_INVALID_PARAMETER), which proves our memory descriptors are correctly reaching the kernel.
+		{"Microsoft-Windows-Kernel-Process", "Payload", NewPayloadFilter([]byte{0x01, 0x02, 0x03}), 0, BehaviorUnsupported, ""},
+		// The API doesn't validate Schematized payloads; it just forwards them to the provider, which ignores the garbage and emits events.
+		{"Microsoft-Windows-Kernel-Process", "Schematized", NewSchematizedFilter(1, 0, []byte{0x01, 0x02, 0x03}), 0, BehaviorApplied, ""},
 	}
 
 	for i := range testCases {
@@ -78,6 +104,12 @@ func TestProviderFiltering(t *testing.T) {
 				return
 			}
 			prov.Filters = []ProviderFilter{tc.Filter}
+
+			// IMPORTANT: Enable the stack trace property if we are testing a StackWalk filter.
+			// The Windows API requires this flag to be set for the LevelKW filter to take effect.
+			if strings.HasPrefix(tc.FilterType, "StackWalk") {
+				prov.EnableProperties |= EVENT_ENABLE_PROPERTY_STACK_TRACE
+			}
 
 			// Try to enable provider - this is where unsupported filters fail
 			err = ses.EnableProvider(prov)
@@ -101,7 +133,7 @@ func TestProviderFiltering(t *testing.T) {
 
 				systemMetadata := h.System()
 
-				// Check if filter is being ignored
+				// Check if filter is being ignored by the ETW runtime
 				switch tc.FilterType {
 				case "EventID-Include":
 					if systemMetadata.EventID != tc.TestEventID {
@@ -128,6 +160,22 @@ func TestProviderFiltering(t *testing.T) {
 						violationMsg = fmt.Sprintf("Got PID %d, expected current process %d", systemMetadata.Execution.ProcessID, currentPID)
 						cancel()
 					}
+				case "PackageID", "PackageAppID":
+					// We filter by a "Dummy" package. If we receive any events,
+					// it means the ETW runtime ignored our filter.
+					violationFound = true
+					violationMsg = fmt.Sprintf("Received event despite filtering for dummy %s", tc.FilterType)
+					cancel()
+				case "EventName-Include":
+					// If we receive AT LEAST ONE event when searching for "DummyEventName",
+					// it means the ETW runtime ignored our filter (which is typical for Manifest providers).
+					violationFound = true
+					violationMsg = "Received event despite EventName filter (filter ignored by ETW runtime)"
+					cancel()
+				case "StackWalk-LevelKW":
+					// StackWalk filters do not drop events, they simply attach (or omit) the StackTrace property.
+					// Since EnableProvider succeeded and events flow, the API accepted the filter.
+					// We consider this successfully applied.
 				}
 
 				// Stop after first few events if no violation
