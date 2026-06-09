@@ -54,14 +54,20 @@ func TdhEnumerateProviderFilters(
 	tdhContextCount uint32,
 	pTdhContext *TdhContext,
 	filterCount *uint32,
-	pBuffer **ProviderFilterInfo,
+	pBuffer *ProviderFilterBuffer,
 	pBufferSize *uint32) error {
+
+	var pBufferPtr uintptr
+	if pBuffer != nil {
+		pBufferPtr = uintptr(unsafe.Pointer(&pBuffer.Ptr))
+	}
+
 	r1, _, _ := tdhEnumerateProviderFilters.Call(
 		uintptr(unsafe.Pointer(pGuid)),
 		uintptr(tdhContextCount),
 		uintptr(unsafe.Pointer(pTdhContext)),
 		uintptr(unsafe.Pointer(filterCount)),
-		uintptr(unsafe.Pointer(pBuffer)),
+		pBufferPtr,
 		uintptr(unsafe.Pointer(pBufferSize)))
 	if r1 == 0 {
 		return nil
@@ -90,7 +96,7 @@ func TdhCreatePayloadFilter(
 	payloadPredicates *PayloadFilterPredicate,
 	payloadFilter *unsafe.Pointer) error {
 
-	var val uintptr
+	var val uint8
 	if eventMatchANY {
 		val = 1
 	} else {
@@ -104,6 +110,77 @@ func TdhCreatePayloadFilter(
 		uintptr(payloadPredicateCount),
 		uintptr(unsafe.Pointer(payloadPredicates)),
 		uintptr(unsafe.Pointer(payloadFilter)))
+	if r1 == 0 {
+		return nil
+	}
+	return syscall.Errno(r1)
+}
+
+// https://learn.microsoft.com/en-us/windows/win32/api/tdh/nf-tdh-tdhaggregatepayloadfilters
+/*
+	TDHSTATUS TdhAggregatePayloadFilters(
+					ULONG                    PayloadFilterCount,
+					PVOID                    *PayloadFilterPtrs,
+	[in, optional] PBOOLEAN                 EventMatchALLFlags,
+	[out]          PEVENT_FILTER_DESCRIPTOR EventFilterDescriptor
+	);
+*/
+// The TdhAggregatePayloadFilters function aggregates multiple payload filters for a single
+// provider into a single data structure for use with the EnableTraceEx2 function.
+func TdhAggregatePayloadFilters(
+	payloadFilterCount uint32,
+	payloadFilterPtrs *unsafe.Pointer,
+	eventMatchALLFlags *bool,
+	eventFilterDescriptor *EventFilterDescriptor) error {
+
+	var pBoolean uintptr
+	if eventMatchALLFlags != nil {
+		b := uint8(0)
+		if *eventMatchALLFlags {
+			b = 1
+		}
+		pBoolean = uintptr(unsafe.Pointer(&b))
+	}
+
+	r1, _, _ := tdhAggregatePayloadFilters.Call(
+		uintptr(payloadFilterCount),
+		uintptr(unsafe.Pointer(payloadFilterPtrs)),
+		pBoolean,
+		uintptr(unsafe.Pointer(eventFilterDescriptor)))
+	if r1 == 0 {
+		return nil
+	}
+	return syscall.Errno(r1)
+}
+
+// https://learn.microsoft.com/en-us/windows/win32/api/tdh/nf-tdh-tdhcleanuppayloadeventfilterdescriptor
+/*
+  TDHSTATUS TdhCleanupPayloadEventFilterDescriptor(
+	[in, out] PEVENT_FILTER_DESCRIPTOR EventFilterDescriptor
+	);
+*/
+// The TdhCleanupPayloadEventFilterDescriptor function frees the aggregated structure of
+// payload filters created using the TdhAggregatePayloadFilters function.
+func TdhCleanupPayloadEventFilterDescriptor(
+	eventFilterDescriptor *EventFilterDescriptor) error {
+	r1, _, _ := tdhCleanupPayloadEventFilterDescriptor.Call(
+		uintptr(unsafe.Pointer(eventFilterDescriptor)))
+	if r1 == 0 {
+		return nil
+	}
+	return syscall.Errno(r1)
+}
+
+// https://learn.microsoft.com/en-us/windows/win32/api/tdh/nf-tdh-tdhdeletepayloadfilter
+/*
+	TDHSTATUS TdhDeletePayloadFilter(
+	  [in, out] PVOID *PayloadFilter
+	);
+*/
+// The TdhDeletePayloadFilter function frees the memory allocated for a single payload filter
+// by the TdhCreatePayloadFilter function.
+func TdhDeletePayloadFilter(payloadFilter *unsafe.Pointer) error {
+	r1, _, _ := tdhDeletePayloadFilter.Call(uintptr(unsafe.Pointer(payloadFilter)))
 	if r1 == 0 {
 		return nil
 	}

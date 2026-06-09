@@ -529,8 +529,16 @@ func (s *RealTimeSession) enableProvider(prov Provider) (err error) {
 	s.enabledProviders[prov.GUID] = prov
 	delete(s.addedProviders, prov.GUID)
 
-	// By reaching this point, the C call is done. The `cleanups` slice
-	// can now go out of scope, and the GC is free to collect the buffers.
+	// By reaching this point, the C call is done.
+	// Clean up unmanaged C memory if the keepAlive object provides a Free() method.
+	for _, ka := range keepAlives {
+		if freer, ok := ka.(interface{ Free() }); ok {
+			freer.Free()
+		}
+	}
+
+	// The `cleanups` slice can now go out of scope, and the GC is free to collect
+	// the go buffers.
 	runtime.KeepAlive(keepAlives)
 
 	return nil

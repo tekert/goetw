@@ -80,9 +80,20 @@ func TestProviderFiltering(t *testing.T) {
 		{"{11111111-2222-3333-4444-555555555555}", "StackWalk-Name", NewStackWalkNameFilter(true, "DummyEventName"), 0, BehaviorApplied, ""},
 
 		// Advanced Filters (Payload & Schematized)
-		// Note: We pass invalid dummy binary data. The ETW runtime (kernel) actively validates Payload/Schematized filters.
-		// EnableProvider will fail (ERROR_INVALID_PARAMETER), which proves our memory descriptors are correctly reaching the kernel.
-		{"Microsoft-Windows-Kernel-Process", "Payload", NewPayloadFilter([]byte{0x01, 0x02, 0x03}), 0, BehaviorUnsupported, ""},
+		// We create a real Payload Filter that targets the Microsoft-Windows-Kernel-Process provider,
+		// Event ID 1 (Process Start), filtering for processes where "ImageName" contains "notepad.exe".
+		// Because the OS has the manifest for this provider, the TDH API will successfully compile the filter.
+		{"Microsoft-Windows-Kernel-Process", "Payload", NewPayloadFilter(
+			*MustParseGUID("{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}"),
+			false, // matchAll
+			PayloadFilterEvent{
+				EventDescriptor: EventDescriptor{Id: 1, Level: 4, Opcode: 1, Task: 1, Keyword: 0x10},
+				MatchAny:        false,
+				Predicates: []PayloadPredicate{
+					{Field: "ImageName", CompareOp: PAYLOADFIELD_CONTAINS, Value: "notepad.exe"},
+				},
+			},
+		), 0, BehaviorApplied, ""},
 		// The API doesn't validate Schematized payloads; it just forwards them to the provider, which ignores the garbage and emits events.
 		{"Microsoft-Windows-Kernel-Process", "Schematized", NewSchematizedFilter(1, 0, []byte{0x01, 0x02, 0x03}), 0, BehaviorApplied, ""},
 	}
@@ -228,4 +239,48 @@ func TestProviderFiltering(t *testing.T) {
 		t.Logf("%-35s %-15s %-12s %s", tc.Provider, tc.FilterType, tc.Result.String(), tc.Message)
 	}
 	t.Log(strings.Repeat("-", 100))
+}
+
+// TestPayloadFilterIntegration validates the end-to-end pipeline for payload filters:
+// from high-level definition and TDH compilation to aggregation, provider enablement,
+// and the final automatic cleanup of unmanaged C memory.
+func TestPayloadFilterIntegration(t *testing.T) {
+	sessionName := "PayloadTestSession"
+	ses := NewRealTimeSession(sessionName)
+	defer ses.Stop()
+
+	providerGuid := *MustParseGUID("{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}") // Kernel-Process
+	prov := Provider{
+		GUID: providerGuid,
+		Name: "Microsoft-Windows-Kernel-Process",
+	}
+
+	// Define a high-level Payload Filter.
+	// This abstracts the complexity: the user defines "what" to filter (ImageName contains notepad.exe)
+	// without dealing with binary blobs or unsafe pointers.
+	payloadFilter := NewPayloadFilter(
+		providerGuid,
+		false, // matchAll: all PayloadFilterEvents must match
+		PayloadFilterEvent{
+			EventDescriptor: EventDescriptor{Id: 1, Level: 4, Opcode: 1, Task: 1, Keyword: 0x10},
+			MatchAny:        false, // matchAll: all predicates for this event must match
+			Predicates: []PayloadPredicate{
+				{Field: "ImageName", CompareOp: PAYLOADFIELD_CONTAINS, Value: "notepad.exe"},
+			},
+		},
+	)
+	prov.Filters = []ProviderFilter{payloadFilter}
+
+	// 3. Enable the provider.
+	// This is the critical path that tests the entire internal pipeline:
+	// a) PayloadFilter.build() -> calls TdhCreatePayloadFilter for each event.
+	// b) PayloadFilter.build() -> calls TdhAggregatePayloadFilters to create the final descriptor.
+	// c) ses.EnableProvider() -> calls EnableTraceEx2 to apply the filter to the kernel.
+	// d) ses.EnableProvider() -> detects the Free() method and calls TdhCleanup... and TdhDelete...
+	err := ses.EnableProvider(prov)
+	if err != nil {
+		t.Errorf("EnableProvider failed with PayloadFilter: %v", err)
+	}
+
+	t.Log("Successfully enabled provider with complex Payload Filter and cleaned up memory.")
 }

@@ -194,6 +194,56 @@ type ProviderFilterInfo struct {
 	EventPropertyInfoArray [1]EventPropertyInfo // variant
 }
 
+// ProviderFilterBuffer manages the memory for TdhEnumerateProviderFilters.
+type ProviderFilterBuffer struct {
+    Data []byte
+    Ptr  *ProviderFilterInfo
+}
+
+// NewProviderFilterBuffer allocates a buffer of the given size and
+// prepares the internal pointer required by the Windows API.
+func NewProviderFilterBuffer(size uint32) *ProviderFilterBuffer {
+    buf := make([]byte, size)
+    return &ProviderFilterBuffer{
+        Data: buf,
+        Ptr:  (*ProviderFilterInfo)(unsafe.Pointer(&buf[0])),
+    }
+}
+
+// From tdh.h v10.0.19041.0
+//
+// # ETW Payload Filtering Tdh support
+//
+// # Payload filtering definitions
+//
+// TDH_PAYLOADFIELD_OPERATORs are used to build Payload filters.
+//
+//	BETWEEN uses a closed interval: [LowerBound <= FieldValue <= UpperBound].
+//	Floating-point comparisons are not supported.
+//	String comparisons are case-sensitive.
+//	Values are converted based on the manifest field type.
+const (
+	// For integers, comparison can be one of:
+	PAYLOADFIELD_EQ         = uint16(0)
+	PAYLOADFIELD_NE         = uint16(1)
+	PAYLOADFIELD_LE         = uint16(2)
+	PAYLOADFIELD_GT         = uint16(3)
+	PAYLOADFIELD_LT         = uint16(4)
+	PAYLOADFIELD_GE         = uint16(5)
+	PAYLOADFIELD_BETWEEN    = uint16(6) // Two values: lower/upper bounds
+	PAYLOADFIELD_NOTBETWEEN = uint16(7) // Two values: lower/upper bounds
+	PAYLOADFIELD_MODULO     = uint16(8) // For periodically sampling a field
+
+	// For strings:
+	PAYLOADFIELD_CONTAINS      = uint16(20) // Substring identical to Value
+	PAYLOADFIELD_DOESNTCONTAIN = uint16(21) // No substring identical to Value
+
+	// For strings or other non-integer values
+	PAYLOADFIELD_IS      = uint16(30) // Field is identical to Value
+	PAYLOADFIELD_ISNOT   = uint16(31) // Field is NOT identical to Value
+	PAYLOADFIELD_INVALID = uint16(32)
+)
+
 // https://learn.microsoft.com/en-us/windows/win32/api/tdh/ns-tdh-payload_filter_predicate
 /*
 	typedef struct _PAYLOAD_FILTER_PREDICATE {
@@ -205,9 +255,9 @@ type ProviderFilterInfo struct {
 // Defines an event payload filter predicate that describes how to filter
 // on a single field in a trace session.
 type PayloadFilterPredicate struct {
-	FieldName  *uint16
-	CompareOp  uint16
-	Value      *uint16
+	FieldName *uint16
+	CompareOp uint16  // PAYLOAD_OPERATOR
+	Value     *uint16 // One or two values (i.e., two for BETWEEN operations)
 }
 
 // https://learn.microsoft.com/en-us/windows/win32/api/tdh/ns-tdh-trace_provider_info

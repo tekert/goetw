@@ -195,6 +195,14 @@ func IsKnownProvider(p string) bool {
 //
 // Example: "Microsoft-Windows-Kernel-File:0xff:12,13,14"
 //
+// If a Name is provided (e.g., "Microsoft-Windows-Kernel-File"), it must be
+// registered in the system, otherwise an ErrUnkownProvider is returned.
+//
+// If a raw GUID is provided, it is always accepted. This is the intended ETW
+// behavior, as it allows consumers to listen to TraceLogging or custom providers
+// that are not registered in the system. Listening to a non-existent GUID will
+// not cause an error; it will simply yield zero events.
+//
 // NOTE: For finding events ID check the manifest in your system.
 //
 //	> logman query providers "provider-name"
