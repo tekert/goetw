@@ -269,6 +269,10 @@ type traceStorage struct {
 	// Pools for nested structures that can't be easily managed by a single slice.
 	propertyMapPool sync.Pool // For nested structs in struct arrays.
 	propSlicePool   sync.Pool // For simple arrays of properties.
+
+	// L1 cache for schemaCacheEntry to avoid repeated lookups in the global cache.
+	lastSchemaKey   globalSchemaCacheKey
+	lastSchemaEntry *schemaCacheEntry
 }
 
 // newTraceStorage creates a new storage area for a goroutine in ProcessTrace.
@@ -287,7 +291,7 @@ func newTraceStorage() *traceStorage {
 		structSingle:         make([]map[string]*Property, 0, 4),
 		selectedProps:        make(map[string]bool, 16),
 		propertyOffsets:      make([]uintptr, 0, 64),
-		dataBuffer:           make([]byte, 0, 1024), // Arena for property strings
+		dataBuffer:           make([]byte, 0, 4096), // Arena for property strings
 		teiBuffer:            make([]byte, 8192),    // Initial size for GetEventInformation()
 
 		// Initialize the property cache with a reasonable capacity to avoid frequent reallocations.
@@ -418,7 +422,6 @@ type EventRecordHelper struct {
 	// Stored property values for resolving array lengths
 	// both are filled when a prop is about to be prepared.
 	propertyOffsets *[]uintptr
-	//epiArray        *[]*EventPropertyInfo
 
 	// Buffer that contains the memory for TraceEventInfo.
 	// used internally to reuse the memory allocation.
@@ -451,7 +454,7 @@ func (e *EventRecordHelper) remainingUserDataLength() uint16 {
 }
 
 // userContext retrieves the thread local traceContext associated with the EventRecord.
-func (e *EventRecordHelper) userContext() (c *traceContext) {
+func (e *EventRecordHelper) userContext() (c *TraceContext) {
 	return e.EventRec.userContext()
 }
 
@@ -504,9 +507,22 @@ func newEventRecordHelper(er *EventRecord, storage *traceStorage) (erh *EventRec
 
 	key := er.schemaCacheKey()
 
+	// --- Stage 0: Check L1 Local Cache ---
+	if storage.lastSchemaEntry != nil && storage.lastSchemaKey == key {
+		cachedEntry := storage.lastSchemaEntry
+		erh.schemaCache = cachedEntry
+		schema := cachedEntry.teiBuffer
+		erh.TraceInfo = (*TraceEventInfo)(unsafe.Pointer(&schema[0]))
+		erh.teiBuffer = nil
+		erh.resetStorageFor(erh.TraceInfo)
+		return erh, nil
+	}
+
 	// --- Stage 1: Check Global Cache (Single, direct lookup) ---
 	if val, found := globalSchemaCache.Load(key); found {
 		cachedEntry := val.(*schemaCacheEntry)
+		storage.lastSchemaKey = key
+		storage.lastSchemaEntry = cachedEntry
 		// Since caching is always enabled, a found entry is guaranteed to be valid and have a non-nil teiBuffer
 		erh.schemaCache = cachedEntry // Cache the entry on the helper for later use.
 		// --- Cache Hit: Populate helper from cache ---
@@ -568,6 +584,8 @@ func newEventRecordHelper(er *EventRecord, storage *traceStorage) (erh *EventRec
 	// The first one to call Store wins, and the second one will get the already-stored value, preventing duplicates.
 	actual, _ := globalSchemaCache.LoadOrStore(key, newEntry)
 	erh.schemaCache = actual.(*schemaCacheEntry) // Always use the value that's in the map.
+	storage.lastSchemaKey = key
+	storage.lastSchemaEntry = erh.schemaCache
 
 	// Perform smart cleanup now that we know the schema
 	erh.resetStorageFor(erh.TraceInfo)
@@ -639,7 +657,13 @@ func (e *EventRecordHelper) initialize() {
 	e.propertyOffsets = &storage.propertyOffsets
 }
 
-// TODO: clear some mem allocated is some event caused peak alloc?
+const (
+	// 256KB limit. Extreme events (like massive registry values or custom payloads)
+	// might spike the buffer, but we don't want to keep a 10MB slice forever.
+	maxHealthyCap = 256 * 1024
+)
+
+// TODO: clear some mem allocated if some event caused peak alloc?
 // resetStorageFor performs selective cleanup of the previous event's state based on
 // what the current event will actually use. This is called after the schema is known
 // but before property preparation begins.
@@ -648,6 +672,14 @@ func (e *EventRecordHelper) initialize() {
 func (e *EventRecordHelper) resetStorageFor(traceInfo *TraceEventInfo) {
 	storage := e.storage
 	//traceInfo := e.TraceInfo
+
+	// Memory Peak Eviction (High-Water Mark)
+	if e.teiBuffer != nil && cap(*e.teiBuffer) > maxHealthyCap {
+		*e.teiBuffer = make([]byte, 8192)
+	}
+	if cap(storage.dataBuffer) > maxHealthyCap {
+		storage.dataBuffer = make([]byte, 0, 1024)
+	}
 
 	// --- Part 1: Clean up complex pooled structures from PREVIOUS event ---
 	// These MUST be cleaned because they hold pooled resources that need to be returned.
@@ -688,9 +720,14 @@ func (e *EventRecordHelper) resetStorageFor(traceInfo *TraceEventInfo) {
 	storage.metadataPopulated = false
 	storage.dataBuffer = storage.dataBuffer[:0]
 
-	// Clear maps that will be repopulated
-	clear(storage.propertiesCustom)
-	clear(storage.selectedProps)
+	// Clear maps that will be repopulated only if they have entries
+	// (most high rate events don't have custom properties or selected properties, perf increase).
+	if len(storage.propertiesCustom) > 0 {
+		clear(storage.propertiesCustom)
+	}
+	if len(storage.selectedProps) > 0 {
+		clear(storage.selectedProps)
+	}
 
 	// --- Part 3: Selective slice cleanup based on current event's schema ---
 	if traceInfo != nil {
@@ -1166,7 +1203,10 @@ func (e *EventRecordHelper) preparePropertiesUpTo(targetID uint32) (err error) {
 		return nil // Already prepared all properties.
 	}
 
-	// TODO: move this to a separate function before TraceInfo(schema) is used/created or not
+	// ARCHITECTURE NOTE: We handle STRING_ONLY events here rather than earlier
+	// because they are extremely rare. Bypassing the schema cache lookup for them
+	// would require duplicating logic and complicating the hot path for negligible gain.
+	//
 	// Handle special case for MOF events that are just a single string.
 	// https://learn.microsoft.com/en-us/windows/win32/api/evntcons/ns-evntcons-event_header
 	if e.EventRec.IsMof() && (e.EventRec.EventHeader.Flags&EVENT_HEADER_FLAG_STRING_ONLY) != 0 {
@@ -1190,7 +1230,7 @@ func (e *EventRecordHelper) preparePropertiesUpTo(targetID uint32) (err error) {
 	epiPtr := uintptr(unsafe.Pointer(&e.TraceInfo.EventPropertyInfoArray[0])) +
 		uintptr(e.currentPrepCount)*gEpiSize
 
-	//propsByIndexSlice := *e.PropertiesByIndex
+	propsByIndex := *e.PropertiesByIndex
 
 	// Process all top-level properties defined in the event schema up to targetIndex.
 	for i := e.currentPrepCount; i < targetID; i++ {
@@ -1227,7 +1267,7 @@ func (e *EventRecordHelper) preparePropertiesUpTo(targetID uint32) (err error) {
 			if p, err = e.prepareProperty(i, names[i], epi); err != nil {
 				return err
 			}
-			(*e.PropertiesByIndex)[i] = p // PERF-NOTE: Heavy write barrier here, go sheningans, but unavoidable.
+			propsByIndex[i] = p // PERF-NOTE: Heavy write barrier here, go sheningans, but unavoidable.
 		}
 
 		epiPtr += gEpiSize // Move to the next EventPropertyInfo struct.
@@ -1265,8 +1305,12 @@ func (e *EventRecordHelper) preparePropertiesUpTo(targetID uint32) (err error) {
 // This is a common pattern with kernel ETW events where newer fields are added
 // but backward compatibility needs to be maintained, so we must check if the
 // data is a new field.
-// TODO(tekert): use the new kernel mof generated classes to decode this.
-// TODO: the problem is, for example FileIO V3 is not defined elsewere, and we get those events from ETW
+// // TODO(tekert): use the new kernel mof generated classes to decode this.
+// NOTE: the problem is, for example FileIO V3 is not defined elsewere, and we get those events from ETW
+// ARCHITECTURE NOTE: Microsoft's official MOF classes occasionally miss trailing
+// fields that are present in live kernel events (e.g., ThreadName in Thread_V3).
+// Since we strictly auto-generate our MOF definitions from official sources,
+// we manually patch these undocumented tail bytes here for now.
 func (e *EventRecordHelper) prepareMofPropertyFix(remainingData []byte, remaining uint32) (err error) {
 	// Check if all bytes are padding (zeros)
 	if bytes.IndexFunc(remainingData, func(r rune) bool {

@@ -31,7 +31,7 @@ type ConsumerTrace struct {
 	open bool // True is the trace is not closed
 
 	// Keep ETW traceContext alive (don't nil it or everything crashes)
-	_ctx *traceContext
+	_ctx *TraceContext
 
 	// True if the trace is currently blocking in ProcessTrace. Must be accessed atomically.
 	processing atomic.Bool

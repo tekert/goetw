@@ -1,0 +1,49 @@
+linters:
+  enable:
+    - forbidigo
+
+  settings:
+    forbidigo:
+      analyze-types: true
+
+      forbid:
+        # 1. TdhAggregatePayloadFilters
+        - pattern: ^etw\.TdhAggregatePayloadFilters$
+          pkg: ^github\.com/tekert/goetw/etw$
+          msg: >
+            [ADVICE] Create PayloadFilters using NewPayloadFilter instead.
+            When using NewPayloadFilter this function is called automatically
+            when multiple filters are added to the same provider.
+            You only need to call this function directly if you want to
+            aggregate filters created with TdhCreatePayloadFilter.
+
+        # 2. TdhCreatePayloadFilter
+        - pattern: ^etw\.TdhCreatePayloadFilter$
+          pkg: ^github\.com/tekert/goetw/etw$
+          msg: >
+            [ADVICE] Create PayloadFilters using NewPayloadFilter instead.
+            When using NewPayloadFilter this function is called automatically
+            when adding filters to a provider.
+            You only need to call this function directly if you want to
+            create filters without using NewPayloadFilter.
+
+        # 3. TdhCleanupPayloadEventFilterDescriptor
+        - pattern: ^etw\.TdhCleanupPayloadEventFilterDescriptor$
+          pkg: ^github\.com/tekert/goetw/etw$
+          msg: >
+            [ADVICE] If you used NewPayloadFilter to create filters,
+            you do not need to call TdhCleanupPayloadEventFilterDescriptor,
+            it is called automatically.
+
+        # 4. TdhDeletePayloadFilter
+        - pattern: ^etw\.TdhDeletePayloadFilter$
+          pkg: ^github\.com/tekert/goetw/etw$
+          msg: >
+            [ADVICE] If you used NewPayloadFilter to create filters,
+            you do not need to call TdhDeletePayloadFilter, it is called automatically.
+
+issues:
+  severity-rules:
+    - linters:
+        - forbidigo
+      severity: warning

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"unsafe"
 
 	"github.com/tekert/goetw/internal/test"
 )
@@ -209,6 +210,24 @@ func BenchmarkGUIDEquals(b *testing.B) {
 		}
 	})
 
+	b.Run("Uint64Compare_Equal", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			p1 := (*[2]uint64)(unsafe.Pointer(guid1))
+			p2 := (*[2]uint64)(unsafe.Pointer(guid2))
+			_ = p1[0] == p2[0] && p1[1] == p2[1]
+		}
+	})
+
+	b.Run("XorCompare_Equal", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			p1 := (*[2]uint64)(unsafe.Pointer(guid1))
+			p2 := (*[2]uint64)(unsafe.Pointer(guid2))
+			_ = ((p1[0] ^ p2[0]) | (p1[1] ^ p2[1])) == 0
+		}
+	})
+
 	b.Run("ManualCompare_NotEqual", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
@@ -220,6 +239,24 @@ func BenchmarkGUIDEquals(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
 			_ = guid1.Equals(guid3)
+		}
+	})
+
+	b.Run("Uint64Compare_NotEqual", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			p1 := (*[2]uint64)(unsafe.Pointer(guid1))
+			p2 := (*[2]uint64)(unsafe.Pointer(guid3))
+			_ = p1[0] == p2[0] && p1[1] == p2[1]
+		}
+	})
+
+	b.Run("XorCompare_NotEqual", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			p1 := (*[2]uint64)(unsafe.Pointer(guid1))
+			p2 := (*[2]uint64)(unsafe.Pointer(guid3))
+			_ = ((p1[0] ^ p2[0]) | (p1[1] ^ p2[1])) == 0
 		}
 	})
 }

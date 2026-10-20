@@ -88,6 +88,12 @@ func TdhEnumerateProviderFilters(
 */
 // The TdhCreatePayloadFilter function creates a single filter
 // for a single payload to be used with the EnableTraceEx2 function.
+//
+// NOTE: Create PayloadFilters using NewPayloadFilter instead,
+//  when using NewPayloadFilter this function is called automatically
+//  when adding filters to a provider.
+//  You only need to call this function directly if you want to
+//  create filters without using NewPayloadFilter.
 func TdhCreatePayloadFilter(
 	providerGuid *GUID,
 	eventDescriptor *EventDescriptor,
@@ -127,6 +133,12 @@ func TdhCreatePayloadFilter(
 */
 // The TdhAggregatePayloadFilters function aggregates multiple payload filters for a single
 // provider into a single data structure for use with the EnableTraceEx2 function.
+//
+// NOTE: Create PayloadFilters using NewPayloadFilter instead,
+// when using NewPayloadFilter this function is called automatically
+// when multiple filters are added to the same provider.
+// You only need to call this function directly if you want to
+// aggregate filters created with TdhCreatePayloadFilter.
 func TdhAggregatePayloadFilters(
 	payloadFilterCount uint32,
 	payloadFilterPtrs *unsafe.Pointer,
@@ -161,6 +173,10 @@ func TdhAggregatePayloadFilters(
 */
 // The TdhCleanupPayloadEventFilterDescriptor function frees the aggregated structure of
 // payload filters created using the TdhAggregatePayloadFilters function.
+//
+// NOTE: If you used NewPayloadFilter to create filters, you do not need to call this function,
+// when using NewPayloadFilter this function is called automatically when the filter descriptor is no longer needed.
+// You only need to call this function directly if you used TdhAggregatePayloadFilters to aggregate filters.
 func TdhCleanupPayloadEventFilterDescriptor(
 	eventFilterDescriptor *EventFilterDescriptor) error {
 	r1, _, _ := tdhCleanupPayloadEventFilterDescriptor.Call(
@@ -179,6 +195,10 @@ func TdhCleanupPayloadEventFilterDescriptor(
 */
 // The TdhDeletePayloadFilter function frees the memory allocated for a single payload filter
 // by the TdhCreatePayloadFilter function.
+//
+// NOTE: If you used NewPayloadFilter to create filters, you do not need to call this function,
+// when using NewPayloadFilter this function is called automatically when the filter is no longer needed.
+// You only need to call this function directly if you used TdhCreatePayloadFilter to create filters.
 func TdhDeletePayloadFilter(payloadFilter *unsafe.Pointer) error {
 	r1, _, _ := tdhDeletePayloadFilter.Call(uintptr(unsafe.Pointer(payloadFilter)))
 	if r1 == 0 {

@@ -79,10 +79,12 @@ type Consumer struct {
 	// if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set, use EventRecord.Timestamp()
 	// or use EventRecord.TimestampNanos() to get the correct timestamp as time.Time
 	// based on trace Clocktype used.
-	EventRecordCallback func(*EventRecord) bool
+	EventRecordCallback  func(*EventRecord) bool
+	EventRecordCallback2 func(*EventRecord, *TraceContext) bool
 
 	// [2] Callback which executes after TraceEventInfo is parsed.
-	EventRecordHelperCallback func(*EventRecordHelper) error
+	EventRecordHelperCallback  func(*EventRecordHelper) error
+	EventRecordHelperCallback2 func(*EventRecordHelper, *TraceContext) error
 
 	// [3] Callback executed after event properties got prepared (step before parsing).
 	// Properties are not parsed yet and this is the right place to filter
@@ -118,23 +120,35 @@ type Consumer struct {
 	closeTimeout time.Duration
 }
 
-// traceContext holds the context information passed to ETW callbacks.
+// TraceContext holds the context information passed to ETW callbacks.
 // This structure bridges the gap between the C callback environment and Go,
 // providing access to the Consumer, ConsumerTrace, and thread-local storage.
-type traceContext struct {
+type TraceContext struct {
 	trace    *ConsumerTrace
 	consumer *Consumer
 	storage  *traceStorage // thread local storage to reduce allocations and lock contention.
 }
 
+// Consumer returns the associated Consumer instance for this callback.
+// Consumer is guaranteed to be non-nil from a live trace.
+func (tc *TraceContext) Consumer() *Consumer {
+	return tc.consumer
+}
+
+// Trace returns the associated ConsumerTrace instance for this callback.
+// Trace is guaranteed to be non-nil from a live trace.
+func (tc *TraceContext) Trace() *ConsumerTrace {
+	return tc.trace
+}
+
 // Helper function to get the traceContext from the UserContext
 // These are used from ETW callbacks to get a reference back to our context.
 // NOTE: keep the pointer alive
-func (er *EventRecord) userContext() *traceContext {
-	return (*traceContext)(unsafe.Pointer(er.UserContext))
+func (er *EventRecord) userContext() *TraceContext {
+	return (*TraceContext)(unsafe.Pointer(er.UserContext))
 }
-func (e *EventTraceLogfile) getContext() *traceContext {
-	return (*traceContext)(unsafe.Pointer(e.Context))
+func (e *EventTraceLogfile) getContext() *TraceContext {
+	return (*TraceContext)(unsafe.Pointer(e.Context))
 }
 
 // NewConsumer creates a new Consumer to consume ETW
@@ -296,7 +310,7 @@ func (c *Consumer) reportError(err error, er *EventRecord) {
 		entry.Msg("Consumer callback error")
 	}
 
-	c.lastError.Store(err)
+	c.lastError.Store(err) // TODO: no longer useful?
 }
 
 // https://learn.microsoft.com/en-us/windows/win32/etw/rt-lostevent
@@ -365,7 +379,6 @@ func (c *Consumer) callback_new10(er *EventRecord) (re uintptr) {
 	setError := func(err error) {
 		er.userContext().trace.ErrorEvents.Add(1)
 		c.reportError(err, er)
-		c.lastError.Store(err) // TODO: no longer useful?
 	}
 
 	// We must always get the context first. just in case. if the context is there
@@ -376,23 +389,22 @@ func (c *Consumer) callback_new10(er *EventRecord) (re uintptr) {
 		return
 	}
 
-	if er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
+	if usrCtx.trace.realtime && er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
 		c.handleLostEvent(er)
 		return
 	}
 
 	// If no callbacks are set, there's nothing to do.
-	if c.EventRecordCallback == nil && c.EventRecordHelperCallback == nil {
+	if c.EventRecordCallback2 == nil && c.EventRecordHelperCallback2 == nil {
 		return
 	}
 
-	// Dont use defer (2% performance drop)
+	// Don't use defer (2% performance drop)
 	_h := &usrCtx.storage.helper
 	_h.reset()
 
-
 	if c.EventRecordCallback != nil {
-		if !c.EventRecordCallback(er) {
+		if !c.EventRecordCallback2(er, usrCtx) {
 			return
 		}
 	}
@@ -405,7 +417,7 @@ func (c *Consumer) callback_new10(er *EventRecord) (re uintptr) {
 			setError(fmt.Errorf("GetHelper failed: %w", err))
 			return
 		}
-		if err := c.EventRecordHelperCallback(h); err != nil {
+		if err := c.EventRecordHelperCallback2(h, usrCtx); err != nil {
 			setError(fmt.Errorf("EventCallback failed: %w", err))
 		}
 	}
@@ -425,7 +437,6 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	setError := func(err error) {
 		er.userContext().trace.ErrorEvents.Add(1)
 		c.reportError(err, er)
-		c.lastError.Store(err)
 	}
 
 	// We must always get the context first. just in case. if the context is there
@@ -441,15 +452,15 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 	// the EVENT_TRACE_LOGFILE.LogfileHeader member that you can access when you open
 	// the trace.
 	if !usrCtx.trace.realtime {
-		if er.EventHeader.ProviderId.Equals(EventTraceGuid) &&
-			er.EventHeader.EventDescriptor.Opcode == EVENT_TRACE_TYPE_INFO {
+		if er.EventHeader.EventDescriptor.Opcode == EVENT_TRACE_TYPE_INFO &&
+			er.EventHeader.ProviderId.Equals(EventTraceGuid) {
 			conlog.Debug().Interface("event", er).Msg("Skipping EventTraceGuid event")
 			// Skip this event.
 			return
 		}
 	}
 
-	if er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
+	if usrCtx.trace.realtime && er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
 		c.handleLostEvent(er)
 		return
 	}
@@ -716,7 +727,7 @@ func (c *Consumer) OpenTrace(name string) (err error) {
 	if ti._ctx == nil {
 		// Important: we must keep a Go reference, so we save this first to ti._ctx
 		// to prevent being garbage collected
-		ti._ctx = &traceContext{
+		ti._ctx = &TraceContext{
 			trace:    ti,
 			consumer: c,
 			storage:  newTraceStorage(),
@@ -910,8 +921,6 @@ func (c *Consumer) RestartSessions(sessions ...Session) error {
 	for _, s := range sessions {
 		name := s.TraceName()
 
-		// TODO: check if session was not already manually restarted.
-
 		// First, ensure the underlying ETW session is running. This stops and
 		// starts the session, which causes the consumer's goroutine to exit.
 		if err := s.Restart(); err != nil {
@@ -930,7 +939,6 @@ func (c *Consumer) RestartSessions(sessions ...Session) error {
 // Start starts the consumer, for each real time trace opened starts ProcessTrace in new goroutine
 // Also opens any trace session not already opened for consumption.
 func (c *Consumer) Start() (err error) {
-	// TODO: make is auto start the sessions that where added from FromSessions ?
 	c.started.Store(true)
 	// opening all traces that are not opened first,
 	c.traces.Range(func(key, value any) bool {
@@ -965,19 +973,6 @@ func (c *Consumer) Start() (err error) {
 
 	return
 }
-
-// TODO: call processTrace directly
-// StartAndWait starts the consumer and blocks until all trace processing has
-// finished. This is a convenience method equivalent to calling Start()
-// followed by Wait(). It returns the last error encountered by the consumer.
-func (c *Consumer) startAndWait() error {
-    if err := c.Start(); err != nil {
-        return err
-    }
-    c.Wait()
-    return c.LastError()
-}
-
 
 // startTraceGoroutine launches the ProcessTrace loop for a single trace.
 func (c *Consumer) startTraceGoroutine(name string, trace *ConsumerTrace) {
