@@ -265,8 +265,18 @@ func (e *EventRecordHelper) appendEventDataJSON(buf []byte) ([]byte, bool, error
 		}
 	}
 
-	// Custom Properties
-	for name, p := range e.PropertiesCustom {
+	// Custom Properties, sorted by name: map iteration order is random and the same
+	// event must always serialize to the same bytes.
+	var namesBuf [8]string // custom properties are few, keeps the sort off the heap
+	customNames := namesBuf[:0]
+	for name := range e.PropertiesCustom {
+		customNames = append(customNames, name)
+	}
+	if len(customNames) > 1 {
+		sort.Strings(customNames)
+	}
+	for _, name := range customNames {
+		p := e.PropertiesCustom[name]
 		if !e.shouldParse(name) {
 			continue
 		}

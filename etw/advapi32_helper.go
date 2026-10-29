@@ -23,16 +23,25 @@ var (
 	}
 )
 
+// GetAccessString returns the DACL of a provider or session GUID in SDDL form.
+// Requires an elevated process (otherwise ERROR_ACCESS_DENIED).
 func GetAccessString(guid *GUID) (s string, err error) {
 
 	g := guid
 	bSize := uint32(0)
-	// retrieves size
-	EventAccessQuery(g, nil, &bSize)
+	// retrieves size (ERROR_MORE_DATA is the expected result with a zero size)
+	if err = EventAccessQuery(g, nil, &bSize); err != nil && err != ERROR_MORE_DATA {
+		return "", fmt.Errorf("EventAccessQuery size: %w", err)
+	}
+	if bSize == 0 {
+		return "", fmt.Errorf("EventAccessQuery returned an empty security descriptor")
+	}
 	buffer := make([]byte, bSize)
 	sd := (*SecurityDescriptor)(unsafe.Pointer(&buffer[0]))
 	// we get the security descriptor
-	EventAccessQuery(g, sd, &bSize)
+	if err = EventAccessQuery(g, sd, &bSize); err != nil {
+		return "", fmt.Errorf("EventAccessQuery: %w", err)
+	}
 
 	if s, err = ConvertSecurityDescriptorToStringSecurityDescriptorW(
 		sd,
