@@ -152,10 +152,9 @@ func (p *Property) resolveOutType(inType TdhInType) TdhOutType {
 	case TDH_INTYPE_GUID:
 		outType = TDH_OUTTYPE_GUID
 	case TDH_INTYPE_POINTER:
-		if p.pointerSize == 8 {
-			return TDH_OUTTYPE_HEXINT64
-		}
-		return TDH_OUTTYPE_HEXINT32
+		// Default is HEXINT64 regardless of pointer size (see TDH_INTYPE_POINTER doc).
+		// HEXINT64 reads with p.pointerSize.
+		outType = TDH_OUTTYPE_HEXINT64
 	case TDH_INTYPE_FILETIME, TDH_INTYPE_SYSTEMTIME:
 		outType = TDH_OUTTYPE_DATETIME
 	case TDH_INTYPE_SID, TDH_INTYPE_WBEMSID:
@@ -311,21 +310,41 @@ func (p *Property) _decodeValue(dst []byte, quote bool) ([]byte, error) {
 		return strconv.AppendUint(dst, uint64(v), 10), nil
 
 	case TDH_OUTTYPE_LONG:
-		if inType != TDH_INTYPE_INT64 &&
-			inType != TDH_INTYPE_POINTER &&
-			inType != TDH_INTYPE_INT32 {
+		// Read with the InType width, not the OutType width.
+		var v int64
+		switch inType {
+		case TDH_INTYPE_INT64:
+			v = *(*int64)(unsafe.Pointer(p.pValue))
+		case TDH_INTYPE_INT32:
+			v = int64(*(*int32)(unsafe.Pointer(p.pValue)))
+		case TDH_INTYPE_POINTER:
+			if p.pointerSize == 8 {
+				v = *(*int64)(unsafe.Pointer(p.pValue))
+			} else {
+				v = int64(*(*uint32)(unsafe.Pointer(p.pValue)))
+			}
+		default:
 			return nil, fmt.Errorf("invalid LONG InType: %v", inType)
 		}
-		v := *(*int64)(unsafe.Pointer(p.pValue))
 		return strconv.AppendInt(dst, v, 10), nil
 
 	case TDH_OUTTYPE_UNSIGNEDLONG:
-		if inType != TDH_INTYPE_UINT64 &&
-			inType != TDH_INTYPE_POINTER &&
-			inType != TDH_INTYPE_UINT32 {
+		// Read with the InType width, not the OutType width.
+		var v uint64
+		switch inType {
+		case TDH_INTYPE_UINT64:
+			v = *(*uint64)(unsafe.Pointer(p.pValue))
+		case TDH_INTYPE_UINT32:
+			v = uint64(*(*uint32)(unsafe.Pointer(p.pValue)))
+		case TDH_INTYPE_POINTER:
+			if p.pointerSize == 8 {
+				v = *(*uint64)(unsafe.Pointer(p.pValue))
+			} else {
+				v = uint64(*(*uint32)(unsafe.Pointer(p.pValue)))
+			}
+		default:
 			return nil, fmt.Errorf("invalid UNSIGNEDLONG InType: %v", inType)
 		}
-		v := *(*uint64)(unsafe.Pointer(p.pValue))
 		return strconv.AppendUint(dst, v, 10), nil
 
 	case TDH_OUTTYPE_FLOAT:
@@ -343,12 +362,16 @@ func (p *Property) _decodeValue(dst []byte, quote bool) ([]byte, error) {
 		return strconv.AppendFloat(dst, v, 'g', -1, 64), nil
 
 	case TDH_OUTTYPE_BOOLEAN:
-		if inType != TDH_INTYPE_BOOLEAN &&
-			inType != TDH_INTYPE_UINT8 {
+		var v bool
+		switch inType {
+		case TDH_INTYPE_BOOLEAN:
+			v = *(*int32)(unsafe.Pointer(p.pValue)) != 0 // ETW boolean is 4 bytes
+		case TDH_INTYPE_UINT8:
+			v = *(*uint8)(unsafe.Pointer(p.pValue)) != 0
+		default:
 			return nil, fmt.Errorf("invalid BOOLEAN InType: %v", inType)
 		}
-		v := *(*int32)(unsafe.Pointer(p.pValue)) // ETW boolean is 4 bytes
-		if v != 0 {
+		if v {
 			return append(dst, "true"...), nil
 		}
 		return append(dst, "false"...), nil
@@ -409,12 +432,20 @@ func (p *Property) _decodeValue(dst []byte, quote bool) ([]byte, error) {
 		return dst, nil
 
 	case TDH_OUTTYPE_HEXINT64:
-		if inType != TDH_INTYPE_UINT64 &&
-			inType != TDH_INTYPE_HEXINT64 &&
-			inType != TDH_INTYPE_POINTER {
+		// Read with the InType width, not the OutType width.
+		var v uint64
+		switch inType {
+		case TDH_INTYPE_UINT64, TDH_INTYPE_HEXINT64:
+			v = *(*uint64)(unsafe.Pointer(p.pValue))
+		case TDH_INTYPE_POINTER, TDH_INTYPE_SIZET:
+			if p.pointerSize == 8 {
+				v = *(*uint64)(unsafe.Pointer(p.pValue))
+			} else {
+				v = uint64(*(*uint32)(unsafe.Pointer(p.pValue)))
+			}
+		default:
 			return dst, fmt.Errorf("invalid HEXINT64 InType: %v", inType)
 		}
-		v := *(*uint64)(unsafe.Pointer(p.pValue))
 		dst = appendQuotes(dst, quote)
 		dst = hexf.AppendNUm64p(dst, v, true)
 		dst = appendQuotes(dst, quote)
@@ -717,21 +748,21 @@ func appendSockAddr(dst []byte, sa *syscall.RawSockaddrAny) ([]byte, error) {
 
 // Parses the property value to a string based on the property's InType and OutType
 func (p *Property) decodeSIDIntype(buf []byte) ([]byte, error) {
-	// Add validation for minimum SID size (8 bytes header)
-	if int(p.userDataRemaining) < 8 {
-		return buf, fmt.Errorf("invalid SID: data too small for header")
-	}
-
 	// For WBEMSID, skip pointer-sized TOKEN_USER structure
 	// (8 bytes on 64-bit, 4 bytes on 32-bit)
-	sidPtr := p.pValue
+	offset := 0
 	if p.evtPropInfo.InType() == TDH_INTYPE_WBEMSID {
 		if p.pointerSize == 8 {
-			sidPtr += 16 // 2 pointers (8 bytes each)
+			offset = 16 // 2 pointers (8 bytes each)
 		} else {
-			sidPtr += 8 // 2 pointers (4 bytes each)
+			offset = 8 // 2 pointers (4 bytes each)
 		}
 	}
+	// Add validation for minimum SID size (8 bytes header)
+	if int(p.userDataRemaining) < offset+8 {
+		return buf, fmt.Errorf("invalid SID: data too small for header")
+	}
+	sidPtr := p.pValue + uintptr(offset)
 	// Validate Max SID
 	sid := (*SID)(unsafe.Pointer(sidPtr))
 	if sid.SubAuthorityCount > 15 { // SID_MAX_SUB_AUTHORITIES
@@ -739,7 +770,7 @@ func (p *Property) decodeSIDIntype(buf []byte) ([]byte, error) {
 	}
 	// Calculate expected size (p.sizeBytes already has it too)
 	expectedSize := 8 + (4 * int(sid.SubAuthorityCount)) // 8 bytes header + 4 bytes per sub-authority
-	if expectedSize > int(p.userDataRemaining) {
+	if offset+expectedSize > int(p.userDataRemaining) {
 		return buf, fmt.Errorf("invalid SID: insufficient data")
 	}
 	// Convert SID to string

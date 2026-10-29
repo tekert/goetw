@@ -6,88 +6,29 @@ import (
 	"github.com/tekert/goetw/internal/utf16f"
 )
 
-const maxUtf16CachedLength = 256 // Maximum string length to cache (prevents cache pollution from large strings)
-
-// decodeUtf16 performs a cache lookup for a given string slice and its hash.
-// On a cache miss, it calls the final utf16 conversion function and stores the result in the cache.
-//
-//go:inline
-func decodeUtf16(s []uint16, h uint64, n int) string {
-	// For long strings, convert directly without caching to avoid polluting the cache.
-	if n >= maxUtf16CachedLength {
-		return utf16f.DecodeWtf8(s)
-	}
-	// If the hash wasn't pre-computed (e.g., from a slice), calculate it now.
-	if h == 0 {
-		h = fnvHash(s)
-	}
-
-	// The converter function is only executed on a cache miss.
-	return globalUtf16Cache.lookupOrConvert(h, func() string {
-		return utf16f.DecodeWtf8(s)
-	})
-}
-
-// fnvHash calculates the FNV-1a hash for a UTF-16 slice.
-//
-//go:inline
-func fnvHash(data []uint16) uint64 {
-	h := uint64(fnvOffset64)
-	for _, v := range data {
-		h ^= uint64(v)
-		h *= fnvPrime64
-	}
-	return h
-}
-
 // FromUTF16PointerN is a variant of FromUTF16Pointer that also returns the
 // length of the string in characters. This is useful for iterating over lists of
 // null-terminated strings without rescanning to find the length.
 func FromUTF16PointerN(p *uint16) (string, int) {
-    if p == nil {
-        return "", 0
-    }
-
-    // Calculate string length and FNV-1a hash in a single loop for optimal performance.
-    h := uint64(fnvOffset64) // FNV-1a offset basis
-    end := unsafe.Pointer(p)
-    n := 0
-    for {
-        char := *(*uint16)(end)
-        if char == 0 {
-            break // Null terminator found
-        }
-        h ^= uint64(char) // XOR with character value
-        h *= fnvPrime64   // Multiply by FNV prime
-
-        end = unsafe.Pointer(uintptr(end) + 2) // 2 bytes per uint16
-        n++
-    }
-
-    if n == 0 {
-        return "", 0
-    }
-    s := unsafe.Slice(p, n)
-
-    return decodeUtf16(s, h, n), n
+	n := Wcslen(p) // handles nil
+	if n == 0 {
+		return "", 0
+	}
+	return utf16f.DecodeWtf8(unsafe.Slice(p, n)), n
 }
 
-// FromUTF16Pointer is the most performant way to convert a null-terminated
-// UTF-16 pointer to a Go string. It finds the string length and calculates
-// its hash in a single pass to optimize cache lookups.
+// FromUTF16Pointer converts a null-terminated UTF-16 pointer to a Go string.
 func FromUTF16Pointer(p *uint16) string {
 	str, _ := FromUTF16PointerN(p)
 	return str
 }
 
-// FromUTF16Slice converts a UTF-16 slice to a string, using a cache for performance.
-// For best performance, use UTF16PtrToString when you have a pointer.
+// FromUTF16Slice converts a UTF-16 slice to a Go string.
 func FromUTF16Slice(s []uint16) string {
 	if len(s) == 0 {
 		return ""
 	}
-	// Pass h=0 to signal that the hash needs to be computed inside the helper function.
-	return decodeUtf16(s, 0, len(s))
+	return utf16f.DecodeWtf8(s)
 }
 
 // AppendFromUTF16Slice decodes a UTF-16 slice and appends the resulting

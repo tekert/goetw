@@ -391,6 +391,10 @@ func (c *Consumer) callback_new10(er *EventRecord) (re uintptr) {
 		return
 	}
 
+	// NOTE: intentionally no check for the ETL file header event (EventTraceGuid,
+	// EVENT_TRACE_TYPE_INFO). It's delivered once per ETL file and skipping it would
+	// cost a branch on every event. Users get it in EventRecordCallback2.
+
 	if usrCtx.trace.realtime && er.EventHeader.ProviderId.Equals(rtLostEventGuid) {
 		c.handleLostEvent(er)
 		return
@@ -405,14 +409,14 @@ func (c *Consumer) callback_new10(er *EventRecord) (re uintptr) {
 	_h := &usrCtx.storage.helper
 	_h.reset()
 
-	if c.EventRecordCallback != nil {
+	if c.EventRecordCallback2 != nil {
 		if !c.EventRecordCallback2(er, usrCtx) {
 			return
 		}
 	}
 
 	// --- Stage 2: Parsed Event Callback (Optional) ---
-	if c.EventRecordHelperCallback != nil {
+	if c.EventRecordHelperCallback2 != nil {
 		// To get a parsed event, we must have an initialized helper.
 		h, err := er.GetHelper()
 		if err != nil {

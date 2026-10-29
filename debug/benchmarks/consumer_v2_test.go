@@ -48,6 +48,24 @@ import (
 
 	# view assembly:
 	go test -c -pgo .\default.pgo -o .\benchv2.exe -gcflags="github.com/tekert/goetw/etw=-B -S" .\ 2> assembly.txt
+
+	# --- Lower variance measurements (from goetw\debug\benchmarks>) ---
+	# -pair: each run is paired with a control run (empty EventRecordCallback, same ETL)
+	# in alternating order. Reports delta-ns/event = real - control,
+	# i.e. the cost of our code above the ProcessTrace + C->Go transition floor.
+	# Only common-mode noise cancels in the delta; most of the noise measured here was not,
+	# so the delta alone is not more stable. High priority + affinity (below) is what helps.
+	.\benchv2.exe -"test.bench"="^BenchmarkConsumer2$" -"test.benchtime"=1x -"test.count"=10 -pair
+
+	# Same with High priority, whole process pinned to logical CPU 4 (avoids core 0 interrupts).
+	# Much more stable (~1% spread vs ~3-4%) and faster, but note the Go runtime (GC, sysmon)
+	# then shares that single CPU with the ProcessTrace thread. Use for A/B, not absolute numbers.
+	$p = Start-Process .\benchv2.exe -NoNewWindow -PassThru -ArgumentList '-test.bench=^BenchmarkConsumer2$','-test.benchtime=1x','-test.count=10','-pair'; $p.PriorityClass='High'; $p.ProcessorAffinity=0x10; $p.WaitForExit()
+
+	# A/B with benchstat (use -count=20, interleave binaries if possible):
+	.\benchv2-old.exe -"test.bench"="^BenchmarkConsumer2$" -"test.benchtime"=1x -"test.count"=20 -pair > old.txt
+	.\benchv2.exe     -"test.bench"="^BenchmarkConsumer2$" -"test.benchtime"=1x -"test.count"=20 -pair > new.txt
+	go run golang.org/x/perf/cmd/benchstat@latest old.txt new.txt
 */
 
 // > logman start "NT Kernel Logger" -p "Windows Kernel Trace" "(process,thread,img,disk,net,registry,fileio,pf,cswitch)" -o systemevents.etl -ets
@@ -57,12 +75,34 @@ var (
 	// Flags to control profiling.
 	cpuProfileNameFlag  = flag.String("profile", "", "Enable CPU profiling (takes effect after first benchmarked run).")
 	heapProfileNameFlag = flag.String("heap", "", "Enable heap profiling (takes snapshot after each benchmarked run).")
+	pairFlag            = flag.Bool("pair", false, "Pair each run with a control run (empty callback) and report the delta.")
 
 	// Global state for the benchmark run count.
 	benchmarkRun atomic.Int32
 
 	totaleventssec float64 = 0.0
+	totalDeltaNs   float64 = 0.0
 )
+
+// runControl processes the same ETL with an empty EventRecordCallback.
+// This is the floor: ProcessTrace + C->Go transition, no parsing.
+func runControl() (events int, elapsed time.Duration) {
+	c := etw.NewConsumer(context.Background()).FromTraces(testFile2)
+	c.EventRecordCallback = func(e *etw.EventRecord) bool {
+		events++
+		return false
+	}
+	start := time.Now()
+	if err := c.Start(); err != nil {
+		panic(err)
+	}
+	c.Wait()
+	if err := c.Stop(); err != nil {
+		panic(err)
+	}
+	elapsed = time.Since(start)
+	return events, elapsed
+}
 
 // TestMain is the entry point for the test package. It's the standard place
 // to parse custom command-line flags before any tests or benchmarks are run.
@@ -75,8 +115,11 @@ func TestMain(m *testing.M) {
 	// Print average after all benchmarks have completed.
 	runs := int(benchmarkRun.Load())
 	if runs > 1 {
-		avg := totaleventssec / float64(runs-1) // exclude first warm-up run
-		fmt.Printf("Average Events/s: %.2f\n", avg)
+		n := float64(runs - 1) // exclude first warm-up run
+		fmt.Printf("Average Events/s: %.2f\n", totaleventssec/n)
+		if *pairFlag {
+			fmt.Printf("Average delta-ns/event: %.2f\n", totalDeltaNs/n)
+		}
 	}
 
 	os.Exit(rc)
@@ -185,6 +228,15 @@ func BenchmarkConsumer2(b *testing.B) {
 		// 	return nil
 		// }
 
+		// Control run (outside timer and profiler). Alternate the order so neither
+		// side always gets the warmer caches.
+		var ctrlEvents int
+		var ctrlElapsed time.Duration
+		controlFirst := runNum%2 == 0
+		if *pairFlag && controlFirst {
+			ctrlEvents, ctrlElapsed = runControl()
+		}
+
 		// --- Profiling logic starts here ---
 		// We only profile runs after the first one (the warm-up).
 		shouldProfile := runNum > 1
@@ -221,6 +273,10 @@ func BenchmarkConsumer2(b *testing.B) {
 		b.StopTimer() // Pause for metrics calculation
 		// --- Timed section ends here ---
 
+		if *pairFlag && !controlFirst {
+			ctrlEvents, ctrlElapsed = runControl()
+		}
+
 		// --- Profiling logic stops here ---
 		if (*cpuProfileNameFlag != "") && shouldProfile {
 			// Stop profiling immediately after the timed section.
@@ -248,8 +304,20 @@ func BenchmarkConsumer2(b *testing.B) {
 		eventsPerSec := float64(count) / elapsed.Seconds()
 		b.ReportMetric(float64(count), "events")
 		b.ReportMetric(eventsPerSec, "events/sec")
+
+		var deltaNs float64
+		if *pairFlag {
+			// Normalize both sides by the control count (all delivered events), so
+			// events filtered before the real callback don't skew the delta.
+			n := float64(ctrlEvents)
+			deltaNs = (float64(elapsed.Nanoseconds()) - float64(ctrlElapsed.Nanoseconds())) / n
+			b.ReportMetric(n/ctrlElapsed.Seconds(), "ctrl-events/sec")
+			b.ReportMetric(deltaNs, "delta-ns/event")
+		}
+
 		if runNum >= 2 {
 			totaleventssec = totaleventssec + eventsPerSec
+			totalDeltaNs += deltaNs
 		}
 		b.StartTimer()
 	}
@@ -549,5 +617,30 @@ BenchmarkConsumer2-16                  1         366794000 ns/op           10145
 PASS
 Average Events/s: 2837805.66
 
-Perf changes in code have improved the performance by 8% 
+Perf changes in code have improved the performance by 8%
+
+go v1.27.3 (same as above)
+but with high priority and processor affinity to core 4 (0x10) to avoid context switching and other processes running on the same core.
+PS E:\Sources\go\projects\goetw\debug\benchmarks> $p = Start-Process .\benchv2.exe -NoNewWindow -PassThru -ArgumentList '-test.bench=^BenchmarkConsumer2$','-test.benchtime=1x','-test.count=10','-pair'; $p.PriorityClass='High'; $p.ProcessorAffinity=0x10; $p.WaitForExit()
+Date: 2026-10-29 01:38:37
+goos: windows
+goarch: amd64
+pkg: debug_etw/benchmarks
+cpu: AMD Ryzen 7 5700X3D 8-Core Processor
+BenchmarkConsumer2             1        2107290900 ns/op           4352860 ctrl-events/sec            2389 cycles/event       1709 delta-cyc/event            1847 delta-ns/event          1014586 events           481465 events/sec
+BenchmarkConsumer2             1         373814900 ns/op           4325879 ctrl-events/sec            1094 cycles/event        411.8 delta-cyc/event           137.3 delta-ns/event        1014586 events          2714142 events/sec
+BenchmarkConsumer2             1         374264600 ns/op           4346397 ctrl-events/sec            1094 cycles/event        414.7 delta-cyc/event           138.8 delta-ns/event        1014586 events          2710881 events/sec
+BenchmarkConsumer2             1         382462600 ns/op           4366998 ctrl-events/sec            1117 cycles/event        440.6 delta-cyc/event           148.0 delta-ns/event        1014586 events          2652773 events/sec
+BenchmarkConsumer2             1         378978000 ns/op           4363116 ctrl-events/sec            1108 cycles/event        432.3 delta-cyc/event           144.3 delta-ns/event        1014586 events          2677167 events/sec
+BenchmarkConsumer2             1         372906300 ns/op           4333343 ctrl-events/sec            1091 cycles/event        410.3 delta-cyc/event           136.8 delta-ns/event        1014586 events          2720755 events/sec
+BenchmarkConsumer2             1         372729700 ns/op           4363685 ctrl-events/sec            1090 cycles/event        413.1 delta-cyc/event           138.2 delta-ns/event        1014586 events          2722044 events/sec
+BenchmarkConsumer2             1         372325200 ns/op           4344123 ctrl-events/sec            1089 cycles/event        413.7 delta-cyc/event           136.8 delta-ns/event        1014586 events          2725002 events/sec
+BenchmarkConsumer2             1         376926000 ns/op           4369605 ctrl-events/sec            1102 cycles/event        425.7 delta-cyc/event           142.7 delta-ns/event        1014586 events          2691740 events/sec
+BenchmarkConsumer2             1         372257300 ns/op           4346531 ctrl-events/sec            1089 cycles/event        409.1 delta-cyc/event           136.8 delta-ns/event        1014586 events          2725499 events/sec
+PASS
+Average Events/s: 2704444.86
+Average cycles/event: 1097.01
+Average delta-ns/event: 139.96
+Average delta-cyc/event: 419.06
+
 */

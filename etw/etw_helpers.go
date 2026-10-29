@@ -6,6 +6,7 @@ import (
 	"bytes" // also slow but not used much here.
 	"errors"
 	"fmt"
+	"hash/maphash"
 
 	"math"
 	"os"
@@ -226,6 +227,26 @@ func getSchemaKey[K SchemaKey](er *EventRecord) K {
 	panic("unsupported key type")
 }
 
+// tlSeed is random per process, so TraceLogging schema hash collisions
+// can't be crafted offline by a provider.
+var tlSeed = maphash.MakeSeed()
+
+// tlSchemaHash returns a hash of the TraceLogging schema metadata, or 0 if the
+// event has none. For TL events the EventDescriptor does not identify the schema
+// (Id/Version are 0); the schema travels in the extended data.
+//
+//go:noinline
+func tlSchemaHash(er *EventRecord) uint64 {
+	items := unsafe.Slice(er.ExtendedData, er.ExtendedDataCount)
+	for i := range items {
+		if items[i].ExtType == EVENT_HEADER_EXT_TYPE_EVENT_SCHEMA_TL {
+			meta := unsafe.Slice((*byte)(unsafe.Pointer(items[i].DataPtr)), items[i].DataSize)
+			return maphash.Bytes(tlSeed, meta)
+		}
+	}
+	return 0
+}
+
 // schemaCacheKey generates a memory friedly composite key for the global schema cache.
 // It combines the provider GUID and the schema key into a struct of scalar types,
 // which helps prevent stack memory writes during map lookups and instead use registers.
@@ -233,11 +254,15 @@ func (er *EventRecord) schemaCacheKey() globalSchemaCacheKey {
 	// Directly access the GUID bytes and interpret them as two uint64s.
 	// This is much faster using GUID struct directly.
 	guidPtr := (*[2]uint64)(unsafe.Pointer(&er.EventHeader.ProviderId))
-	return globalSchemaCacheKey{
+	key := globalSchemaCacheKey{
 		providerGUIDHigh: guidPtr[0],
 		providerGUIDLow:  guidPtr[1],
 		schemaKey:        getSchemaKey[preferredSchemaKey](er),
 	}
+	if er.ExtendedDataCount != 0 {
+		key.providerGUIDLow ^= tlSchemaHash(er)
+	}
+	return key
 }
 
 // traceStorage holds all the necessary reusable memory for a single trace (goroutine).
@@ -988,10 +1013,6 @@ func (e *EventRecordHelper) getPropertyLength(i uint32, epi *EventPropertyInfo) 
 			// +==============================================================+
 			// Note: First two fields are pointers - size depends on 32/64-bit
 
-			// Minimum SID size is 8 bytes (header + identifier authority, no sub-authorities)
-			if e.remainingUserDataLength() < 8 {
-				break // try tdhGetPropertySize
-			}
 			var sidSize uint32
 			if epi.InType() == TDH_INTYPE_WBEMSID {
 				// For WBEMSID, skip TOKEN_USER structure
@@ -1002,12 +1023,16 @@ func (e *EventRecordHelper) getPropertyLength(i uint32, epi *EventPropertyInfo) 
 					sidSize += 8 // 32-bit: 2 * 4-byte pointers
 				}
 			}
+			// Minimum SID size is 8 bytes (header + identifier authority, no sub-authorities)
+			if uint32(e.remainingUserDataLength()) < sidSize+8 {
+				break // try tdhGetPropertySize
+			}
 			sidPtr := e.userDataIt + uintptr(sidSize) // Skip header
 			// Read SubAuthorityCount from SID header
 			subAuthCount := *(*uint8)(unsafe.Pointer(sidPtr + 1)) // offset 1 byte for Revision
 			sidSize += 8 + (4 * uint32(subAuthCount))             // 8 byte header + 4 bytes per sub-authority
 			// Verify we have enough data for the full SID
-			if uint32(e.remainingUserDataLength()) <= sidSize {
+			if uint32(e.remainingUserDataLength()) < sidSize {
 				break // try tdhGetPropertySize
 			}
 			return 0, sidSize, nil
@@ -1152,6 +1177,10 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 		epi.InType() == TDH_INTYPE_UNICODECHAR {
 		// C++ Definition example: wchar_t ThreadName[1]; (Variadic arrays)
 		// arrayCount is usualy a cap in this case. Fixed 256 byte array usually.
+		// arrayCount is a cap here, the data may be shorter: clamp to what's left.
+		if maxCount := (e.userDataEnd - e.userDataIt) / 2; uintptr(arrayCount) > maxCount {
+			arrayCount = uint16(maxCount)
+		}
 		mofString := unsafe.Slice((*uint16)(unsafe.Pointer(e.userDataIt)), arrayCount)
 		value := FromUTF16Slice(mofString)
 		e.SetCustomProperty(arrayName, value)

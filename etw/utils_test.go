@@ -300,12 +300,8 @@ func BenchmarkHash(b *testing.B) {
 }
 
 // TestUTF16PtrToStringConcurrent tests the UTF16PtrToString function
-// in a concurrent environment to ensure it handles multiple goroutines
-// accessing the cache without issues.
+// in a concurrent environment.
 func TestUTF16PtrToStringConcurrent(t *testing.T) {
-	// Reset the global cache for a clean test run.
-	globalUtf16Cache = newClockCache(128)
-
 	var wg sync.WaitGroup
 	// Tested a bug with this, min 100/10000 for consistent detection
 	numGoroutines := 100 // use min of 100
