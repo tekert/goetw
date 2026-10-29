@@ -626,7 +626,7 @@ func (e *EventRecordHelper) getCachedNameToIndexMap() map[string]int {
 }
 
 // initialize sets up the helper pointers and state for the current event.
-// This is called after resetForEvent and assumes the storage has been properly cleaned.
+// This is called after resetStorageFor and assumes the storage has been properly cleaned.
 // This function does NOT perform any cleanup; it only assigns values.
 func (e *EventRecordHelper) initialize() {
 	storage := e.storage
@@ -650,7 +650,7 @@ func (e *EventRecordHelper) initialize() {
 		return
 	}
 
-	// Assign slice pointers (slices were already sized in resetForEvent)
+	// Assign slice pointers (slices were already sized in resetStorageFor)
 	e.PropertiesByIndex = &storage.propertiesByIndex
 	e.ArrayProperties = &storage.arrayProperties
 	e.StructArrays = &storage.structArrays

@@ -79,10 +79,12 @@ type Consumer struct {
 	// if PROCESS_TRACE_MODE_RAW_TIMESTAMP is set, use EventRecord.Timestamp()
 	// or use EventRecord.TimestampNanos() to get the correct timestamp as time.Time
 	// based on trace Clocktype used.
+	// TODO: remove in v1.0, use EventRecordCallback2 instead, which is more flexible.
 	EventRecordCallback  func(*EventRecord) bool
 	EventRecordCallback2 func(*EventRecord, *TraceContext) bool
 
 	// [2] Callback which executes after TraceEventInfo is parsed.
+	// TODO: remove in v1.0, use EventRecordHelperCallback2 instead, which is more flexible.
 	EventRecordHelperCallback  func(*EventRecordHelper) error
 	EventRecordHelperCallback2 func(*EventRecordHelper, *TraceContext) error
 
@@ -490,6 +492,10 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 			h.timestamp = er.EventHeader.TimeStamp
 		}
 
+		// Must run before any user callback: property getters prepare lazily
+		// (getPrepProperty -> preparePropertiesUpTo) and depend on this state.
+		h.initialize()
+
 		if c.EventRecordHelperCallback != nil {
 			if err = c.EventRecordHelperCallback(h); err != nil {
 				setError(fmt.Errorf("EventRecordHelperCallback failed: %w", err))
@@ -503,9 +509,6 @@ func (c *Consumer) callback(er *EventRecord) (re uintptr) {
 		if c.EventPreparedCallback == nil && c.EventCallback == nil {
 			return
 		}
-
-		// initialize record helper
-		h.initialize()
 
 		// Use TraceInfo to prepare properties without parsing the values yet.
 		if err := h.preparePropertiesUpTo(h.TraceInfo.TopLevelPropertyCount); err != nil {
