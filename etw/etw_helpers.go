@@ -1542,7 +1542,8 @@ func (e *EventRecordHelper) EventID() uint16 {
 func (e *EventRecordHelper) getPrepProperty(name string) (p *Property, isCustom bool, err error) {
 	// Check schema-defined properties first (the common case).
 	nameToIndex := e.getCachedNameToIndexMap() // <- this was cached before we got here, so it's fast
-	if index, ok := nameToIndex[name]; ok {    // <- this is the same as p := Properties[name] would have done it.
+	index, inSchema := nameToIndex[name]       // <- this is the same as p := Properties[name] would have done it.
+	if inSchema {
 		// Lazily prepare properties up to the requested target ID (index+1)
 		if err = e.preparePropertiesUpTo(uint32(index) + 1); err != nil {
 			return nil, false, err
@@ -1559,6 +1560,11 @@ func (e *EventRecordHelper) getPrepProperty(name string) (p *Property, isCustom 
 		return p, true, nil // Found in custom properties.
 	}
 
+	// Arrays live in ArrayProperties (checked last: MOF wchar arrays are stored as
+	// custom properties with the array name).
+	if inSchema && index < len(*e.ArrayProperties) && (*e.ArrayProperties)[index] != nil {
+		return nil, false, fmt.Errorf("%w %s: it's an array, use GetPropertyArray", ErrUnknownProperty, name)
+	}
 	return nil, false, fmt.Errorf("%w %s", ErrUnknownProperty, name)
 }
 
@@ -1570,6 +1576,26 @@ func (e *EventRecordHelper) GetPropertyString(name string) (s string, err error)
 		return "", err
 	}
 	return p.ToString()
+}
+
+// GetPropertyArray returns the elements of the named array property (arrays of
+// simple types). Read each one with Property.ToString, ToInt, etc. The returned
+// properties are only valid during the callback.
+// Returns ErrUnknownProperty if the property doesn't exist or is not an array.
+func (e *EventRecordHelper) GetPropertyArray(name string) ([]*Property, error) {
+	index, ok := e.getCachedNameToIndexMap()[name]
+	if !ok {
+		return nil, fmt.Errorf("%w %s", ErrUnknownProperty, name)
+	}
+	if err := e.preparePropertiesUpTo(uint32(index) + 1); err != nil {
+		return nil, err
+	}
+	if index < len(*e.ArrayProperties) {
+		if arr := (*e.ArrayProperties)[index]; arr != nil {
+			return *arr, nil
+		}
+	}
+	return nil, fmt.Errorf("%w %s: not an array", ErrUnknownProperty, name)
 }
 
 // GetPropertyInt returns the property value as int64.
