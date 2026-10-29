@@ -188,6 +188,9 @@ func (m *SystemMetadata) AppendText(buf []byte) []byte {
 // MarshalJSON implements the json.Marshaler interface for EventRecordHelper.
 // It provides the highest-performance, lowest-allocation method to serialize an event
 // directly to JSON by writing into a reusable internal buffer.
+//
+// The returned slice is only valid until the next MarshalJSON call or until the
+// callback returns: copy it to keep it (json.Marshal(h) already returns a copy).
 func (e *EventRecordHelper) MarshalJSON() ([]byte, error) {
 	if err := e.PrepareAll(); err != nil {
 		return nil, err
@@ -215,10 +218,6 @@ func (e *EventRecordHelper) MarshalJSON() ([]byte, error) {
 
 	buf = append(buf, '}') // Close main object
 
-	// WARNING: The returned byte slice is a view into a reusable internal buffer.
-	// It is only valid until the next call to MarshalJSON or until the callback returns.
-	// If we need to retain the data, we MUST make a copy.
-	// Example: `dataCopy := make([]byte, len(jsonData)); copy(dataCopy, jsonData)`
 	e.storage.dataBuffer = buf
 	return e.storage.dataBuffer, nil
 }
