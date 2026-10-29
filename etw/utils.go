@@ -136,7 +136,7 @@ func ConvertSidToStringSidGO(sid *SID) (string, error) {
 		return "", nil
 	}
 	var err error
-		// A typical SID string is around 40-70 chars. Pre-allocating a buffer of
+	// A typical SID string is around 40-70 chars. Pre-allocating a buffer of
 	// 64 bytes is a good starting point to avoid reallocations.
 	buf := make([]byte, 0, 64)
 	buf, err = sid.AppendText(buf)
@@ -144,14 +144,10 @@ func ConvertSidToStringSidGO(sid *SID) (string, error) {
 	return string(buf), err
 }
 
+// isETLFile reports whether a trace name refers to an ETL file (by extension),
+// absolute or relative. A real-time session literally named "*.etl" is not supported.
 func isETLFile(path string) bool {
-	// Convert to clean Windows path
-	clean := filepath.Clean(path)
-	if !strings.EqualFold(filepath.Ext(clean), ".etl") {
-		return false
-	}
-	// Check if absolute path or UNC
-	return filepath.IsAbs(clean) || strings.HasPrefix(clean, "\\\\")
+	return strings.EqualFold(filepath.Ext(filepath.Clean(path)), ".etl")
 }
 
 func getGoroutineID() int64 {

@@ -5,6 +5,7 @@ package etw
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -425,6 +426,13 @@ func newConsumerTrace(tname string) *ConsumerTrace {
 
 	t.TraceName = tname
 	t.TraceNameW, _ = syscall.UTF16PtrFromString(tname)
+	if isETLFile(tname) && !filepath.IsAbs(tname) {
+		// OpenTrace needs an absolute path. TraceName keeps the name as given,
+		// so GetTrace/StopTrace still work with it.
+		if abs, err := filepath.Abs(tname); err == nil {
+			t.TraceNameW, _ = syscall.UTF16PtrFromString(abs)
+		}
+	}
 
 	// Default raw timestamp processing to enabled.
 	t.rawTimestampProcessing = PROCESS_TRACE_MODE_RAW_TIMESTAMP
