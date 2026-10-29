@@ -1299,18 +1299,13 @@ func (e *EventRecordHelper) preparePropertiesUpTo(targetID uint32) (err error) {
 
 	propsByIndex := *e.PropertiesByIndex
 
+	// The loop reads EventPropertyInfo by pointer arithmetic: i < targetID must stay in
+	// range of the schema. Only catches our own bugs (no-op in release builds).
+	assert(targetID <= e.TraceInfo.PropertyCount, "prepare: targetID %d out of range (%d)", targetID, e.TraceInfo.PropertyCount)
+
 	// Process all top-level properties defined in the event schema up to targetIndex.
 	for i := e.currentPrepCount; i < targetID; i++ {
 		epi := (*EventPropertyInfo)(unsafe.Pointer(epiPtr))
-		if epi == nil {
-			e.addPropError()
-			conlog.SampledError("epi-null").
-				Uint32("index", i).
-				Uint32("topLevelPropertyCount", e.TraceInfo.TopLevelPropertyCount).
-				Msg("prepareProperties: getEpiAt returned nil, skipping property")
-
-			continue // This is not a fatal error, we can continue processing.
-		}
 
 		arrayCount, isArray, err := e.getArrayInfo(i, epi)
 		if err != nil {
