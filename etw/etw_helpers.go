@@ -473,6 +473,15 @@ type EventRecordHelper struct {
 	timestamp int64
 }
 
+// remainingSafe returns the bytes left in the user data, 0 if the iterator is at or
+// past the end. Used only on paths where a size comes from the event data itself.
+func (e *EventRecordHelper) remainingSafe() uintptr {
+	if e.userDataIt >= e.userDataEnd {
+		return 0
+	}
+	return e.userDataEnd - e.userDataIt
+}
+
 // remainingUserDataLength returns the number of bytes remaining in the event's user data
 func (e *EventRecordHelper) remainingUserDataLength() uint16 {
 	return uint16(e.userDataEnd - e.userDataIt)
@@ -890,6 +899,14 @@ func (e *EventRecordHelper) getPropertyLength(i uint32, epi *EventPropertyInfo) 
 		if err != nil {
 			return 0, 0, err
 		}
+		// The length comes from the event data: never past the end of the user data.
+		maxLen := e.remainingSafe()
+		if epi.InType() == TDH_INTYPE_UNICODESTRING {
+			maxLen /= 2 // length is in WCHARs
+		}
+		if uintptr(propLength) > maxLen {
+			propLength = uint16(maxLen)
+		}
 
 	case (epi.Flags & PropertyParamFixedLength) != 0:
 		// Fixed length specified in manifest
@@ -977,6 +994,9 @@ func (e *EventRecordHelper) getPropertyLength(i uint32, epi *EventPropertyInfo) 
 				break // try tdhGetPropertySize
 			}
 			sizeBytes = uint32(*(*uint16)(unsafe.Pointer(e.userDataIt))) + 2 // Include length prefix
+			if rem := e.remainingSafe(); uintptr(sizeBytes) > rem {
+				sizeBytes = uint32(rem) // length prefix comes from the data
+			}
 			return 0, sizeBytes, nil
 
 		case TDH_INTYPE_REVERSEDCOUNTEDSTRING,
@@ -987,6 +1007,9 @@ func (e *EventRecordHelper) getPropertyLength(i uint32, epi *EventPropertyInfo) 
 			}
 			byteLen := *(*uint16)(unsafe.Pointer(e.userDataIt))
 			sizeBytes = uint32(Swap16(byteLen)) + 2 // Include length prefix
+			if rem := e.remainingSafe(); uintptr(sizeBytes) > rem {
+				sizeBytes = uint32(rem) // length prefix comes from the data
+			}
 			return 0, sizeBytes, nil
 
 		case TDH_INTYPE_SID,
@@ -1043,6 +1066,9 @@ func (e *EventRecordHelper) getPropertyLength(i uint32, epi *EventPropertyInfo) 
 				break // try tdhGetPropertySize
 			}
 			sizeBytes = *(*uint32)(unsafe.Pointer(e.userDataIt))
+			if rem := e.remainingSafe(); uintptr(sizeBytes) > rem {
+				sizeBytes = uint32(rem) // length prefix comes from the data
+			}
 			return 0, sizeBytes, nil
 
 		default:
@@ -1131,6 +1157,9 @@ func (e *EventRecordHelper) prepareStruct(i uint32, epi *EventPropertyInfo, arra
 
 	// Treat non-array properties as arrays with one element.
 	for range arrayCount {
+		if e.userDataIt >= e.userDataEnd {
+			break // count comes from the event data: stop when the data ends
+		}
 		propStruct := e.storage.propertyMapPool.Get().(map[string]*Property)
 
 		startIndex := epi.StructStartIndex()
@@ -1188,6 +1217,12 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 		return nil                                // Array parsed, we're done with this property.
 	}
 
+	// The count may come from the event data: an element takes at least 1 byte,
+	// so never more elements than bytes left (also bounds the slice allocation).
+	if rem := e.remainingSafe(); uintptr(arrayCount) > rem {
+		arrayCount = uint16(rem)
+	}
+
 	// For regular simple arrays, get a slice from the pool.
 	array := e.storage.propSlicePool.Get().(*[]*Property)
 	if cap(*array) < int(arrayCount) {
@@ -1197,6 +1232,9 @@ func (e *EventRecordHelper) prepareSimpleArray(i uint32, epi *EventPropertyInfo,
 	var p *Property
 	var err error
 	for range arrayCount {
+		if e.userDataIt >= e.userDataEnd {
+			break // count comes from the event data: stop when the data ends
+		}
 		if p, err = e.prepareProperty(i, names[i], epi); err != nil {
 			// On error, return the slice to the pool.
 			// No need to release individual properties due to block pooling.

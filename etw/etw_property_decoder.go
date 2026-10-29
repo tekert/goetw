@@ -785,6 +785,15 @@ func (p *Property) decodeSIDIntype(buf []byte) ([]byte, error) {
 	return buf, nil
 }
 
+// countedLen bounds a length prefix read from the event data by the size computed
+// in prepare (already clamped to the user data), so decoding never reads past it.
+func (p *Property) countedLen(byteLen uint16) uint16 {
+	if p.sizeBytes < 2 {
+		return 0
+	}
+	return min(byteLen, uint16(min(p.sizeBytes-2, 0xffff)))
+}
+
 func (p *Property) decodeStringIntype(dst []byte) ([]byte, error) {
 	// p.length has already been set from either:
 	// - Length field
@@ -858,7 +867,7 @@ func (p *Property) decodeStringIntype(dst []byte) ([]byte, error) {
 	case TDH_INTYPE_MANIFEST_COUNTEDSTRING:
 		// Same as COUNTEDSTRING but for manifests
 		// Contains little-endian 16-bit bytecount followed by UTF16 string
-		byteLen := *(*uint16)(unsafe.Pointer(p.pValue))
+		byteLen := p.countedLen(*(*uint16)(unsafe.Pointer(p.pValue)))
 		wcharCount := byteLen / 2
 		wchars := unsafe.Slice((*uint16)(unsafe.Add(unsafe.Pointer(p.pValue), 2)), wcharCount)
 		return AppendFromUTF16Slice(dst, wchars), nil
@@ -866,7 +875,7 @@ func (p *Property) decodeStringIntype(dst []byte) ([]byte, error) {
 	case TDH_INTYPE_MANIFEST_COUNTEDANSISTRING:
 		// Same as COUNTEDANSISTRING but for manifests
 		// Contains little-endian 16-bit bytecount followed by ANSI string
-		byteLen := *(*uint16)(unsafe.Pointer(p.pValue))
+		byteLen := p.countedLen(*(*uint16)(unsafe.Pointer(p.pValue)))
 		bytes := unsafe.Slice((*byte)(unsafe.Add(unsafe.Pointer(p.pValue), 2)), byteLen)
 		return append(dst, bytes...), nil
 
@@ -874,27 +883,27 @@ func (p *Property) decodeStringIntype(dst []byte) ([]byte, error) {
 
 	case TDH_INTYPE_COUNTEDSTRING:
 		// First 2 bytes contain length in bytes of following string
-		byteLen := *(*uint16)(unsafe.Pointer(p.pValue))
+		byteLen := p.countedLen(*(*uint16)(unsafe.Pointer(p.pValue)))
 		wcharCount := byteLen / 2
 		wchars := unsafe.Slice((*uint16)(unsafe.Add(unsafe.Pointer(p.pValue), 2)), wcharCount)
 		return AppendFromUTF16Slice(dst, wchars), nil
 
 	case TDH_INTYPE_COUNTEDANSISTRING:
 		// First 2 bytes contain length in bytes of following string
-		byteLen := *(*uint16)(unsafe.Pointer(p.pValue))
+		byteLen := p.countedLen(*(*uint16)(unsafe.Pointer(p.pValue)))
 		bytes := unsafe.Slice((*byte)(unsafe.Add(unsafe.Pointer(p.pValue), 2)), byteLen)
 		return append(dst, bytes...), nil
 
 	case TDH_INTYPE_REVERSEDCOUNTEDSTRING:
 		// Like COUNTEDSTRING but length is big-endian
-		byteLen := Swap16(*(*uint16)(unsafe.Pointer(p.pValue)))
+		byteLen := p.countedLen(Swap16(*(*uint16)(unsafe.Pointer(p.pValue))))
 		wcharCount := byteLen / 2
 		wchars := unsafe.Slice((*uint16)(unsafe.Add(unsafe.Pointer(p.pValue), 2)), wcharCount)
 		return AppendFromUTF16Slice(dst, wchars), nil
 
 	case TDH_INTYPE_REVERSEDCOUNTEDANSISTRING:
 		// Like COUNTEDANSISTRING but length is big-endian
-		byteLen := Swap16(*(*uint16)(unsafe.Pointer(p.pValue)))
+		byteLen := p.countedLen(Swap16(*(*uint16)(unsafe.Pointer(p.pValue))))
 		bytes := unsafe.Slice((*byte)(unsafe.Add(unsafe.Pointer(p.pValue), 2)), byteLen)
 		return append(dst, bytes...), nil
 
